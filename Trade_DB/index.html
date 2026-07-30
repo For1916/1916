@@ -391,6 +391,8 @@
       <table>
         <thead>
           <tr>
+            <th onclick="sortDep('buy_date')" style="cursor:pointer">구매일 <span id="sortdep-buy_date"></span></th>
+            <th onclick="sortDep('sell_date')" style="cursor:pointer">판매일 <span id="sortdep-sell_date"></span></th>
             <th onclick="sortDep('item_name')" style="cursor:pointer">품목명 <span id="sortdep-item_name"></span></th>
             <th onclick="sortDep('category')" style="cursor:pointer">카테고리 <span id="sortdep-category"></span></th>
             <th onclick="sortDep('buy_price')" style="cursor:pointer;text-align:right">구매가 <span id="sortdep-buy_price"></span></th>
@@ -832,6 +834,8 @@ function renderDepTable() {
     return 0;
   });
   tbody.innerHTML = rows.map(r => `<tr>
+    <td>${displayDate(r.buy_date)}</td>
+    <td>${displayDate(r.sell_date)}</td>
     <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${r.item_name}</td>
     <td>${r.category || '-'}</td>
     <td style="text-align:right">${fmt(r.buy_price)}</td>
@@ -847,7 +851,7 @@ function renderDepTable() {
 function sortDep(key) {
   if (sortDepKey === key) sortDepAsc = !sortDepAsc;
   else { sortDepKey = key; sortDepAsc = false; }
-  ['item_name','category','buy_price','sell_price','days','profit','dailyCost','monthlyCost','evalTag'].forEach(k => {
+  ['buy_date','sell_date','item_name','category','buy_price','sell_price','days','profit','dailyCost','monthlyCost','evalTag'].forEach(k => {
     const el = document.getElementById('sortdep-' + k);
     if (el) el.textContent = k === sortDepKey ? (sortDepAsc ? ' ↑' : ' ↓') : '';
   });
