@@ -320,6 +320,9 @@
           <select id="status">
             <option value="보유중">보유중</option>
             <option value="판매완료">판매완료</option>
+            <option value="분실">분실</option>
+            <option value="고장">고장</option>
+            <option value="폐기">폐기</option>
             <option value="판매중">판매중</option>
             <option value="반품">반품</option>
           </select>
@@ -344,6 +347,9 @@
         <option value="">전체 상태</option>
         <option value="판매완료">판매완료</option>
         <option value="보유중">보유중</option>
+        <option value="분실">분실</option>
+        <option value="고장">고장</option>
+        <option value="폐기">폐기</option>
         <option value="판매중">판매중</option>
         <option value="반품">반품</option>
       </select>
@@ -799,19 +805,23 @@ let sortDepKey = 'buy_date', sortDepAsc = false;
 function renderDepreciation(trades) {
   const tbody = document.getElementById('depreciation-list');
   if (!tbody) return;
-  depRows = trades.filter(t => t.buy_date).map(t => {
+  depRows = trades.filter(t => t.buy_date && t.status !== '반품').map(t => {
     const end = t.sell_date ? new Date(t.sell_date) : new Date();
     const days = Math.round((end - new Date(t.buy_date)) / 86400000);
-    const profit = (t.sell_price != null && t.buy_price != null) ? t.sell_price - t.buy_price : null;
+    const isHolding = t.status === '보유중' || t.status === '판매중';
+    const isLoss = ['분실', '고장', '폐기'].includes(t.status);
+    const profit = isLoss && t.buy_price != null ? -t.buy_price : (t.sell_price != null && t.buy_price != null) ? t.sell_price - t.buy_price : null;
     let monthlyCost = null;
     let dailyCost = null;
-    if (days > 0 && t.buy_price != null) {
+    if (!isHolding && !isLoss && days > 0 && t.buy_price != null) {
       const sellVal = t.sell_price != null ? t.sell_price : 0;
       dailyCost = Math.round((sellVal - t.buy_price) / days);
       monthlyCost = Math.round(dailyCost * 30);
     }
     let evalTag, evalClass, evalRank;
-    if (profit != null && profit > 0) { evalTag = '🧿 수익'; evalClass = 'eval-profit'; evalRank = 0; }
+    if (isLoss) { evalTag = '❌ 순손실'; evalClass = 'eval-bad'; evalRank = 4; }
+    else if (isHolding) { evalTag = '⏳ 미판매 보유중'; evalClass = 'eval-warn'; evalRank = 3; }
+    else if (profit != null && profit > 0) { evalTag = '🧿 수익'; evalClass = 'eval-profit'; evalRank = 0; }
     else if (monthlyCost == null) { evalTag = '-'; evalClass = ''; evalRank = -1; }
     else if (Math.abs(monthlyCost) <= 15000) { evalTag = '✅ 월 15,000원 이하'; evalClass = 'eval-good'; evalRank = 1; }
     else if (Math.abs(monthlyCost) <= 30000) { evalTag = '⚠️ 월 15,000원 초과'; evalClass = 'eval-warn'; evalRank = 2; }
@@ -828,7 +838,10 @@ function renderDepTable() {
     let va, vb;
     if (sortDepKey === 'evalTag') { va = a.evalRank; vb = b.evalRank; }
     else if (sortDepKey === 'category' || sortDepKey === 'item_name') { va = a[sortDepKey] ?? ''; vb = b[sortDepKey] ?? ''; }
-    else { va = a[sortDepKey]; vb = b[sortDepKey]; va = (va == null ? -Infinity : va); vb = (vb == null ? -Infinity : vb); }
+    else if (sortDepKey === 'buy_date' || sortDepKey === 'sell_date') {
+      va = a[sortDepKey] ? new Date(a[sortDepKey] + 'T00:00:00').getTime() : -Infinity;
+      vb = b[sortDepKey] ? new Date(b[sortDepKey] + 'T00:00:00').getTime() : -Infinity;
+    } else { va = a[sortDepKey]; vb = b[sortDepKey]; va = (va == null ? -Infinity : va); vb = (vb == null ? -Infinity : vb); }
     if (va < vb) return sortDepAsc ? -1 : 1;
     if (va > vb) return sortDepAsc ? 1 : -1;
     return 0;
