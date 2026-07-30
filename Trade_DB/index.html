@@ -76,7 +76,7 @@
     margin-bottom: -1px;
   }
 
-  .content { padding: 24px; flex: 1; max-width: 1040px; margin: 0 auto; width: 100%; }
+  .content { padding: 24px 32px; flex: 1; max-width: 1500px; margin: 0 auto; width: 100%; }
   .panel { display: none; }
   .panel.active { display: block; }
 
@@ -147,7 +147,7 @@
   .filter-bar input { flex: 1; min-width: 160px; }
 
   .table-wrap { overflow-x: hidden; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
-  table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 13px; }
+  table { width: 100%; table-layout: auto; border-collapse: collapse; font-size: 12px; }
   thead th {
     text-align: left; padding: 10px 12px; background: var(--accent-soft);
     border-bottom: 1px solid var(--border); color: var(--accent-dark);
@@ -157,8 +157,9 @@
   thead th[onclick]:hover { color: var(--red); }
   tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
   tbody tr:hover { background: var(--surface2); }
-  tbody td { padding: 10px 8px; vertical-align: middle; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
-  .memo-cell { max-width: 220px; overflow: hidden; text-overflow: ellipsis; color: var(--text2); }
+  tbody td { padding: 9px 7px; vertical-align: middle; white-space: nowrap; }
+  tbody td:nth-child(4), tbody td:nth-child(10) { white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
+  .memo-cell { max-width: 150px; overflow: hidden; text-overflow: ellipsis; color: var(--text2); }
   .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
   .badge-done { background: var(--green-soft); color: var(--green); }
   .badge-hold { background: var(--accent-soft); color: var(--accent); }
@@ -362,6 +363,7 @@
         <thead>
           <tr>
             <th onclick="sortBy('buy_date')" style="cursor:pointer">구매일 <span id="sort-buy_date"></span></th>
+            <th onclick="sortBy('sell_date')" style="cursor:pointer">판매일 <span id="sort-sell_date"></span></th>
             <th onclick="sortBy('category')" style="cursor:pointer">카테고리 <span id="sort-category"></span></th>
             <th onclick="sortBy('item_name')" style="cursor:pointer">품목명 <span id="sort-item_name"></span></th>
             <th onclick="sortBy('buy_price')" style="cursor:pointer;text-align:right">구매가 <span id="sort-buy_price"></span></th>
@@ -503,7 +505,15 @@ function checkPw() {
 
 // ── Supabase 설정 : 새 프로젝트(서울 리전) 정보로 교체 ──
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwv9b613EfnpLSqtV6QnIq4tpuMkaPdLKsaF1UzDzZHjj93vUgVxQEnjNH6Hm5LiJu7/exec';
-async function gsGetAll() { const r = await fetch(SCRIPT_URL); const j = await r.json(); if (j.error) throw new Error(j.error); return j.data || []; }
+async function gsGetAll() {
+  const r = await fetch(SCRIPT_URL); const j = await r.json();
+  if (j.error) throw new Error(j.error);
+  return (j.data || []).map(t => {
+    const text = v => (v == null || v === '' || v === 'null' || v === 'NaN') ? null : String(v);
+    const num = v => (v == null || v === '' || v === 'null' || v === 'NaN' || Number.isNaN(Number(v))) ? null : Number(v);
+    return { ...t, buy_date: text(t.buy_date)?.slice(0, 10) || null, sell_date: text(t.sell_date)?.slice(0, 10) || null, buy_price: num(t.buy_price), sell_price: num(t.sell_price), memo: text(t.memo) };
+  });
+}
 async function gsWrite(action, id, record) { const r = await fetch(SCRIPT_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify({action,id,record})}); const j = await r.json(); if (j.error) throw new Error(j.error); return j.data; }
 const TABLE = 'jonggo_trades';
 
@@ -681,7 +691,8 @@ function renderList(trades) {
                 : t.status === '반품' ? 'badge-return'
                 : 'badge-sell';
     return `<tr>
-      <td>${t.buy_date || '-'}</td>
+      <td>${displayDate(t.buy_date)}</td>
+      <td>${displayDate(t.sell_date)}</td>
       <td>${t.category || '-'}</td>
       <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${t.item_name}</td>
       <td style="text-align:right">${fmt(t.buy_price)}</td>
@@ -768,9 +779,10 @@ function renderSummary(trades) {
   document.getElementById('stat-hold-val').textContent = fmt(holdVal);
 }
 
-const fmt = n => n == null ? '-' : Number(n).toLocaleString('ko-KR') + '원';
+const displayDate = v => v ? String(v).slice(0, 10) : '-';
+const fmt = n => (n == null || n === '' || n === 'null' || n === 'NaN' || Number.isNaN(Number(n))) ? '-' : Number(n).toLocaleString('ko-KR') + '원';
 const fmtPL = n => {
-  if (n == null) return '-';
+  if (n == null || n === '' || n === 'null' || n === 'NaN' || Number.isNaN(Number(n))) return '-';
   if (n === 0) return '0원';
   const s = Number(n).toLocaleString('ko-KR') + '원';
   return n > 0 ? `+${s}` : s;
