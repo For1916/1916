@@ -810,12 +810,16 @@ function renderDepreciation(trades) {
     const days = Math.round((end - new Date(t.buy_date)) / 86400000);
     const isHolding = t.status === '보유중' || t.status === '판매중';
     const isLoss = ['분실', '고장', '폐기'].includes(t.status);
-    const profit = isLoss && t.buy_price != null ? -t.buy_price : (t.sell_price != null && t.buy_price != null) ? t.sell_price - t.buy_price : null;
+    const saleAmount = t.sell_price != null && t.sell_price >= 0 ? t.sell_price : 0;
+    const remainingCost = t.buy_price != null ? Math.max(t.buy_price - saleAmount, 0) : null;
+    const profit = isLoss && remainingCost != null ? -remainingCost : isHolding ? null : (t.sell_price != null && t.buy_price != null) ? t.sell_price - t.buy_price : null;
     let monthlyCost = null;
     let dailyCost = null;
-    if (!isHolding && !isLoss && days > 0 && t.buy_price != null) {
-      const sellVal = t.sell_price != null ? t.sell_price : 0;
-      dailyCost = Math.round((sellVal - t.buy_price) / days);
+    if (isHolding && days > 0 && remainingCost != null) {
+      dailyCost = Math.round(-remainingCost / days);
+      monthlyCost = Math.round(dailyCost * 30);
+    } else if (!isHolding && !isLoss && days > 0 && t.buy_price != null) {
+      dailyCost = Math.round((saleAmount - t.buy_price) / days);
       monthlyCost = Math.round(dailyCost * 30);
     }
     let evalTag, evalClass, evalRank;
@@ -826,7 +830,7 @@ function renderDepreciation(trades) {
     else if (Math.abs(monthlyCost) <= 15000) { evalTag = '✅ 월 15,000원 이하'; evalClass = 'eval-good'; evalRank = 1; }
     else if (Math.abs(monthlyCost) <= 30000) { evalTag = '⚠️ 월 15,000원 초과'; evalClass = 'eval-warn'; evalRank = 2; }
     else { evalTag = '❌ 월 30,000원 초과'; evalClass = 'eval-bad'; evalRank = 3; }
-    return { ...t, days, profit, monthlyCost, dailyCost, evalTag, evalClass, evalRank };
+    return { ...t, days, profit, saleAmount, remainingCost, monthlyCost, dailyCost, evalTag, evalClass, evalRank };
   });
   renderDepTable();
 }
