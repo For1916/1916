@@ -737,7 +737,7 @@ function sortBy(key) {
   filterList();
 }
 function updateSortIcons() {
-  ['buy_date','category','item_name','buy_price','sell_price','pl','days','status'].forEach(k => {
+  ['buy_date','sell_date','category','item_name','buy_price','sell_price','pl','days','status'].forEach(k => {
     const el = document.getElementById('sort-' + k);
     if (!el) return;
     el.textContent = k === sortKey ? (sortAsc ? ' ↑' : ' ↓') : '';
@@ -750,7 +750,7 @@ function getSortVal(t, key) {
     const end = t.sell_date ? new Date(t.sell_date) : new Date();
     return (end - new Date(t.buy_date)) / 86400000;
   }
-  if (key === 'buy_date') return t.buy_date ? new Date(t.buy_date).getTime() : 0;
+  if (key === 'buy_date' || key === 'sell_date') return t[key] ? new Date(t[key] + 'T00:00:00').getTime() : -Infinity;
   if (key === 'buy_price') return t.buy_price ?? -Infinity;
   if (key === 'sell_price') return t.sell_price ?? -Infinity;
   if (key === 'item_name') return t.item_name ?? '';
