@@ -234,8 +234,8 @@
 </header>
 
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('add', event)">+ 거래 입력</button>
-  <button class="tab" onclick="switchTab('list', event)">목록</button>
+  <button class="tab" onclick="switchTab('add', event)">+ 거래 입력</button>
+  <button class="tab active" onclick="switchTab('list', event)">목록</button>
   <button class="tab" onclick="switchTab('depreciation', event)">감가상각 분석</button>
   <button class="tab" onclick="switchTab('monthly', event)">월별 요약</button>
   <button class="tab" onclick="switchTab('summary', event)">요약</button>
@@ -243,7 +243,7 @@
 
 <div class="content">
 
-  <div id="tab-add" class="panel active">
+  <div id="tab-add" class="panel">
 
     <div class="form-card">
       <h2>구매 정보</h2>
@@ -416,7 +416,7 @@
   </div>
 
   <div id="tab-monthly" class="panel">
-    <p style="font-size:13px;color:var(--text2);margin-bottom:12px">월별 구매/판매 건수·금액과 손익, 평균 수익률이에요.</p>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:12px">월별 구매·판매 현금흐름과 판매완료 기준 실현손익을 보여줘요. 보유중·감가상각·분실 손실은 감가상각 분석에서 확인합니다.</p>
     <div class="table-wrap">
       <table>
         <thead>
@@ -576,8 +576,12 @@ function switchTab(name, evt) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelector(`#tab-${name}`).classList.add('active');
   if (evt && evt.target) evt.target.classList.add('active');
+  else document.querySelector(`.tab[onclick*="switchTab('${name}'"]`)?.classList.add('active');
   if (name === 'list' || name === 'summary' || name === 'depreciation' || name === 'monthly') loadTrades();
 }
+
+// 창을 열 때는 목록을 기본 화면으로 표시
+switchTab('list');
 
 function toast(msg, type='success') {
   const el = document.getElementById('toast');
@@ -620,9 +624,11 @@ async function submitTrade() {
   }
   if (error) { toast('저장 실패: ' + error.message, 'error'); return; }
 
-  toast(editingId ? '수정됐어요 ✅' : '저장됐어요 ✅');
+  const wasEditing = Boolean(editingId);
+  toast(wasEditing ? '수정됐어요 ✅' : '저장됐어요 ✅');
   resetForm();
-  loadTrades();
+  await loadTrades();
+  if (wasEditing) switchTab('list');
 }
 
 function resetForm() {
