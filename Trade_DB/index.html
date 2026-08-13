@@ -466,6 +466,9 @@
 
   <div id="tab-depreciation" class="panel">
     <p style="font-size:13px;color:var(--text2);margin-bottom:12px">월환산비용 기준으로 감가상각 상태를 자동 평가해요. 🧿 수익 → ✅ 월 1.5만원 이하 → ⚠️ 월 1.5만원 초과 → ❌ 월 3만원 초과 순으로 안 좋아져요.</p>
+    <div class="filter-bar">
+      <input type="text" id="dep-search" placeholder="품목명 검색..." oninput="filterDepreciation()">
+    </div>
     <div class="table-wrap">
       <table>
         <thead>
@@ -1237,7 +1240,9 @@ function renderDepreciation(trades) {
 function renderDepTable() {
   const tbody = document.getElementById('depreciation-list');
   if (!tbody) return;
-  const rows = [...depRows].sort((a, b) => {
+  const kw = (document.getElementById('dep-search')?.value || '').toLowerCase();
+  let rows = kw ? depRows.filter(r => (r.item_name || '').toLowerCase().includes(kw)) : [...depRows];
+  rows.sort((a, b) => {
     let va, vb;
     if (sortDepKey === 'evalTag') { va = a.evalRank; vb = b.evalRank; }
     else if (sortDepKey === 'category' || sortDepKey === 'item_name') { va = a[sortDepKey] ?? ''; vb = b[sortDepKey] ?? ''; }
@@ -1271,6 +1276,10 @@ function sortDep(key) {
     const el = document.getElementById('sortdep-' + k);
     if (el) el.textContent = k === sortDepKey ? (sortDepAsc ? ' ↑' : ' ↓') : '';
   });
+  renderDepTable();
+}
+
+function filterDepreciation() {
   renderDepTable();
 }
 
