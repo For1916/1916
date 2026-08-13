@@ -132,7 +132,7 @@
   .toast {
     position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 8px;
     font-size: 14px; font-weight: 600; opacity: 0; transform: translateY(8px);
-    transition: all 0.25s; z-index: 100; pointer-events: none;
+    transition: all 0.25s; z-index: 10001; pointer-events: none;
   }
   .toast.show { opacity: 1; transform: translateY(0); }
   .toast.success { background: var(--green); color: #fff; }
@@ -162,10 +162,73 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 0;
   }
-  .item-name-cell { width: 28%; color: var(--text); }
-  .memo-cell { width: 10%; color: var(--text2); }
+  .item-name-cell { max-width: 220px; color: var(--text); }
+  .memo-cell { max-width: 140px; color: var(--text2); }
+  .item-link {
+    color: var(--accent);
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .item-link:hover { text-decoration: underline; }
+  #detail-overlay {
+    position: fixed; inset: 0; z-index: 5000;
+    background: rgba(18, 33, 61, 0.45);
+    display: none; align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  .detail-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%; max-width: 520px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(18, 33, 61, 0.2);
+  }
+  .detail-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
+  .detail-header h3 { font-size: 17px; font-weight: 800; line-height: 1.4; flex: 1; word-break: keep-all; }
+  .detail-close {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    width: 32px; height: 32px; cursor: pointer; font-size: 16px; color: var(--text2); flex-shrink: 0;
+  }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+  .detail-item { display: flex; flex-direction: column; gap: 4px; }
+  .detail-item.full { grid-column: 1 / -1; }
+  .detail-label { font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: 0.3px; }
+  .detail-value { font-size: 14px; font-weight: 600; word-break: keep-all; }
+  .detail-memo {
+    font-size: 14px; line-height: 1.6; color: var(--text);
+    background: var(--surface2); border-radius: 8px; padding: 12px;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .detail-actions { display: flex; gap: 10px; margin-top: 24px; }
+  .detail-actions .btn { flex: 1; justify-content: center; }
+  .detail-edit-form { display: flex; flex-direction: column; gap: 14px; }
+  .detail-edit-form .form-grid { gap: 12px; }
+  .detail-edit-form .field textarea { min-height: 64px; }
+
+  .trade-cards { display: none; flex-direction: column; gap: 10px; }
+  .trade-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    box-shadow: 0 1px 3px rgba(30,112,240,0.05);
+  }
+  .trade-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+  .trade-card-title { font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; cursor: pointer; color: var(--accent); }
+  .trade-card-meta { font-size: 12px; color: var(--text2); margin-bottom: 10px; line-height: 1.4; }
+  .trade-card-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .trade-card-grid .label { font-size: 10px; color: var(--text2); font-weight: 600; margin-bottom: 2px; }
+  .trade-card-grid .val { font-size: 13px; font-weight: 600; }
+  .trade-card-memo {
+    font-size: 12px; color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    padding: 8px 10px; background: var(--surface2); border-radius: 6px;
+  }
+  .trade-card-extra { font-size: 12px; color: var(--text2); }
+
   .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
   .badge-done { background: var(--green-soft); color: var(--green); }
   .badge-hold { background: var(--accent-soft); color: var(--accent); }
@@ -216,6 +279,9 @@
     .form-grid.cols3 { grid-template-columns: 1fr; }
     .stats { grid-template-columns: 1fr 1fr; }
     header h1 { font-size: 16px; }
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .detail-grid { grid-template-columns: 1fr; }
+    .detail-actions { flex-direction: column; }
   }
 </style>
 </head>
@@ -367,10 +433,11 @@
         <option>TV/모니터</option><option>가전</option><option>의류</option>
         <option>도서</option><option>기타</option>
       </select>
+      <button class="btn btn-ghost btn-sm" id="btn-toggle-view" onclick="toggleListView()">카드뷰로 보기</button>
       <button class="btn btn-ghost btn-sm" onclick="exportExcel()">엑셀로 내보내기</button>
       <button class="btn btn-ghost btn-sm" onclick="loadTrades()">새로고침</button>
     </div>
-    <div class="table-wrap">
+    <div class="table-wrap" id="list-table-wrap">
       <table>
         <thead>
           <tr>
@@ -384,15 +451,15 @@
             <th onclick="sortBy('days')" style="cursor:pointer;text-align:right">사용기간 <span id="sort-days"></span></th>
             <th onclick="sortBy('status')" style="cursor:pointer">상태 <span id="sort-status"></span></th>
             <th>메모</th>
-            <th>관리</th>
           </tr>
         </thead>
         <tbody id="trade-list"></tbody>
       </table>
-      <div id="list-empty" class="empty" style="display:none">
-        <div style="font-size:32px">📭</div>
-        <p>거래 내역이 없어요</p>
-      </div>
+    </div>
+    <div class="trade-cards" id="trade-cards"></div>
+    <div id="list-empty" class="empty" style="display:none">
+      <div style="font-size:32px">📭</div>
+      <p>거래 내역이 없어요</p>
     </div>
   </div>
 
@@ -466,6 +533,103 @@
 
 <div class="toast" id="toast"></div>
 
+<div id="detail-overlay" onclick="if(event.target===this)onDetailClose()">
+  <div class="detail-box">
+    <div class="detail-header">
+      <h3 id="detail-title"></h3>
+      <button type="button" class="detail-close" onclick="onDetailClose()" aria-label="닫기">✕</button>
+    </div>
+    <div id="detail-view">
+      <div id="detail-body" class="detail-grid"></div>
+      <div class="detail-actions">
+        <button type="button" class="btn btn-ghost" onclick="showDetailEdit()">수정</button>
+        <button type="button" class="btn btn-danger" onclick="deleteFromDetail()">삭제</button>
+      </div>
+    </div>
+    <div id="detail-edit" style="display:none">
+      <div class="detail-edit-form">
+        <div class="form-grid cols3">
+          <div class="field date-field">
+            <label>구매일 (YYMMDD)</label>
+            <input type="text" id="dedit_buy_date" maxlength="10">
+          </div>
+          <div class="field">
+            <label>카테고리</label>
+            <select id="dedit_category">
+              <option value="">선택</option>
+              <option>스마트폰</option><option>태블릿</option><option>노트북</option>
+              <option>스마트워치</option><option>이어폰/헤드폰</option><option>저장장치</option>
+              <option>주변기기</option><option>카메라</option><option>게임기</option>
+              <option>TV/모니터</option><option>가전</option><option>의류</option>
+              <option>도서</option><option>기타</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>구매 유형</label>
+            <select id="dedit_buy_type">
+              <option value="">선택</option>
+              <option>신품</option><option>중고</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label>품목명 *</label>
+            <input type="text" id="dedit_item_name">
+          </div>
+          <div class="field">
+            <label>구매 플랫폼</label>
+            <select id="dedit_buy_platform">
+              <option value="">선택</option>
+              <option>당근</option><option>번개장터</option><option>중고나라</option>
+              <option>쿠팡</option><option>네이버</option><option>알리익스프레스</option>
+              <option>오프라인</option><option>기타</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>구매가 (원)</label>
+            <input type="number" id="dedit_buy_price">
+          </div>
+          <div class="field date-field">
+            <label>판매일 (YYMMDD)</label>
+            <input type="text" id="dedit_sell_date" maxlength="10">
+          </div>
+          <div class="field">
+            <label>판매 플랫폼</label>
+            <select id="dedit_sell_platform">
+              <option value="">선택</option>
+              <option>당근</option><option>번개장터</option><option>중고나라</option>
+              <option>크림</option><option>네이버카페</option><option>기타</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>판매가 (원)</label>
+            <input type="number" id="dedit_sell_price">
+          </div>
+          <div class="field">
+            <label>상태</label>
+            <select id="dedit_status">
+              <option value="보유중">보유중</option>
+              <option value="판매완료">판매완료</option>
+              <option value="분실">분실</option>
+              <option value="고장">고장</option>
+              <option value="폐기">폐기</option>
+              <option value="판매중">판매중</option>
+              <option value="반품">반품</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label>메모</label>
+            <textarea id="dedit_memo"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="detail-actions">
+        <button type="button" class="btn btn-ghost" onclick="cancelDetailEdit()">취소</button>
+        <button type="button" class="btn btn-primary" onclick="saveDetailEdit()">💾 저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── 비밀번호 & 세션 관리 ────────────────────────────────
 const PASSWORD   = '1916';       // ← 비밀번호 변경 시 여기만 수정
@@ -534,6 +698,23 @@ const TABLE = 'jonggo_trades';
 let allTrades = [];
 let editingId = null;
 
+// 손익 예외 (품목명 포함 매칭, 시세 반영) — 목록·상세·감가상각 공통
+const PL_OVERRIDES = [
+  { match: '샌디스크 외장 SSD 2TB 미개봉', profit: -350000 },
+];
+
+function getPlOverride(t) {
+  const name = (t.item_name || '').trim();
+  const rule = PL_OVERRIDES.find(r => name.includes(r.match));
+  return rule ? rule.profit : null;
+}
+
+function tradePl(t) {
+  const override = getPlOverride(t);
+  if (override != null) return override;
+  return (t.sell_price != null && t.buy_price != null) ? t.sell_price - t.buy_price : null;
+}
+
 // ── YYMMDD → YYYY-MM-DD 자동 변환 (2019년 이후 거래 기준, 20YY로 해석) ──
 function convertYYMMDD(raw) {
   const digits = raw.replace(/\D/g, '');
@@ -575,6 +756,8 @@ function setupDateField(inputEl) {
 }
 setupDateField(document.getElementById('buy_date'));
 setupDateField(document.getElementById('sell_date'));
+setupDateField(document.getElementById('dedit_buy_date'));
+setupDateField(document.getElementById('dedit_sell_date'));
 
 // ── 탭 전환 ───────────────────────────────────────────
 function switchTab(name, evt) {
@@ -593,7 +776,154 @@ function toast(msg, type='success') {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.className = `toast ${type} show`;
-  setTimeout(() => el.classList.remove('show'), 2500);
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+let detailTrade = null;
+let detailEditMode = false;
+
+function getTradeById(id) {
+  return allTrades.find(t => String(t._id) === String(id));
+}
+
+function tradeDays(t) {
+  if (t.buy_date && t.sell_date) return Math.round((new Date(t.sell_date) - new Date(t.buy_date)) / 86400000);
+  if (t.buy_date) return Math.round((Date.now() - new Date(t.buy_date)) / 86400000);
+  return null;
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function detailItem(label, value, full) {
+  return `<div class="detail-item${full ? ' full' : ''}"><span class="detail-label">${label}</span><span class="detail-value">${value}</span></div>`;
+}
+
+function openTradeDetail(id) {
+  const t = getTradeById(id);
+  if (!t) return;
+  detailTrade = t;
+  detailEditMode = false;
+  document.getElementById('detail-view').style.display = 'block';
+  document.getElementById('detail-edit').style.display = 'none';
+  const pl = tradePl(t);
+  const days = tradeDays(t);
+  const plClass = pl == null ? '' : pl === 0 ? '' : pl > 0 ? 'pl-pos' : 'pl-neg';
+  const badge = t.status === '판매완료' ? 'badge-done'
+              : t.status === '보유중' ? 'badge-hold'
+              : t.status === '반품' ? 'badge-return'
+              : 'badge-sell';
+
+  document.getElementById('detail-title').textContent = t.item_name || '거래 상세';
+  document.getElementById('detail-body').innerHTML =
+    detailItem('구매일', displayDate(t.buy_date)) +
+    detailItem('판매일', displayDate(t.sell_date)) +
+    detailItem('카테고리', escapeHtml(t.category || '-')) +
+    detailItem('구매 유형', escapeHtml(t.buy_type || '-')) +
+    detailItem('구매 플랫폼', escapeHtml(t.buy_platform || '-')) +
+    detailItem('구매가', fmt(t.buy_price)) +
+    detailItem('판매 플랫폼', escapeHtml(t.sell_platform || '-')) +
+    detailItem('판매가', fmt(t.sell_price)) +
+    detailItem('손익', `<span class="${plClass}">${fmtPL(pl)}</span>`) +
+    detailItem('사용기간', days != null ? days.toLocaleString() + '일' : '-') +
+    `<div class="detail-item"><span class="detail-label">상태</span><span class="detail-value"><span class="badge ${badge}">${escapeHtml(t.status)}</span></span></div>` +
+    `<div class="detail-item full"><span class="detail-label">메모</span><div class="detail-memo">${escapeHtml(t.memo || '-')}</div></div>`;
+
+  document.getElementById('detail-overlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeTradeDetail() {
+  document.getElementById('detail-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+  document.getElementById('detail-view').style.display = 'block';
+  document.getElementById('detail-edit').style.display = 'none';
+  detailTrade = null;
+  detailEditMode = false;
+}
+
+function onDetailClose() {
+  closeTradeDetail();
+}
+
+function showDetailEdit() {
+  if (!detailTrade) return;
+  const t = detailTrade;
+  document.getElementById('dedit_buy_date').value = t.buy_date || '';
+  document.getElementById('dedit_category').value = t.category || '';
+  document.getElementById('dedit_item_name').value = t.item_name || '';
+  document.getElementById('dedit_buy_type').value = t.buy_type || '';
+  document.getElementById('dedit_buy_platform').value = t.buy_platform || '';
+  document.getElementById('dedit_buy_price').value = t.buy_price ?? '';
+  document.getElementById('dedit_sell_date').value = t.sell_date || '';
+  document.getElementById('dedit_sell_platform').value = t.sell_platform || '';
+  document.getElementById('dedit_sell_price').value = t.sell_price ?? '';
+  document.getElementById('dedit_status').value = t.status || '보유중';
+  document.getElementById('dedit_memo').value = t.memo || '';
+  document.querySelectorAll('#detail-edit .date-field input').forEach(el => {
+    el.classList.remove('ok', 'err');
+    if (el.value) el.classList.add('ok');
+  });
+  document.getElementById('detail-title').textContent = t.item_name || '거래 수정';
+  document.getElementById('detail-view').style.display = 'none';
+  document.getElementById('detail-edit').style.display = 'block';
+  detailEditMode = true;
+}
+
+function cancelDetailEdit() {
+  closeTradeDetail();
+}
+
+async function saveDetailEdit() {
+  if (!detailTrade) return;
+  const itemName = document.getElementById('dedit_item_name').value.trim();
+  if (!itemName) { toast('품목명을 입력해 주세요', 'error'); return; }
+
+  const buyRaw = document.getElementById('dedit_buy_date').value.trim();
+  const sellRaw = document.getElementById('dedit_sell_date').value.trim();
+  const buyDate = buyRaw ? parseDate(buyRaw) : null;
+  const sellDate = sellRaw ? parseDate(sellRaw) : null;
+  if (buyRaw && !buyDate) { toast('구매일 형식을 확인해 주세요 (YYMMDD)', 'error'); return; }
+  if (sellRaw && !sellDate) { toast('판매일 형식을 확인해 주세요 (YYMMDD)', 'error'); return; }
+
+  const payload = {
+    buy_date: buyDate,
+    category: document.getElementById('dedit_category').value || null,
+    item_name: itemName,
+    buy_type: document.getElementById('dedit_buy_type').value || null,
+    buy_platform: document.getElementById('dedit_buy_platform').value || null,
+    buy_price: document.getElementById('dedit_buy_price').value ? parseInt(document.getElementById('dedit_buy_price').value) : null,
+    sell_date: sellDate,
+    sell_platform: document.getElementById('dedit_sell_platform').value || null,
+    sell_price: document.getElementById('dedit_sell_price').value ? parseInt(document.getElementById('dedit_sell_price').value) : null,
+    status: document.getElementById('dedit_status').value,
+    memo: document.getElementById('dedit_memo').value.trim() || null,
+  };
+
+  try {
+    await gsWrite('update', detailTrade._id, payload);
+    closeTradeDetail();
+    switchTab('list');
+    toast('저장됐어요 ✅');
+    await loadTrades();
+  } catch (e) {
+    toast('저장 실패: ' + e.message, 'error');
+  }
+}
+
+async function deleteFromDetail() {
+  if (!detailTrade) return;
+  if (!confirm('정말 이 거래를 삭제할까요? 되돌릴 수 없어요.')) return;
+  const id = detailTrade._id;
+  closeTradeDetail();
+  try {
+    await gsWrite('delete', id, null);
+    toast('삭제됐어요 ✅');
+    await loadTrades();
+  } catch (e) {
+    toast('삭제 실패: ' + e.message, 'error');
+  }
 }
 
 // ── 거래 저장 (등록/수정 겸용) ───────────────────────────
@@ -622,19 +952,19 @@ async function submitTrade() {
     memo: document.getElementById('memo').value.trim() || null,
   };
 
-  let error;
-  if (editingId) {
-    await gsWrite('update', editingId, payload);
-  } else {
-    await gsWrite('insert', null, payload);
+  try {
+    if (editingId) {
+      await gsWrite('update', editingId, payload);
+    } else {
+      await gsWrite('insert', null, payload);
+    }
+    resetForm();
+    switchTab('list');
+    toast('저장됐어요 ✅');
+    await loadTrades();
+  } catch (e) {
+    toast('저장 실패: ' + e.message, 'error');
   }
-  if (error) { toast('저장 실패: ' + error.message, 'error'); return; }
-
-  const wasEditing = Boolean(editingId);
-  toast(wasEditing ? '수정됐어요 ✅' : '저장됐어요 ✅');
-  resetForm();
-  await loadTrades();
-  if (wasEditing) switchTab('list');
 }
 
 function resetForm() {
@@ -646,7 +976,11 @@ function resetForm() {
   document.getElementById('btn-submit').textContent = '💾 저장';
   document.getElementById('btn-cancel-edit').style.display = 'none';
 }
-function cancelEdit() { resetForm(); }
+function cancelEdit() {
+  const wasEditing = Boolean(editingId);
+  resetForm();
+  if (wasEditing) switchTab('list');
+}
 
 function startEdit(t) {
   editingId = t._id;
@@ -668,14 +1002,6 @@ function startEdit(t) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-async function deleteTrade(id) {
-  if (!confirm('이 거래를 삭제할까요? 되돌릴 수 없어요.')) return;
-  await gsWrite('delete', id, null);
-  if (error) { toast('삭제 실패: ' + error.message, 'error'); return; }
-  toast('삭제됐어요 ✅');
-  loadTrades();
-}
-
 // ── 거래 불러오기 ────────────────────────────────────────
 async function loadTrades() {
   try {
@@ -695,41 +1021,93 @@ async function loadTrades() {
 }
 
 // ── 목록 렌더 ────────────────────────────────────────────
+let listViewMode = localStorage.getItem('jonggo_list_view') || 'table';
+
+function toggleListView() {
+  listViewMode = listViewMode === 'table' ? 'card' : 'table';
+  localStorage.setItem('jonggo_list_view', listViewMode);
+  updateListViewUI();
+}
+
+function updateListViewUI() {
+  const isCard = listViewMode === 'card';
+  document.getElementById('list-table-wrap').style.display = isCard ? 'none' : '';
+  const cards = document.getElementById('trade-cards');
+  cards.style.display = isCard ? 'flex' : 'none';
+  document.getElementById('btn-toggle-view').textContent = isCard ? '목록으로 보기' : '카드뷰로 보기';
+}
+
 function renderList(trades) {
   const tbody = document.getElementById('trade-list');
+  const cards = document.getElementById('trade-cards');
   const empty = document.getElementById('list-empty');
-  if (!trades.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  if (!trades.length) {
+    tbody.innerHTML = '';
+    cards.innerHTML = '';
+    empty.style.display = 'block';
+    updateListViewUI();
+    return;
+  }
   empty.style.display = 'none';
 
   tbody.innerHTML = trades.map(t => {
-    const pl = (t.sell_price != null && t.buy_price != null) ? t.sell_price - t.buy_price : null;
-    const days = (t.buy_date && t.sell_date)
-      ? Math.round((new Date(t.sell_date) - new Date(t.buy_date)) / 86400000)
-      : t.buy_date ? Math.round((Date.now() - new Date(t.buy_date)) / 86400000) : null;
+    const pl = tradePl(t);
+    const days = tradeDays(t);
     const badge = t.status === '판매완료' ? 'badge-done'
                 : t.status === '보유중' ? 'badge-hold'
                 : t.status === '반품' ? 'badge-return'
                 : 'badge-sell';
+    const plClass = pl == null ? '' : pl === 0 ? '' : pl > 0 ? 'pl-pos' : 'pl-neg';
     return `<tr>
       <td>${displayDate(t.buy_date)}</td>
       <td>${displayDate(t.sell_date)}</td>
       <td>${t.category || '-'}</td>
-      <td class="item-name-cell" title="${(t.item_name || '').replace(/"/g, '&quot;')}">${t.item_name}</td>
+      <td class="item-name-cell item-link" data-trade-id="${t._id}">${t.item_name}</td>
       <td style="text-align:right">${fmt(t.buy_price)}</td>
       <td style="text-align:right">${fmt(t.sell_price)}</td>
-      <td style="text-align:right" class="${pl == null ? '' : pl === 0 ? '' : pl > 0 ? 'pl-pos' : 'pl-neg'}">${fmtPL(pl)}</td>
+      <td style="text-align:right" class="${plClass}">${fmtPL(pl)}</td>
       <td style="text-align:right">${days != null ? days.toLocaleString() + '일' : '-'}</td>
       <td><span class="badge ${badge}">${t.status}</span></td>
-      <td class="memo-cell" title="${(t.memo || '').replace(/"/g, '&quot;')}">${t.memo || '-'}</td>
-      <td>
-        <div class="row-actions">
-          <button class="btn btn-ghost btn-sm" onclick='startEdit(${JSON.stringify(t).replace(/'/g, "&#39;")})'>수정</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteTrade('${t._id}')">삭제</button>
-        </div>
-      </td>
+      <td class="memo-cell">${t.memo || '-'}</td>
     </tr>`;
   }).join('');
+
+  cards.innerHTML = trades.map(t => {
+    const pl = tradePl(t);
+    const days = tradeDays(t);
+    const badge = t.status === '판매완료' ? 'badge-done'
+                : t.status === '보유중' ? 'badge-hold'
+                : t.status === '반품' ? 'badge-return'
+                : 'badge-sell';
+    const plClass = pl == null ? '' : pl === 0 ? '' : pl > 0 ? 'pl-pos' : 'pl-neg';
+    return `<div class="trade-card">
+      <div class="trade-card-header">
+        <span class="trade-card-title" data-trade-id="${t._id}">${t.item_name}</span>
+        <span class="badge ${badge}">${t.status}</span>
+      </div>
+      <div class="trade-card-meta">${displayDate(t.buy_date)} · ${t.category || '-'}${t.sell_date ? ' · 판매 ' + displayDate(t.sell_date) : ''}</div>
+      <div class="trade-card-grid">
+        <div><div class="label">구매가</div><div class="val">${fmt(t.buy_price)}</div></div>
+        <div><div class="label">판매가</div><div class="val">${fmt(t.sell_price)}</div></div>
+        <div><div class="label">손익</div><div class="val ${plClass}">${fmtPL(pl)}</div></div>
+      </div>
+      <div class="trade-card-extra">사용기간 ${days != null ? days.toLocaleString() + '일' : '-'}</div>
+      ${t.memo ? `<div class="trade-card-memo">${t.memo}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  updateListViewUI();
 }
+
+document.getElementById('trade-list').addEventListener('click', e => {
+  const cell = e.target.closest('[data-trade-id]');
+  if (cell) openTradeDetail(cell.dataset.tradeId);
+});
+document.getElementById('trade-cards').addEventListener('click', e => {
+  const cell = e.target.closest('[data-trade-id]');
+  if (cell) openTradeDetail(cell.dataset.tradeId);
+});
+updateListViewUI();
 
 function filterList() {
   const kw = document.getElementById('search').value.toLowerCase();
@@ -764,7 +1142,7 @@ function updateSortIcons() {
   });
 }
 function getSortVal(t, key) {
-  if (key === 'pl') return (t.sell_price != null && t.buy_price != null) ? t.sell_price - t.buy_price : -Infinity;
+  if (key === 'pl') { const v = tradePl(t); return v == null ? -Infinity : v; }
   if (key === 'days') {
     if (!t.buy_date) return -Infinity;
     const end = t.sell_date ? new Date(t.sell_date) : new Date();
@@ -834,15 +1212,24 @@ function renderDepreciation(trades) {
       dailyCost = Math.round((saleAmount - t.buy_price) / days);
       monthlyCost = Math.round(dailyCost * 30);
     }
+    const profitOverride = getPlOverride(t);
+    let finalProfit = profit;
+    if (profitOverride != null) {
+      finalProfit = profitOverride;
+      if (days > 0) {
+        dailyCost = Math.round(finalProfit / days);
+        monthlyCost = Math.round(dailyCost * 30);
+      }
+    }
     let evalTag, evalClass, evalRank;
     if (isLoss) { evalTag = '❌ 순손실'; evalClass = 'eval-bad'; evalRank = 4; }
-    else if (isHolding) { evalTag = '⏳ 미판매 보유중'; evalClass = 'eval-warn'; evalRank = 3; }
-    else if (profit != null && profit > 0) { evalTag = '🧿 수익'; evalClass = 'eval-profit'; evalRank = 0; }
+    else if (isHolding) { evalTag = ''; evalClass = ''; evalRank = -1; }
+    else if (finalProfit != null && finalProfit > 0) { evalTag = '🧿 수익'; evalClass = 'eval-profit'; evalRank = 0; }
     else if (monthlyCost == null) { evalTag = '-'; evalClass = ''; evalRank = -1; }
     else if (Math.abs(monthlyCost) <= 15000) { evalTag = '✅ 월 15,000원 이하'; evalClass = 'eval-good'; evalRank = 1; }
     else if (Math.abs(monthlyCost) <= 30000) { evalTag = '⚠️ 월 15,000원 초과'; evalClass = 'eval-warn'; evalRank = 2; }
     else { evalTag = '❌ 월 30,000원 초과'; evalClass = 'eval-bad'; evalRank = 3; }
-    return { ...t, days, profit, saleAmount, remainingCost, monthlyCost, dailyCost, evalTag, evalClass, evalRank };
+    return { ...t, days, profit: finalProfit, saleAmount, remainingCost, monthlyCost, dailyCost, evalTag, evalClass, evalRank };
   });
   renderDepTable();
 }
@@ -873,7 +1260,7 @@ function renderDepTable() {
     <td style="text-align:right" class="${r.profit==null?'':r.profit===0?'':r.profit>0?'pl-pos':'pl-neg'}">${fmtPL(r.profit)}</td>
     <td style="text-align:right">${r.dailyCost==null?'-':fmt(r.dailyCost)}</td>
     <td style="text-align:right">${r.monthlyCost==null?'-':fmt(r.monthlyCost)}</td>
-    <td><span class="${r.evalClass}">${r.evalTag}</span></td>
+    <td>${r.evalTag ? `<span class="${r.evalClass}">${r.evalTag}</span>` : ''}</td>
   </tr>`).join('');
 }
 
