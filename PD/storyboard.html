@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OS-Bio Cell — 스토리보드</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#141414;
+  --bg-2:#1e1e1e;
+  --ink:#f0ede6;
+  --ink-dim:#b8b4a9;
+  --ink-sub:#7a766d;
+  --line:#333333;
+  --accent:#3D68F6;
+  --font-sans:'Pretendard Variable', Pretendard, sans-serif;
+  --font-display:'Inter Tight', 'Pretendard Variable', sans-serif;
+  --font-mono:'JetBrains Mono', ui-monospace, monospace;
+}
+*{ box-sizing:border-box; margin:0; padding:0; }
+html,body{ background:var(--bg); color:var(--ink); font-family:var(--font-sans); -webkit-font-smoothing:antialiased; }
+body{ font-size:15px; line-height:1.7; }
+a{ color:inherit; text-decoration:none; }
+img{ display:block; max-width:100%; }
+
+.nav{
+  padding: 22px 32px;
+  display:flex; justify-content:space-between; align-items:center;
+  border-bottom:1px solid var(--line);
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--ink-dim);
+  position:sticky; top:0; z-index:10; background:var(--bg);
+}
+.nav__logo{ font-family:var(--font-display); font-size:18px; font-weight:800; letter-spacing:-.02em; color:var(--ink); text-transform:none; }
+.nav__logo .hl{ color:var(--accent); }
+.nav__links{ display:flex; gap:20px; }
+.nav__links a{ padding:6px 10px; }
+.nav__links a:hover{ color:var(--accent); }
+
+.stack{
+  width:100%;
+  padding: 0;
+  display:flex; flex-direction:column;
+  gap: 0;
+}
+.frame{
+  width:100%;
+  display:block;
+  background:#fff;
+  border-bottom:1px solid var(--line);
+}
+.frame img{
+  width:100%;
+  height:auto;
+  display:block;
+}
+
+.foot{
+  padding: 40px 32px; border-top:1px solid var(--line); text-align:center;
+  font-family:var(--font-mono); font-size:11px; color:var(--ink-sub); letter-spacing:.12em; text-transform:uppercase;
+}
+.back{
+  position:fixed; bottom:20px; left:20px; z-index:20;
+  padding:10px 16px; background:var(--bg-2); border:1px solid var(--line);
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.15em; text-transform:uppercase;
+  transition:background .3s, border-color .3s;
+}
+.back:hover{ background:var(--accent); color:#fff; border-color:var(--accent); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="index.html" class="nav__logo">OS-Bio Cell<span class="hl">.</span> Storyboard</a>
+  <div class="nav__links">
+    <a href="scenario.html">← 시나리오</a>
+    <a href="index.html">Portfolio</a>
+  </div>
+</nav>
+
+<section class="stack">
+  <div class="frame"><img src="assets/storyboard/clip1.png" alt="CLIP 1 · 발견 — 3일 전" loading="lazy"></div>
+  <div class="frame"><img src="assets/storyboard/clip2.png" alt="CLIP 2 · 속보 — 행방 묘연" loading="lazy"></div>
+  <div class="frame"><img src="assets/storyboard/clip3.png" alt="CLIP 3 · 다툼 — 누구의 것인가" loading="lazy"></div>
+  <div class="frame"><img src="assets/storyboard/clip4.jpg" alt="CLIP 4 · 경제·정치의 욕망" loading="lazy"></div>
+  <div class="frame"><img src="assets/storyboard/clip5.png" alt="CLIP 5 · 비 — 탄금대" loading="lazy"></div>
+  <div class="frame"><img src="assets/storyboard/clip6.png" alt="CLIP 6 · 3년 후 — 타이틀 리빌" loading="lazy"></div>
+</section>
+
+<div class="foot">
+  <span>© 2026 · OS-Bio Cell Storyboard</span>
+</div>
+
+<a href="index.html" class="back">← Portfolio</a>
+
+</body>
+</html>

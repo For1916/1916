@@ -1,0 +1,1850 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OS-Bio Cell : 제 2의 초전도체</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" />
+  <style>
+
+    :root {
+      --navy: #141414;
+      --navy-2: #1e1e1e;
+      --blue: #3D68F6;
+      --blue-bright: #5b83ff;
+      --red: #e31b23;
+      --gold: #f2a03d;
+      --paper: #141414;
+      --card: #1e1e1e;
+      --ink: #f0ede6;
+      --muted: #7a766d;
+      --line: #333333;
+    }
+    /* Dark theme adjustments over source */
+    body { background: var(--paper) !important; color: var(--ink) !important; }
+    p, .lead, .ep p, .card p, .intent p { color: var(--ink) !important; }
+    .lead { color: #d4d0c5 !important; }
+    .ep p, .intent p { color: #cfcbc0 !important; }
+    b, strong { color: var(--ink) !important; }
+    .card { background: var(--card) !important; border: 1px solid var(--line) !important; color: var(--ink) !important; }
+    .gnb { background: rgba(20,20,20,.94) !important; border-bottom: 1px solid var(--line) !important; }
+    .util, .crumb, .tabs { background: var(--card) !important; border-bottom: 1px solid var(--line) !important; color: var(--muted) !important; }
+    .hero { background: linear-gradient(180deg, var(--navy-2), var(--paper)) !important; }
+    /* Screenplay page dark */
+    .script-only .page { background: var(--card) !important; color: var(--ink) !important; box-shadow: none !important; border: 1px solid var(--line) !important; }
+    .script-only .slug, .script-only .character, .script-only .title-page h1 { color: var(--ink) !important; }
+    .script-only .action { color: var(--ink) !important; opacity:.92; }
+    .script-only .line { color: var(--ink) !important; }
+    .script-only .trans { color: var(--blue) !important; }
+    .script-only .title-page { border-bottom: 1px solid var(--line) !important; }
+    .script-only .credits th, .script-only .credits td { border-color: var(--line) !important; color: var(--ink) !important; }
+    .script-only .credits th { color: var(--muted) !important; }
+    /* Relmap: 원본 밝은 배경 SVG를 밝은 카드에 그대로 표시 */
+    .map {
+      background: #f4f6fa !important;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 16px 0 8px;
+      overflow: hidden;
+    }
+    .map svg { width: 100%; height: auto; display: block; background:#f4f6fa; }
+    /* SVG 안의 우리가 오버라이드한 색들을 원본 팔레트로 복구 */
+    .map rect[fill="#141414"] { fill: #f8fafc !important; }
+    .map rect[fill="#f0ede6"] { fill: #ffffff !important; }
+    .map text[fill="#f0ede6"] { fill: #071428 !important; }
+    .map g.node rect[fill="#1e1e1e"] { fill: #071428 !important; }
+    .map g.node text[fill="#fff"] { fill: #ffffff !important; }
+    /* 노드 카드는 원본대로 흰 배경 + 파란/청록/빨간 테두리 */
+    .map g.node rect[stroke="#3D68F6"] { fill: #ffffff !important; stroke: #1a5fbf !important; }
+    .map g.node rect[stroke="#0b4d4a"] { fill: #ffffff !important; }
+    .map g.node rect[stroke="#e31b23"] { fill: #ffffff !important; }
+    /* 노드 안 텍스트 원본 색 유지 (검정 계열) */
+    .map g.node text { fill: #071428 !important; }
+    .map g.node text[fill="#5b6b82"], .map g.node text[fill="#7a766d"] { fill: #5b6b82 !important; }
+    .map g.node text[fill="#e31b23"] { fill: #e31b23 !important; }
+    .map g.node text[fill="#f2a03d"], .map g.node text[fill="#d4a017"] { fill: #d4a017 !important; }
+    /* 선 색상 복구 */
+    .map line[stroke="#3D68F6"] { stroke: #1a5fbf !important; }
+    .map path[stroke="#f2a03d"] { stroke: #c9a227 !important; }
+    /* 붉은 허브 원 (OS-Bio Cell) */
+    .map circle[fill="url(#hubGrad)"] { fill: #e31b23 !important; }
+    /* 다크 카드 배경 (오성은 박사) 텍스트는 흰색 유지 */
+    .map g.node rect[fill="#071428"] + text { fill: #ffffff !important; }
+    /* Legend (다크 카드 위에 표시) */
+    .rel-legend { color: var(--ink) !important; }
+    .rel-legend i.solid-research { background: #1a5fbf !important; }
+    .rel-legend i.solid-youth { background: #0b4d4a !important; }
+    .rel-legend i.dash-power { background: repeating-linear-gradient(90deg, #c9a227 0 5px, transparent 5px 9px) !important; }
+    .rel-legend i.dash-cell { background: repeating-linear-gradient(90deg, #e31b23 0 4px, transparent 4px 8px) !important; }
+    /* Info table */
+    .info th, .info td { border-color: var(--line) !important; color: var(--ink) !important; }
+    .info th { color: var(--muted) !important; }
+    /* Buttons */
+    .btn-play { background: var(--blue) !important; color: #fff !important; border-color: var(--blue) !important; }
+    .btn-ghost { color: var(--ink) !important; border-color: var(--line) !important; }
+    .btn-ghost:hover { background: var(--blue) !important; color: #fff !important; border-color: var(--blue) !important; }
+    /* Tabs */
+    .tabs button { color: var(--muted) !important; }
+    .tabs button.on, .tabs button:hover { color: var(--ink) !important; border-bottom-color: var(--blue) !important; }
+    /* Meta boxes */
+    .meta > div { background: var(--navy-2) !important; border: 1px solid var(--line) !important; color: var(--ink) !important; }
+    .meta b { color: var(--muted) !important; }
+    /* Gate */
+    .gate { background: rgba(0,0,0,.94) !important; }
+    .gate-card { color: var(--ink) !important; }
+    .gate .go { background: var(--blue) !important; color: #fff !important; }
+    /* Loc cards */
+    .loc { background: var(--navy-2) !important; border: 1px solid var(--line) !important; color: var(--ink) !important; }
+    .loc b { color: var(--blue) !important; }
+    /* Person cards */
+    .person { background: var(--navy-2) !important; border: 1px solid var(--line) !important; color: var(--ink) !important; }
+    .person h3 { color: var(--ink) !important; }
+    .person p { color: var(--ink-dim, #b8b4a9) !important; }
+    .person .role { color: var(--blue) !important; }
+    /* Section title */
+    .sec { color: var(--ink) !important; border-bottom-color: var(--line) !important; }
+    /* onair */
+    .onair { color: var(--red) !important; }
+    /* Scenario page - table page becomes dark card */
+    .page { background: var(--card) !important; }
+    /* Storyboard CTA button — added in header */
+    .storyboard-link {
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 8px 16px; margin-left: 12px;
+      background: var(--blue); color: #fff !important;
+      font-family: Pretendard, sans-serif; font-size: 12px; font-weight: 600;
+      border-radius: 4px; text-decoration: none;
+      transition: background .3s;
+    }
+    .storyboard-link:hover { background: var(--blue-bright); }
+    /* Back link to portfolio */
+    .back-portfolio {
+      position: fixed; bottom: 20px; left: 20px; z-index: 200;
+      padding: 10px 16px; background: var(--card); border: 1px solid var(--line);
+      color: var(--ink); text-decoration: none;
+      font-family: Pretendard, sans-serif; font-size: 11px; letter-spacing: .1em;
+      text-transform: uppercase;
+      transition: background .3s;
+    }
+    .back-portfolio:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
+    /* Trailer popup */
+    .trailer-popup{
+      position:fixed; inset:0; z-index:9999;
+      display:none; align-items:center; justify-content:center;
+      padding:24px;
+      background: rgba(20,20,20,.55);
+      backdrop-filter: blur(16px) saturate(1.2);
+      -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    }
+    .trailer-popup.on{ display:flex; }
+    .trailer-popup__card{
+      max-width: 560px; width:100%;
+      padding: 60px 48px;
+      background: var(--card); border:1px solid var(--line);
+      text-align:center;
+    }
+    .trailer-popup__label{
+      font-family: Pretendard, sans-serif; font-size:11px; letter-spacing:.2em;
+      color:var(--blue); text-transform:uppercase; font-weight:600;
+      display:inline-flex; align-items:center; gap:10px; margin-bottom:32px;
+    }
+    .trailer-popup__label::before{ content:""; width:24px; height:1px; background:var(--blue); }
+    .trailer-popup__msg{
+      font-family: Pretendard, sans-serif; font-weight:500;
+      font-size: clamp(28px, 3.5vw, 42px); line-height:1.35; letter-spacing:-.02em;
+      color:var(--ink); text-wrap:balance;
+    }
+    .trailer-popup__msg .hl{ color:var(--blue); font-weight:700; }
+    .trailer-popup__sub{
+      margin-top:24px; color:var(--muted); font-size:14px; line-height:1.6;
+    }
+    .trailer-popup__close{
+      margin-top:40px; padding:14px 28px;
+      background:transparent; color:var(--ink); border:1px solid var(--line);
+      font-family: Pretendard, sans-serif; font-size:12px; letter-spacing:.15em; text-transform:uppercase;
+      font-weight:600; cursor:pointer; transition: background .3s, border-color .3s;
+    }
+    .trailer-popup__close:hover{ background:var(--blue); color:#fff; border-color:var(--blue); }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Pretendard, "Pretendard Variable", -apple-system, sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+    }
+    body.gated {
+      overflow: hidden;
+    }
+    .gate {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(3, 8, 18, .94);
+    }
+    body.gated .gate { display: flex; }
+    .gate-card {
+      width: auto;
+      max-width: calc(100% - 48px);
+      color: #e8eef6;
+      text-align: center;
+    }
+    .gate-card .k {
+      font-size: 11px; font-weight: 800; letter-spacing: .2em;
+      color: var(--gold);
+    }
+    .gate-card h2 {
+      margin: 10px 0 18px;
+      font-size: 26px; font-weight: 800; letter-spacing: -.03em;
+      color: #fff;
+    }
+    .gate-card p {
+      margin: 0 0 12px;
+      font-size: 15px; font-weight: 500; line-height: 1.8;
+      color: #c5d4e8;
+      white-space: nowrap;
+    }
+    @media (max-width: 720px) {
+      .gate-card p { white-space: normal; }
+    }
+    .gate-actions {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      margin-top: 22px;
+      justify-content: center;
+    }
+    .gate-actions button {
+      border: 0; cursor: pointer;
+      font-family: inherit;
+      font-size: 14px; font-weight: 800;
+      padding: 12px 18px; border-radius: 4px;
+    }
+    .gate-actions .go {
+      background: var(--red); color: #fff;
+    }
+    .gate-actions .alt {
+      background: transparent; color: #fff;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.35);
+    }
+    a { color: inherit; text-decoration: none; }
+    .util {
+      background: #050d1a;
+      color: #9db0c9;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: .02em;
+    }
+    .util-inner, .gnb-inner, .wrap, .crumb-inner {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+    .util-inner {
+      display: flex; justify-content: space-between; align-items: center;
+      height: 36px;
+    }
+    .onair {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: #fff; font-weight: 700;
+    }
+    .onair i {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--red); box-shadow: 0 0 0 4px rgba(227,27,35,.25);
+      animation: pulse 1.6s infinite;
+    }
+    @keyframes pulse {
+      50% { box-shadow: 0 0 0 7px rgba(227,27,35,0); }
+    }
+    .util-links { display: flex; gap: 18px; align-items: center; }
+    .util-links a:hover { color: #fff; }
+    header.gnb {
+      background: var(--navy);
+      border-bottom: 3px solid var(--red);
+      position: sticky; top: 0; z-index: 40;
+    }
+    .gnb-inner {
+      display: flex; align-items: center; gap: 36px; height: 72px;
+    }
+    .gnb-banner {
+      display: flex; align-items: center; gap: 8px;
+      margin-left: auto;
+      color: #fff;
+      white-space: nowrap;
+    }
+    .gnb-banner b {
+      font-size: 22px; font-weight: 800; letter-spacing: -.04em;
+    }
+    .gnb-banner .tag {
+      font-size: 20px; font-weight: 800; color: var(--gold);
+      letter-spacing: .08em;
+    }
+    .gnb-banner .circled {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.55em;
+      height: 1.55em;
+      margin-right: 6px;
+      border: 2px solid var(--gold);
+      border-radius: 50%;
+      font-size: 16px;
+      line-height: 1;
+      color: var(--gold);
+      font-weight: 800;
+      vertical-align: middle;
+    }
+    .logo {
+      display: flex; align-items: baseline; gap: 8px; color: #fff;
+      white-space: nowrap;
+    }
+    .logo b {
+      font-size: 22px; font-weight: 800; letter-spacing: -.04em;
+    }
+    .logo span {
+      font-size: 11px; font-weight: 700; color: var(--gold);
+      letter-spacing: .18em;
+    }
+    nav.menu { display: flex; gap: 22px; font-size: 15px; font-weight: 600; color: #c5d4e8; }
+    nav.menu a.active, nav.menu a:hover { color: #fff; }
+    .gnb-cta {
+      margin-left: auto;
+      background: var(--red); color: #fff;
+      font-size: 13px; font-weight: 700;
+      padding: 9px 16px; border-radius: 4px;
+    }
+    .gnb-cta:hover { filter: brightness(1.08); }
+    .crumb {
+      background: #fff; border-bottom: 1px solid var(--line);
+      font-size: 13px; color: var(--muted); font-weight: 500;
+    }
+    .crumb-inner { height: 42px; display: flex; align-items: center; gap: 8px; }
+    .crumb strong { color: var(--ink); font-weight: 700; }
+    .hero {
+      position: relative;
+      background:
+        radial-gradient(1200px 420px at 70% 20%, rgba(26,95,191,.45), transparent 55%),
+        linear-gradient(180deg, #06101f 0%, #0a1c36 55%, #071428 100%);
+      color: #fff; overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute; inset: 0;
+      background-image: repeating-linear-gradient(
+        90deg, transparent 0 2px, rgba(255,255,255,.015) 2px 3px
+      );
+      opacity: .5; pointer-events: none;
+    }
+    .hero-inner {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 40px;
+      padding: 42px 0 48px;
+      position: relative;
+    }
+    .poster {
+      width: 280px; height: 396px;
+      border-radius: 6px;
+      background:
+        radial-gradient(ellipse at 50% 42%, #0e3a48 0%, #071428 58%, #040a12 100%);
+      box-shadow: 0 24px 50px rgba(0,0,0,.35);
+      display: flex; align-items: center; justify-content: center;
+      padding: 0; position: relative; overflow: hidden;
+    }
+    .poster svg { width: 78%; height: auto; display: block; }
+    .poster em, .poster strong { display: none; }
+    .hero-copy h1 {
+      margin: 10px 0 0;
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 800; letter-spacing: -.05em; line-height: 1.15;
+    }
+    .badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+    .badge {
+      font-size: 11px; font-weight: 800; letter-spacing: .08em;
+      padding: 5px 9px; border-radius: 2px;
+    }
+    .badge.red { background: var(--red); }
+    .badge.gold { background: var(--gold); color: #2a1d00; }
+    .badge.ghost { border: 1px solid rgba(255,255,255,.28); color: #dbe6f5; }
+    .logline {
+      margin: 18px 0 0;
+      font-size: 18px; font-weight: 500; line-height: 1.7;
+      color: #d7e4f5; max-width: 640px;
+    }
+    .meta {
+      display: grid; grid-template-columns: repeat(6, minmax(0, 120px));
+      gap: 0; margin-top: 28px;
+      border-top: 1px solid rgba(255,255,255,.12);
+    }
+    .meta div { padding: 16px 16px 0 0; }
+    .meta b { display: block; font-size: 11px; color: #8ea3bd; font-weight: 700; letter-spacing: .08em; }
+    .meta span { display: block; margin-top: 6px; font-size: 15px; font-weight: 700; }
+    .actions { display: flex; gap: 10px; margin-top: 28px; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      height: 44px; padding: 0 18px; border-radius: 4px;
+      font-size: 14px; font-weight: 700; border: 0; cursor: pointer;
+    }
+    .btn-play { background: var(--red); color: #fff; }
+    .btn-ghost { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.3); }
+    .btn:hover { filter: brightness(1.06); }
+    .tabs {
+      background: #fff; border-bottom: 1px solid var(--line);
+      position: sticky; top: 72px; z-index: 30;
+    }
+    .tabs-inner {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto; display: flex; gap: 4px;
+    }
+    .tabs button {
+      appearance: none; background: none; border: 0;
+      height: 54px; padding: 0 18px;
+      font-family: inherit; font-size: 15px; font-weight: 700;
+      color: var(--muted); cursor: pointer;
+      border-bottom: 3px solid transparent;
+    }
+    .tabs button.on { color: var(--navy); border-bottom-color: var(--red); }
+    main.wrap { padding: 36px 0 80px; }
+    .panel { display: none; }
+    .panel.on { display: block; }
+    .card {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: 8px; padding: 28px 30px;
+      margin-bottom: 18px;
+    }
+    h2.sec {
+      margin: 0 0 16px;
+      font-size: 20px; font-weight: 800; letter-spacing: -.03em;
+    }
+    p { font-size: 16px; font-weight: 400; line-height: 1.85; color: #243246; }
+    p.lead { font-size: 17px; font-weight: 500; }
+    .ep {
+      display: grid; grid-template-columns: 88px 1fr;
+      align-items: center;
+      gap: 18px; padding: 22px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .ep:last-child { border-bottom: 0; padding-bottom: 0; }
+    .ep:first-child { padding-top: 0; }
+    .ep-no {
+      width: 88px; height: 88px; border-radius: 6px;
+      background: var(--navy); color: #fff;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      align-self: center;
+    }
+    .ep-no span {
+      font-size: 15px; font-weight: 800; color: #fff; letter-spacing: .06em;
+    }
+    .ep h3 { margin: 0 0 8px; font-size: 18px; font-weight: 800; }
+    .ep p { margin: 0; font-size: 15px; }
+    .ep p strong { font-weight: 800; color: var(--navy-2); display: block; margin-top: 10px; }
+    .quote {
+      margin: 14px 0 0;
+      padding-left: 14px; border-left: 3px solid var(--red);
+      font-weight: 600; color: var(--navy-2);
+    }
+    .cast-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+    }
+    .cast-grid.pol5 {
+      grid-template-columns: repeat(5, 1fr);
+      margin-bottom: 14px;
+    }
+    .cast-grid.duo {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .person {
+      border: 1px solid var(--line); border-radius: 8px; padding: 18px;
+      background: #fff;
+    }
+    .person .role {
+      font-size: 11px; font-weight: 800; letter-spacing: .12em;
+      color: var(--blue);
+    }
+    .person.lead .role { color: var(--red); }
+    .person h3 { margin: 0 0 8px; font-size: 18px; font-weight: 800; }
+    .person .role + h3 { margin-top: 6px; }
+    .person p { margin: 0; font-size: 14px; line-height: 1.7; color: var(--muted); }
+    .intent {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    }
+    .loc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .loc {
+      min-height: 160px; border-radius: 8px; overflow: hidden;
+      color: #fff; padding: 22px; display: flex; flex-direction: column; justify-content: flex-end;
+      position: relative;
+    }
+    .loc b { font-size: 18px; font-weight: 800; }
+    .loc span { font-size: 13px; font-weight: 500; opacity: .92; margin-top: 6px; }
+    .l1 { background: linear-gradient(180deg, transparent, rgba(0,0,0,.72)), linear-gradient(135deg, #0b4d4a, #082033); }
+    .l2 { background: linear-gradient(180deg, transparent, rgba(0,0,0,.72)), linear-gradient(135deg, #1d4e2f, #0c2344); }
+    .l3 { background: linear-gradient(180deg, transparent, rgba(0,0,0,.72)), linear-gradient(135deg, #3a2a12, #1a1208); }
+    .l4 { background: linear-gradient(180deg, transparent, rgba(0,0,0,.72)), linear-gradient(135deg, #1a3a66, #071428); }
+    table.info { width: 100%; border-collapse: collapse; font-size: 15px; }
+    table.info th, table.info td { padding: 12px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+    table.info th { width: 140px; color: var(--muted); font-weight: 700; }
+    table.info td { font-weight: 600; }
+    footer {
+      background: #050d1a; color: #8ea3bd; padding: 36px 0 28px; font-size: 13px;
+    }
+    .foot-inner { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
+    .foot-inner strong { color: #fff; font-size: 16px; }
+    .foot-links { display: flex; gap: 16px; margin: 12px 0 10px; flex-wrap: wrap; }
+    .copy { color: #c5d4e8; font-weight: 600; }
+    .map {
+      overflow-x: auto;
+      padding: 4px 0 8px;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #f0f4fa 0%, #f8fafc 100%);
+      border: 1px solid var(--line);
+    }
+    .map svg { width: 100%; min-width: 760px; height: auto; display: block; }
+    .map .node { transition: filter .2s ease; }
+    .map .node:hover { filter: brightness(1.04); }
+    .rel-legend {
+      display: flex; flex-wrap: wrap; gap: 10px 18px;
+      margin-bottom: 18px; padding: 14px 16px;
+      background: #f0f4fa; border: 1px solid var(--line); border-radius: 8px;
+      font-size: 13px; font-weight: 600; color: var(--muted);
+    }
+    .rel-legend span { display: inline-flex; align-items: center; gap: 8px; }
+    .rel-legend i {
+      display: inline-block; width: 28px; height: 3px; border-radius: 2px;
+    }
+    .rel-legend i.solid-research { background: #1a5fbf; }
+    .rel-legend i.solid-youth { background: #0b4d4a; }
+    .rel-legend i.dash-power { background: repeating-linear-gradient(90deg, #c9a227 0 5px, transparent 5px 9px); height: 3px; }
+    .rel-legend i.dash-cell { background: repeating-linear-gradient(90deg, #e31b23 0 4px, transparent 4px 8px); height: 3px; }
+    .person p b { color: var(--ink); font-weight: 700; }
+    @media (max-width: 860px) {
+      nav.menu, .gnb-cta { display: none; }
+      .gnb-banner b { font-size: 15px; }
+      .gnb-banner .tag { font-size: 16px; }
+      .gnb-banner .circled { font-size: 13px; }
+      .hero-inner { grid-template-columns: 1fr; }
+      .poster { width: 200px; height: 280px; }
+      .meta { grid-template-columns: 1fr 1fr; }
+      .cast-grid, .cast-grid.pol5, .cast-grid.duo { grid-template-columns: 1fr; }
+      .ep { grid-template-columns: 1fr; }
+    }
+  
+
+    /* ── 시나리오 · 앤틱 원고 ── */
+    body.view-script {
+      background: #c8bcaa;
+      background-image:
+        radial-gradient(ellipse 120% 80% at 50% -20%, rgba(255,255,255,.35), transparent 50%),
+        linear-gradient(180deg, #d6cbb8 0%, #b8aa94 100%);
+    }
+    body.view-script header.gnb {
+      background: #1a120c;
+      border-bottom-color: #8b2e26;
+    }
+    body.view-script .logo span { color: #c9a86c; }
+    body.view-script .gnb-banner .tag { color: #c9a86c; }
+    body.view-script nav.menu button { color: #c9b89a; }
+    body.view-script nav.menu button.on,
+    body.view-script nav.menu button:hover { color: #fff; }
+
+    .script-only {
+      --script-ink: #1c1612;
+      --script-muted: #5e554a;
+      --script-rule: #c9bda8;
+      --script-paper: #f8f3e9;
+      --script-accent: #8b2e26;
+      --script-margin: 68px;
+      font-family: Pretendard, "Pretendard Variable", sans-serif;
+      color: var(--script-ink);
+    }
+    .script-only .page {
+      width: min(840px, calc(100% - 28px));
+      margin: 28px auto 88px;
+      background: var(--script-paper);
+      box-shadow:
+        0 1px 0 rgba(255,255,255,.65) inset,
+        0 28px 64px rgba(28,14,4,.16),
+        0 0 0 1px #b5a48e;
+      padding: 56px var(--script-margin) 80px;
+      position: relative;
+    }
+    .script-only .page::before {
+      content: "";
+      position: absolute;
+      inset: 14px;
+      border: 1px solid rgba(139,46,38,.12);
+      pointer-events: none;
+    }
+    .script-only .page::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      opacity: .55;
+    }
+    .script-only .title-page {
+      text-align: center;
+      padding: 36px 0 48px;
+      border-bottom: 2px solid var(--script-rule);
+      position: relative;
+      z-index: 1;
+    }
+    .script-only .title-page .kicker {
+      font-family: "Courier Prime", "Courier New", monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .32em;
+      color: var(--script-accent);
+    }
+    .script-only .title-page h1 {
+      margin: 18px 0 6px;
+      font-family: "Libre Baskerville", Georgia, serif;
+      font-size: clamp(28px, 5vw, 38px);
+      font-weight: 700;
+      letter-spacing: -.02em;
+      line-height: 1.28;
+    }
+    .script-only .title-page .sub {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--script-muted);
+      letter-spacing: .06em;
+    }
+    .script-only .title-page .credits {
+      margin: 26px auto 0;
+      width: min(360px, 100%);
+      border-collapse: collapse;
+      text-align: left;
+    }
+    .script-only .title-page .credits th {
+      width: 38%;
+      padding: 5px 14px 5px 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--script-muted);
+      vertical-align: top;
+      font-family: "Courier Prime", monospace;
+      letter-spacing: .04em;
+    }
+    .script-only .title-page .credits td {
+      padding: 5px 0;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+    .script-only .title-page .period {
+      margin: 22px auto 0;
+      width: min(360px, 100%);
+      text-align: left;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--script-muted);
+      line-height: 1.85;
+      border-top: 1px solid var(--script-rule);
+      padding-top: 18px;
+    }
+    .script-only .note {
+      margin: 24px 0;
+      padding: 16px 18px;
+      border-left: 3px solid var(--script-accent);
+      background: rgba(139,46,38,.05);
+      font-size: 13.5px;
+      line-height: 1.75;
+      font-weight: 500;
+      position: relative;
+      z-index: 1;
+    }
+    .script-only .note b { font-weight: 800; }
+    .script-only h2.part {
+      margin: 36px 0 28px;
+      padding: 10px 0;
+      text-align: center;
+      font-family: "Courier Prime", "Courier New", monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .28em;
+      color: var(--script-accent);
+      border-top: 1px solid var(--script-rule);
+      border-bottom: 1px solid var(--script-rule);
+      position: relative;
+      z-index: 1;
+    }
+    .script-only .scene {
+      margin: 52px 0 0;
+      padding: 24px 0 4px;
+      border-top: 1px dashed var(--script-rule);
+      position: relative;
+      z-index: 1;
+    }
+    .script-only .scene:first-of-type {
+      margin-top: 16px;
+      border-top: 0;
+      padding-top: 0;
+    }
+    .script-only .slug {
+      font-family: "Courier Prime", "Courier New", monospace;
+      font-size: 13.5px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      margin: 0 0 18px;
+      line-height: 1.5;
+      color: var(--script-ink);
+    }
+    .script-only .slug .num {
+      color: var(--script-accent);
+      margin-right: 6px;
+    }
+    .script-only .sd { display: none !important; }
+    .script-only .action {
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1.82;
+      margin: 0 0 11px;
+      max-width: none;
+    }
+    .script-only .action.heavy { font-weight: 600; }
+    .script-only .action.thriller { font-weight: 500; }
+    .script-only .shot {
+      font-family: "Courier Prime", monospace;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      color: var(--script-accent);
+      margin: 14px 0 6px;
+      opacity: .85;
+    }
+    .script-only .dialogue-block {
+      margin: 18px auto;
+      width: min(400px, 92%);
+      padding: 0 4px;
+    }
+    .script-only .character {
+      text-align: center;
+      font-family: "Courier Prime", "Courier New", monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      margin: 0 0 3px;
+      text-transform: uppercase;
+    }
+    .script-only .paren {
+      text-align: center;
+      font-size: 12.5px;
+      font-weight: 400;
+      font-style: italic;
+      color: var(--script-muted);
+      margin: 0 0 3px;
+    }
+    .script-only .line {
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.72;
+      text-align: left;
+    }
+    .script-only .line.weak { font-weight: 300; }
+    .script-only .line.shout { font-weight: 800; }
+    .script-only .trans {
+      text-align: right;
+      font-family: "Courier Prime", "Courier New", monospace;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      color: var(--script-accent);
+      margin: 16px 0 0;
+    }
+    .script-only .end-mark {
+      text-align: center;
+      font-family: "Courier Prime", "Courier New", monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .28em;
+      color: var(--script-accent);
+      margin: 56px 0 0;
+      padding-top: 28px;
+      border-top: 2px solid var(--script-rule);
+      position: relative;
+      z-index: 1;
+    }
+    .script-only nav.toc {
+      font-size: 13.5px;
+      line-height: 1.9;
+      font-weight: 500;
+      position: relative;
+      z-index: 1;
+    }
+    .script-only nav.toc a { color: var(--script-ink); }
+    @media print {
+      body.view-script { background: #fff; }
+      .script-only .page {
+        width: auto;
+        margin: 0;
+        box-shadow: none;
+        padding: 18mm 22mm;
+      }
+      .script-only .page::before,
+      .script-only .page::after { display: none; }
+    }
+    @media (max-width: 720px) {
+      .script-only { --script-margin: 22px; }
+      .script-only .page { padding: 32px 22px 56px; }
+      .script-only .dialogue-block { width: 100%; }
+    }
+
+    body.view-script { background: #c8bcaa; }
+    body.view-script .syn-only { display: none !important; }
+    body.view-syn .script-only { display: none !important; }
+    nav.menu a { cursor: pointer; border: 0; background: none; font: inherit; color: inherit; }
+    nav.menu button {
+      appearance: none; border: 0; background: none; cursor: pointer;
+      font: inherit; color: #c5d4e8; font-size: 15px; font-weight: 600; padding: 0;
+    }
+    nav.menu button.on, nav.menu button:hover { color: #fff; }
+    @media (max-width: 860px) {
+      nav.menu { display: flex !important; }
+    }
+
+  </style>
+</head>
+<body class="view-syn gated">
+  <div class="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title">
+    <div class="gate-card">
+      <div class="k">NOTICE</div>
+      <h2 id="gate-title">OS-Bio Cell : 제 2의 초전도체</h2>
+      <p>2014년 봄, 퇴고를 마친 이 시나리오는<br>단 한 방울의 땀도 AI에게 양보하지 않은 작업물임을 밝힙니다.</p>
+      <div class="gate-actions">
+        <button type="button" class="go" data-enter="syn">확인</button>
+      </div>
+    </div>
+  </div>
+  <div class="util syn-only">
+    <div class="util-inner">
+      <div class="onair"><i></i>단편 영화 소개</div>
+    </div>
+  </div>
+
+  <header class="gnb">
+    <div class="gnb-inner">
+      <a class="logo" href="#" data-view="syn">
+        <b>슈카 미디어</b>
+        <span>CINEMA</span>
+      </a>
+      <nav class="menu">
+        <button type="button" class="on" data-view="syn">시놉시스</button>
+        <button type="button" data-view="script">시나리오</button>
+        <a href="storyboard.html" class="storyboard-link">스토리보드 →</a>
+      </nav>
+      <span class="gnb-banner" aria-label="축 종합편성채널, 슈카 미디어 개국">
+        <b><span class="circled">축</span> 종합편성채널, 슈카 미디어</b>
+        <span class="tag">개국</span>
+      </span>
+    </div>
+  </header>
+
+  <div class="crumb syn-only">
+    <div class="crumb-inner">
+      홈 <span>›</span> 영화 <span>›</span>
+      <strong>OS-Bio Cell : 제 2의 초전도체</strong>
+    </div>
+  </div>
+
+  <div class="syn-only">
+<section class="hero">
+    <div class="hero-inner">
+      <div class="poster" aria-hidden="true">
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="scope" cx="50%" cy="42%" r="70%">
+              <stop offset="0%" stop-color="#1a4a52"/>
+              <stop offset="100%" stop-color="#071018"/>
+            </radialGradient>
+          </defs>
+          <circle cx="100" cy="100" r="96" fill="url(#scope)"/>
+          <circle cx="100" cy="100" r="78" fill="none" stroke="#2ec4b6" stroke-width="1.2" opacity=".35"/>
+          <!-- packed colony: small round cells, large nucleus, nucleoli -->
+          <g fill="#c5ebe6" stroke="#8fd4cc" stroke-width=".6">
+            <circle cx="100" cy="86" r="11"/><circle cx="118" cy="94" r="10.5"/><circle cx="84" cy="96" r="10.5"/>
+            <circle cx="108" cy="108" r="10"/><circle cx="90" cy="112" r="10"/><circle cx="126" cy="112" r="9.5"/>
+            <circle cx="76" cy="114" r="9.5"/><circle cx="100" cy="124" r="10"/><circle cx="116" cy="126" r="9"/>
+            <circle cx="84" cy="128" r="9"/><circle cx="132" cy="96" r="9"/><circle cx="70" cy="100" r="9"/>
+            <circle cx="94" cy="74" r="9"/><circle cx="112" cy="76" r="8.5"/><circle cx="78" cy="82" r="8.5"/>
+          </g>
+          <g fill="#5a9aa0" opacity=".92">
+            <circle cx="100" cy="86" r="8.2"/><circle cx="118" cy="94" r="7.8"/><circle cx="84" cy="96" r="7.8"/>
+            <circle cx="108" cy="108" r="7.4"/><circle cx="90" cy="112" r="7.4"/><circle cx="126" cy="112" r="7"/>
+            <circle cx="76" cy="114" r="7"/><circle cx="100" cy="124" r="7.4"/><circle cx="116" cy="126" r="6.6"/>
+            <circle cx="84" cy="128" r="6.6"/><circle cx="132" cy="96" r="6.6"/><circle cx="70" cy="100" r="6.6"/>
+            <circle cx="94" cy="74" r="6.6"/><circle cx="112" cy="76" r="6.2"/><circle cx="78" cy="82" r="6.2"/>
+          </g>
+          <g fill="#d8f6f2">
+            <circle cx="97" cy="83" r="1.5"/><circle cx="103" cy="87" r="1.3"/>
+            <circle cx="115" cy="91" r="1.4"/><circle cx="121" cy="96" r="1.2"/>
+            <circle cx="81" cy="93" r="1.4"/><circle cx="87" cy="98" r="1.2"/>
+            <circle cx="105" cy="105" r="1.3"/><circle cx="110" cy="110" r="1.1"/>
+            <circle cx="87" cy="109" r="1.3"/><circle cx="93" cy="114" r="1.1"/>
+            <circle cx="123" cy="109" r="1.2"/><circle cx="73" cy="111" r="1.2"/>
+            <circle cx="97" cy="121" r="1.3"/><circle cx="113" cy="123" r="1.1"/>
+            <circle cx="81" cy="125" r="1.1"/><circle cx="129" cy="93" r="1.1"/>
+            <circle cx="67" cy="97" r="1.1"/><circle cx="91" cy="71" r="1.1"/>
+            <circle cx="109" cy="73" r="1.1"/><circle cx="75" cy="79" r="1.1"/>
+          </g>
+        </svg>
+      </div>
+      <div class="hero-copy">
+        <div class="badge-row">
+          <span class="badge red">단편영화</span>
+        </div>
+        <h1>OS-Bio Cell : 제 2의 초전도체</h1>
+        <p class="logline">
+          우연히, 인체의 모든 기관으로 분화할 수 있는 유도만능줄기세포(induced pluripotent stem cell, iPSC)가 발견된다.<br>
+          어디에 쓸 것인가, 그리고 어떻게 정할 것인가.<br>
+          욕망을 가진 인간이기에, 각자의 욕망을 위해, 사건이 발생한다.
+        </p>
+        <div class="meta">
+          <div><b>장르</b><span>드라마</span></div>
+          <div><b>연출</b><span>도진우</span></div>
+          <div><b>극본</b><span>도진우</span></div>
+          <div><b>투자</b><span>도진우</span></div>
+          <div><b>제작</b><span>도진우</span></div>
+          <div><b>주최</b><span>충청북도</span></div>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn btn-play" data-trailer-popup>▶ 30초 예고편 보기</button>
+          <button type="button" class="btn btn-ghost" data-view="script">시나리오 전문 보기</button>
+        </div>
+      </div>
+    </div>
+  </section>
+<div class="tabs">
+    <div class="tabs-inner">
+      <button class="on" data-tab="story">줄거리</button>
+      <button data-tab="cast">등장인물</button>
+      <button data-tab="plan">기획의도</button>
+      <button data-tab="place">배경</button>
+      <button data-tab="info">제작정보</button>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <section id="story" class="panel on">
+      <div class="card">
+        <h2 class="sec">영화 줄거리</h2>
+        <p class="lead">
+          오송생명과학단지(국가산업단지)의 OS-Bio Complex 연구소에서, 인체의 모든 기관으로 분화할 수 있는 유도만능줄기세포(induced pluripotent stem cell, iPSC)가 돌연변이로 발견된다.
+          세포를 어디에 먼저 쓸 것인가. 과학이 아니라 정치의 문제가 된 순간, 세 갈래의 욕망이 서로를 향해 잠을 깨운다.
+        </p>
+      </div>
+
+      <div class="card">
+        <article class="ep">
+          <div class="ep-no"><span>ACT I</span></div>
+          <div>
+            <h3>우연 — 돌연변이</h3>
+            <p>
+              오송생명과학단지(국가산업단지), OS-Bio Complex. 밤, 실험실. 하나의 사소한 사고로 누군가의 비커가 깨지고, 번지는 배양액 너머 현미경 렌즈 안에 가능성이 맺힌다. 모든 장기로 분화할 수 있는 유도만능줄기세포, iPSC.
+              오성은 박사 연구팀은 그것을 ‘OS-Bio Cell’이라 명명하고 성공을 선언한다.
+              그러나 발생 기원은 밝혀내지 못한다. 우연한 돌연변이. 그래서 이 세포를 어디에 먼저 쓸 것인지는, 과학이 아니라 정치의 문제가 된다.
+            </p>
+          </div>
+        </article>
+        <article class="ep">
+          <div class="ep-no"><span>ACT II</span></div>
+          <div>
+            <h3>국무회의 — 누구의 세포인가</h3>
+            <p>
+              미래창조과학부 장관은 뇌를 로봇에 이식해 산업에 활용하자 한다. 보건복지부 장관은 생명이 먼저라며
+              인체 장기 이식을 주장한다. 기획재정부 장관은 내수 위축을 이유로 산업 쪽 손을 든다.
+              총리는 총선 이후로 미루자 하고, 대통령은 고개를 끄덕인다.
+              <strong>결정은 유예된다, 그러나 욕망은 유예되지 않는다.</strong>
+            </p>
+          </div>
+        </article>
+        <article class="ep">
+          <div class="ep-no"><span>ACT III</span></div>
+          <div>
+            <h3>세 갈래의 탐욕</h3>
+            <p>
+              OS-Bio Cell을 둘러싼 긴장은 연구소 밖으로 번져간다.
+              산업계와 정치권, 그리고 유명인의 욕망까지 — 서로 다른 이유를 가진 사람들이 각자의 방식으로 세포에 손을 뻗으려 한다.
+              연구소 안팎의 동선이 얽히는 순간, 오성은 박사는 침묵한다.
+            </p>
+          </div>
+        </article>
+        <article class="ep">
+          <div class="ep-no"><span>ACT IV</span></div>
+          <div>
+            <h3>작별 - 침묵 그리고 후회</h3>
+            <p>
+              오성은 박사는 호스피스 병동에 있는 친구를 찾아간다. 한중일에서만 극히 드물게 보고되는 희귀 혈액형, cis-AB형.
+              이식조차 시도하지 못한 채 시간만 흘러가는 친구 앞에서, 과학자는 침묵한다.
+              청남대 인근에서 숙박업소를 하는 최민재가 그를 청남대로 데려간다. 관광객이 없어 힘들다는 말을 건네며.
+              장례식장에서는 친구들의 각기 다른 삶의 무게가 함께 들려온다.
+              유골은 충주 탄금대 아래 강에 뿌려진다.
+            </p>
+          </div>
+        </article>
+        <article class="ep">
+          <div class="ep-no"><span>ACT V</span></div>
+          <div>
+            <h3>3년 후</h3>
+            <p>
+              3년이 지난다. 오송생명과학단지에 사람들이 모여든다.
+              청남대 근처 숙박업소는 빈방이 없고, 멈추었던 공장도 다시 돌아간다.
+            </p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="cast" class="panel">
+      <div class="card">
+        <h2 class="sec">인물 관계도</h2>
+        <div class="rel-legend" aria-label="관계도 범례">
+          <span><i class="solid-research"></i>실선 · 인간 관계</span>
+          <span><i class="dash-power"></i>점선 · 로비·추천</span>
+          <span><i class="dash-cell"></i>점선 · OS-Bio Cell</span>
+        </div>
+        <p style="margin-bottom:14px;font-size:15px;color:var(--muted)">OS-Bio Cell은 실선과 점선이 모두 모이는 욕망의 교차점이다.</p>
+        <div class="map" aria-label="인물 관계도">
+          <svg viewBox="0 0 1000 460" xmlns="http://www.w3.org/2000/svg" role="img">
+            <title>OS-Bio Cell : 제 2의 초전도체 인물 관계도</title>
+            <defs>
+              <filter id="cardShadow" x="-8%" y="-8%" width="116%" height="116%">
+                <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#071428" flood-opacity="0.12"/>
+              </filter>
+              <linearGradient id="hubGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#e31b23"/>
+                <stop offset="100%" stop-color="#b8141c"/>
+              </linearGradient>
+            </defs>
+
+            <rect width="1000" height="460" fill="#f8fafc"/>
+
+            <!-- 허브: OS-Bio Cell -->
+            <g class="node" filter="url(#cardShadow)">
+              <circle cx="500" cy="48" r="20" fill="url(#hubGrad)"/>
+              <circle cx="500" cy="48" r="12" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.45"/>
+              <text x="500" y="84" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="12" font-weight="800" fill="#e31b23">OS-Bio Cell</text>
+            </g>
+
+            <!-- 오성은 박사 -->
+            <g class="node" filter="url(#cardShadow)">
+              <rect x="420" y="100" width="160" height="56" rx="10" fill="#071428"/>
+              <text x="500" y="124" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="14" font-weight="800" fill="#fff">오성은 박사</text>
+              <text x="500" y="142" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="11" font-weight="600" fill="#d4a017">연구소장</text>
+            </g>
+            <line x1="500" y1="68" x2="500" y2="100" stroke="#e31b23" stroke-width="2" stroke-dasharray="5 4"/>
+
+            <!-- 이선우 -->
+            <line x1="420" y1="128" x2="248" y2="128" stroke="#1a5fbf" stroke-width="2.5"/>
+            <g class="node" filter="url(#cardShadow)">
+              <rect x="88" y="100" width="160" height="56" rx="10" fill="#fff" stroke="#1a5fbf" stroke-width="2"/>
+              <text x="168" y="124" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="13" font-weight="800" fill="#071428">이선우 연구원</text>
+              <text x="168" y="142" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="11" font-weight="600" fill="#5b6b82">수석 연구원</text>
+            </g>
+
+            <!-- 한수진 -->
+            <line x1="580" y1="128" x2="752" y2="128" stroke="#1a5fbf" stroke-width="2.5"/>
+            <g class="node" filter="url(#cardShadow)">
+              <rect x="752" y="100" width="160" height="56" rx="10" fill="#fff" stroke="#1a5fbf" stroke-width="2"/>
+              <text x="832" y="124" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="13" font-weight="800" fill="#071428">한수진</text>
+              <text x="832" y="142" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="11" font-weight="600" fill="#5b6b82">아내</text>
+            </g>
+
+            <!-- 친구1·2·3 -->
+            <line x1="500" y1="156" x2="168" y2="248" stroke="#0b4d4a" stroke-width="2.5"/>
+            <line x1="500" y1="156" x2="500" y2="248" stroke="#0b4d4a" stroke-width="2.5"/>
+            <line x1="500" y1="156" x2="832" y2="248" stroke="#0b4d4a" stroke-width="2.5"/>
+
+            <g class="node" filter="url(#cardShadow)">
+              <rect x="88" y="228" width="160" height="56" rx="10" fill="#fff" stroke="#0b4d4a" stroke-width="2"/>
+              <text x="168" y="252" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="13" font-weight="800" fill="#071428">김지성</text>
+              <text x="168" y="270" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="11" font-weight="600" fill="#5b6b82">친구1</text>
+            </g>
+            <g class="node" filter="url(#cardShadow)">
+              <rect x="420" y="228" width="160" height="56" rx="10" fill="#fff" stroke="#0b4d4a" stroke-width="2"/>
+              <text x="500" y="252" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="13" font-weight="800" fill="#071428">최민재</text>
+              <text x="500" y="270" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="11" font-weight="600" fill="#5b6b82">친구2</text>
+            </g>
+            <g class="node" filter="url(#cardShadow)">
+              <rect x="752" y="228" width="160" height="56" rx="10" fill="#fff" stroke="#0b4d4a" stroke-width="2"/>
+              <text x="832" y="252" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="13" font-weight="800" fill="#071428">강지훈</text>
+              <text x="832" y="270" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="11" font-weight="600" fill="#5b6b82">친구3</text>
+            </g>
+
+            <!-- 이지연 -->
+            <line x1="168" y1="284" x2="168" y2="300" stroke="#0b4d4a" stroke-width="2"/>
+            <g class="node" filter="url(#cardShadow)">
+              <rect x="88" y="300" width="160" height="44" rx="10" fill="#fff" stroke="#0b4d4a" stroke-width="1.5"/>
+              <text x="168" y="328" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="13" font-weight="800" fill="#071428">이지연</text>
+            </g>
+
+            <!-- 권력·욕망 (점선) -->
+            <path d="M 500 48 Q 135 200 135 388" fill="none" stroke="#c9a227" stroke-width="1.8" stroke-dasharray="6 5"/>
+            <path d="M 500 48 Q 270 200 270 388" fill="none" stroke="#c9a227" stroke-width="1.8" stroke-dasharray="6 5"/>
+            <path d="M 500 48 L 430 388" fill="none" stroke="#c9a227" stroke-width="1.8" stroke-dasharray="6 5"/>
+            <path d="M 500 48 Q 610 220 610 388" fill="none" stroke="#c9a227" stroke-width="1.8" stroke-dasharray="6 5"/>
+            <path d="M 500 48 Q 750 220 750 388" fill="none" stroke="#c9a227" stroke-width="1.8" stroke-dasharray="6 5"/>
+
+            <!-- 정치·욕망 (흰 배경 · 빨간 테두리) -->
+            <g class="node" filter="url(#cardShadow)">
+              <rect x="85" y="388" width="100" height="44" rx="6" fill="#fff" stroke="#e31b23" stroke-width="2"/>
+              <text x="135" y="406" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="12" font-weight="800" fill="#e31b23">대통령</text>
+              <text x="135" y="420" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="9" font-weight="600" fill="#5b6b82">불로장생</text>
+            </g>
+            <g class="node" filter="url(#cardShadow)">
+              <rect x="220" y="388" width="100" height="44" rx="6" fill="#fff" stroke="#e31b23" stroke-width="2"/>
+              <text x="270" y="406" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="12" font-weight="800" fill="#e31b23">총리</text>
+              <text x="270" y="420" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="9" font-weight="600" fill="#5b6b82">권력</text>
+            </g>
+            <g class="node" filter="url(#cardShadow)">
+              <rect x="340" y="388" width="180" height="44" rx="6" fill="#fff" stroke="#e31b23" stroke-width="2"/>
+              <text x="430" y="404" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="11" font-weight="800" fill="#e31b23">장관</text>
+              <text x="430" y="418" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="8.5" font-weight="600" fill="#5b6b82">미래창조과학부 · 기획재정부 · 보건복지부</text>
+            </g>
+            <g class="node" filter="url(#cardShadow)">
+              <rect x="560" y="388" width="100" height="44" rx="6" fill="#fff" stroke="#e31b23" stroke-width="2"/>
+              <text x="610" y="406" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="12" font-weight="800" fill="#e31b23">OS-Bio</text>
+              <text x="610" y="420" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="9" font-weight="600" fill="#5b6b82">Money</text>
+            </g>
+            <g class="node" filter="url(#cardShadow)">
+              <rect x="700" y="388" width="100" height="44" rx="6" fill="#fff" stroke="#e31b23" stroke-width="2"/>
+              <text x="750" y="406" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="12" font-weight="800" fill="#e31b23">이설</text>
+              <text x="750" y="420" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="9" font-weight="600" fill="#5b6b82">美</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+      <div class="cast-grid">
+        <article class="person lead">
+          <div class="role">주연</div>
+          <h3>오성은 박사</h3>
+          <p><b>30대 후반.</b> 오송생명과학단지 OS-Bio Complex. 천재라 그 자리에 일찍 앉았다. 총리 추천. 말이 없고, 웃을 때만 연구실이 움직인다.</p>
+        </article>
+        <article class="person">
+          <h3>한수진</h3>
+          <p><b>오성은 박사의 아내.</b> 세포가 사라져도 기술은 남는다고 위로한다. 남편이 침묵하는 이유를 모른다. 서재 문 앞에서 한 번 더 말을 걸지만, 들어가지 못한다.</p>
+        </article>
+        <article class="person">
+          <h3>이선우 연구원</h3>
+          <p><b>30대 중반, 수석 연구원.</b> 사고 직후 연구소가 들썩이는 가운데, 오성은 박사팀의 발견 현장을 함께 목격한다.</p>
+        </article>
+        <article class="person">
+          <h3>김지성 (친구1)</h3>
+          <p><b>오성은 박사의 유년 시절 친구.</b> 한중일에서만 극히 드물게 보고되는 희귀 혈액형 cis-AB형. 심장 이식조차 시도하지 못하고 호스피스에서 죽는다.</p>
+        </article>
+        <article class="person">
+          <h3>이지연</h3>
+          <p><b>지성의 아내이자 오성은 박사의 유년 시절 친구.</b> 세포 소식을 누구보다 반겼다. 장례식장 상주. 영정 앞에서 오성은 박사를 보는 순간 더 운다.</p>
+        </article>
+        <article class="person">
+          <h3>최민재 (친구2)</h3>
+          <p><b>청남대 인근 숙박업.</b> 손님이 없어 문을 열어 둔 채 버틴다. 오성은 박사를 청남대로 데려가는 사람. 3년 뒤 오송 관광객으로 만실이 된다.</p>
+        </article>
+        <article class="person">
+          <h3>강지훈 (친구3)</h3>
+          <p><b>충청북도 산업단지 사업가.</b> 디도스로 생산량이 틀어져 부도. 장례식에서 그 사실을 털어놓는다. 3년 뒤 인공지능으로 라인을 되돌린다.</p>
+        </article>
+      </div>
+      <div class="cast-grid pol5">
+        <article class="person">
+          <div class="role">불로장생</div>
+          <h3>대통령</h3>
+          <p>국무회의에서는 침착하지 않고 <b>격분</b>한다. 진시황이 이루지 못한 불로장생의 꿈을 OS-Bio Cell로 다시 꿈꾼다.</p>
+        </article>
+        <article class="person">
+          <div class="role">권력</div>
+          <h3>총리</h3>
+          <p>차기 대통령을 노리고 오성은 박사를 그 자리에 앉힌 사람이다. OS-Bio Cell 확보를 보고한다.</p>
+        </article>
+        <article class="person">
+          <div class="role">정치</div>
+          <h3>미래창조과학부 장관</h3>
+          <p>인간의 뇌로 분화시켜 로봇에 이식하자고 한다. OS-Bio의 로비를 받고 있다.</p>
+        </article>
+        <article class="person">
+          <div class="role">정치</div>
+          <h3>기획재정부 장관</h3>
+          <p>내수 경제 위축을 이유로 산업 쪽 손을 든다. OS-Bio의 로비를 받고 있다.</p>
+        </article>
+        <article class="person">
+          <div class="role">정치</div>
+          <h3>보건복지부 장관</h3>
+          <p>중년의 미남 장관. 생명이 먼저라 말하지만, 톱스타 이설과의 부적절한 관계를 담은 사진이 발목을 잡고 있다.</p>
+        </article>
+      </div>
+      <div class="cast-grid duo">
+        <article class="person">
+          <div class="role">Money</div>
+          <h3>OS-Bio</h3>
+          <p>OS 제약 대표. 이번 연구를 통해 경쟁 제약사를 제치려 장관들에게 로비를 이어간다.</p>
+        </article>
+        <article class="person">
+          <div class="role">美</div>
+          <h3>이설</h3>
+          <p>톱스타. 젊고 아름다운 외모에 대한 욕망을 드러낸다. 복지부 장관을 부적절한 사진으로 협박한다.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="plan" class="panel">
+      <div class="intent">
+        <div class="card">
+          <h2 class="sec">기획의도</h2>
+          <p>
+            2014년 봄에 집필하고, 2026년 여름에 제작하다.<br>
+            가을은 두 번째 봄이라는데….<br>
+            같은 해 가을 열린 오송국제바이오산업엑스포를 앞두고 마친 단편 영화 시나리오이다.
+            오송생명과학단지(국가산업단지)와 오송국제바이오산업엑스포 홍보, 그리고 대통령 별장인 청남대와 충주 탄금대 등 충청북도의 관광 명소 홍보를 통한 침체된 지역 경제 부흥에 있다.
+          </p>
+        </div>
+        <div class="card">
+          <h2 class="sec">활용 방안</h2>
+          <p>
+            제작된 영화를 인스타그램 등 SNS와 YouTube에 업로드한다. 영화의 배경을 오송생명과학단지와 청남대, 충주 탄금대 등 충청북도를 배경으로 하며, 오송국제바이오산업엑스포에 온 관광객들이 다른 관광지로 발길을 이어가고, 신규 기업 유치에 도움이 될 수 있다.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="place" class="panel">
+      <div class="card">
+        <h2 class="sec">배경</h2>
+        <p>오송생명과학단지와 오송국제바이오산업엑스포를 시작으로 청남대, 충주 탄금대 등 충청북도의 관광 명소로 이어진다.</p>
+      </div>
+      <div class="loc-grid">
+        <div class="loc l1"><b>오송국제바이오산업엑스포</b><span>2014. 9. 26. ~ 10. 12.</span></div>
+        <div class="loc l2"><b>청남대</b><span>대통령도 쉬러 온다는 그 길. 호수가 보이는 산책로.</span></div>
+        <div class="loc l3"><b>충주 탄금대</b><span>남한강과 달천이 만나는 절벽.</span></div>
+        <div class="loc l4"><b>오송생명과학단지</b><span>3년 뒤, 모두가 다시 모이는 곳.</span></div>
+      </div>
+    </section>
+
+    <section id="info" class="panel">
+      <div class="card">
+        <h2 class="sec">제작정보</h2>
+        <table class="info">
+          <tr><th>제목</th><td>OS-Bio Cell : 제 2의 초전도체</td></tr>
+          <tr><th>형식</th><td>단편 영화</td></tr>
+          <tr><th>연출</th><td>도진우</td></tr>
+          <tr><th>극본</th><td>도진우</td></tr>
+          <tr><th>투자</th><td>도진우</td></tr>
+          <tr><th>제작</th><td>도진우</td></tr>
+          <tr><th>주최</th><td>충청북도</td></tr>
+          <tr><th>주관</th><td>충청북도지식산업진흥원 · 충청북도인터넷방송</td></tr>
+          <tr><th>소재</th><td>충청북도</td></tr>
+          <tr><th>시나리오</th><td>2014년 봄</td></tr>
+          <tr><th>영화</th><td>2026년 여름</td></tr>
+          <tr><th>알림</th><td>집필 당시 정부 부처 명칭과 인공지능에 대한 인식을 그대로 사용했습니다. 유도만능줄기세포(iPSC)의 과학적 오류는 뒤늦게 알게 되었습니다. 시나리오 집필 시점이 12년 전이라 과학의 발전을 예상하기 어려웠으나, 2014년 기준으로 보아도 자료 조사가 틀렸습니다. 이 점에 깊이 사과드립니다.</td></tr>
+        </table>
+      </div>
+    </section>
+  </main>
+  </div>
+
+  <div class="script-only">
+    <article class="page">
+
+    <header class="title-page">
+      <div class="kicker">MOTION PICTURE SCREENPLAY</div>
+      <h1>OS-Bio Cell<br>: 제 2의 초전도체</h1>
+      <div class="sub">단편 시나리오</div>
+      <table class="credits">
+        <tr><th>장르</th><td>드라마</td></tr>
+        <tr><th>연출</th><td>도진우</td></tr>
+        <tr><th>극본</th><td>도진우</td></tr>
+        <tr><th>투자</th><td>도진우</td></tr>
+        <tr><th>제작</th><td>도진우</td></tr>
+        <tr><th>주최</th><td>충청북도</td></tr>
+        <tr><th>주관</th><td>충청북도지식산업진흥원<br>충청북도인터넷방송</td></tr>
+        <tr><th>시나리오</th><td>2014년 봄</td></tr>
+        <tr><th>영화</th><td>2026년 여름</td></tr>
+      </table>
+      <p class="period">2014년 봄에 집필하고, 2026년 여름에 제작하다.<br><br>집필 당시 정부 부처 명칭과 인공지능에 대한 인식을 그대로 사용했습니다. 양해를 바랍니다.<br><br>유도만능줄기세포(iPSC)에 관한 과학적 사실에 심각한 오류가 있음을 뒤늦게 알게 되었습니다. 시나리오 집필 시점이 12년 전이라 과학의 발전을 예상하기 어려웠습니다. 그러나 2014년 기준으로 보아도 자료 조사가 틀렸습니다. 이 점에 깊이 사과드립니다.</p>
+    </header>
+
+
+
+    <h2 class="part">시나리오</h2>
+    <p class="action" style="opacity:.85;font-size:.92em;margin:0 0 1.2em;">※ <b>본편</b>은 씬1(속보) → 씬2(「3일 전」) 순. <b>30초 트레일러</b>는 편집상 CLIP1(발견) → CLIP2(속보)로 역순 배치.</p>
+
+    <!-- 1 -->
+    <section class="scene" id="s1">
+      <p class="slug"><span class="num">1.</span>EXT. 서울 도심 옥외 전광판 - 밤</p>
+      <p class="action">카메라, 전광판으로 천천히 다가간다. 속보 자막이 먼저 보인다.</p>
+      <div class="dialogue-block">
+        <p class="character">앵커</p>
+        <p class="line shout">속보입니다. OS-Bio Cell이 사라졌습니다. 행방이 묘연한 줄기세포를 찾기 위해 경찰은 오성은 박사팀을 심문…</p>
+      </div>
+      <p class="trans">FADE OUT</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="scene" id="s2">
+      <p class="slug"><span class="num">2.</span>EXT. 오송생명과학단지 - 밤</p>
+      <p class="action heavy">화면 하단 자막: 3일 전.</p>
+      <p class="action">오송의 밤. 연구소 유리 외벽이 차갑게 빛난다. 저 멀리 가로등 아래, 주차된 차 한 대. 바람 소리만 있다.</p>
+    </section>
+
+    <!-- 3 BEAKER -->
+    <section class="scene" id="s3">
+      <p class="slug"><span class="num">3.</span>INT. OS-Bio Complex 연구소 - 밤</p>
+
+      <p class="action thriller">형광등 하나가 미세하게 깜빡인다. 거의 빈 연구소. 기계 험(HUM) 소리만 남는다. 한쪽, 오성은 박사가 현미경에 몸을 숙인다.</p>
+
+      <p class="action thriller">접안렌즈 너머, 세포가 너무 빠르고 너무 정확하게 분열한다. 오성은 박사가 고개를 들고 희미하게 미소 짓는다. 아직 아무 말도 하지 않는다.</p>
+
+      <p class="action heavy">익스트림 클로즈업. 걷는 중 발끝·발등이 바닥 선(케이블)에 <b>걸린다</b> — 발바닥으로 선을 <b>밟거나 누르는 장면이 아니다</b>(걸림≠밟기). 감김·휘감김 아님. 넘어짐·유리 없음.</p>
+
+      <p class="action heavy">별도 스냅컷(사이드). 실험대(책상) 위 시험관·비커가 넘어져 <b>책상 가장자리 밖 아래로</b> 떨어지며 바닥에서 깨진다 — 책상면보다 위로 튀어오르거나 공중에 떠 있는 유리 연출 금지. 책꽂이·선반 아님. 발·걸림 없음. 연구원들 전원 시선.</p>
+
+      <p class="action thriller">와르르 깨지는 소리. 이선우 연구원도 고개를 든다. 오성은 박사만 다시 현미경으로 시선을 돌린다. 모니터에 글자가 떠오른다. OS-Bio Cell DETECTED.</p>
+      <div class="dialogue-block">
+        <p class="character">이선우 연구원</p>
+        <p class="paren">(숨이 가빠져)</p>
+        <p class="line shout">박사님! 됐어요, 됐다고요!</p>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="scene" id="s4">
+      <p class="slug"><span class="num">4.</span>INT. OS-Bio Complex 연구소 - 밤</p>
+      <p class="action">연구원들이 몰려든다. 누군가 깨진 유리를 피한다. 바닥에 엎드린 채 일어나는 익명의 여성 연구원 — 풀어헤친 머리, 옆모습만, 얼굴은 여전히 식별되지 않는다. 오성은 박사는 아무 말 없이 현미경을 들여다본다. 한참. 무표정. 연구원들의 숨만 들린다. 이선우 연구원의 손이 아직 떨린다.</p>
+      <p class="action">오성은 박사가 천천히 일어난다. 잔뜩 긴장한 얼굴들을 한 바퀴 훑고, 씨익 웃는다.</p>
+      <div class="dialogue-block">
+        <p class="character">오성은 박사</p>
+        <p class="line">성공이네.</p>
+      </div>
+      <p class="action">환호. 박수. 누군가 이선우 연구원의 등을 친다. 카메라는 그 소란 아래로 내려가, 아직 바닥에 남은 깨진 시험관·비커 파편을 본다. 조각 위에 오송의 형광등이 길게 가른다.</p>
+      <div class="dialogue-block">
+        <p class="character">이선우 연구원</p>
+        <p class="paren">(거의 혼잣말처럼)</p>
+        <p class="line">이게… 저희가 만들려고 한 게 아닌데요.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">오성은 박사</p>
+        <p class="line">그래서 더 중요하다. 다시는 안 생길 수도 있으니까.</p>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section class="scene" id="s5">
+      <p class="slug"><span class="num">5.</span>INT. 기자회견장 - 낮</p>
+      <p class="action">국내 언론, 외신. 셔터가 끊이지 않는다. 오성은 박사가 입장한다.</p>
+      <div class="dialogue-block">
+        <p class="character">오성은 박사</p>
+        <p class="line">기나긴 연구 끝에 우리 연구팀은 마침내 인체의 모든 조직으로 분화할 수 있는 유도만능줄기세포, iPSC, 일명 OS-Bio Cell를 발견했습니다.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">오성은 박사</p>
+        <p class="line">OS-Bio Cell는 세포 분열 과정에서 OS-Bio 기술을 활용해 실험하던 중, 돌연변이로 만들어졌습니다. 아직 이런 돌연변이가 어떤 환경에서, 그리고 왜 생기는지는 규명하지 못했습니다. 하지만 우리 연구팀의 실험 데이터를 거꾸로 분석해 실험하다 보면, 이 세포의 발생에 대한 근거를 찾을 수 있을 거라 예측됩니다.</p>
+      </div>
+      <p class="action">실망하는 기자들. 비판적인 태도로 손을 든다.</p>
+      <div class="dialogue-block">
+        <p class="character">기자1</p>
+        <p class="line">유도만능줄기세포의 발생 기원이 확실히 증명된 것도 아닌데, 이렇게 중간 결과를 발표하는 이유는 뭡니까?</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">기자2</p>
+        <p class="line">오송 바이오 클러스터에 대한 투자를 유치하기 위한 상업적인 목적 아닙니까?</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">오성은 박사</p>
+        <p class="line">우리 연구팀은 OS-Bio Cell 발생에 대한 연구를 계속 진행할 거고, 반드시 발생 기원을 알아낼 겁니다. 중요한 것은 이 OS-Bio Cell입니다.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">기자3</p>
+        <p class="paren">(어이없다는 듯)</p>
+        <p class="line">발생 기원도 모르는데 OS-Bio Cell가 무슨 의미가 있다는 겁니까?</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">오성은 박사</p>
+        <p class="line">이 OS-Bio Cell는 심장이면 심장, 간이면 간, 피부, 심지어 뇌까지로도 분화가 가능하며, 인간 게놈지도가 이미 완성되어 있기 때문에 그것을 지금 당장이라도 만들 수 있다는 겁니다.</p>
+      </div>
+      <p class="action">기자회견장이 다시 웅성거린다.</p>
+      <div class="dialogue-block">
+        <p class="character">기자4</p>
+        <p class="line">그럼 인간이 만들 최초의 장기는 뭡니까?</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">오성은 박사</p>
+        <p class="line">이 세포가 누군가의 생명을 구할 수도, 산업에 활용할 수도 있기 때문에 어디에 우선순위를 둬야 할지 아직 결정을 내리지 못했습니다.</p>
+      </div>
+      <p class="action">기자5가 카메라를 보며 말한다. 카메라가 천천히 뒤로 빠져 빌딩 옥외 전광판을 잡는다. 전광판 너머로 오송생명과학단지의 유리 외벽이 낮빛을 받는다.</p>
+      <div class="dialogue-block">
+        <p class="character">기자5</p>
+        <p class="line">오송생명과학단지 OS-Bio Complex 연구소에서 오성은 박사의 연구팀이 인체의 모든 조직으로 분화할 수 있는 유도만능줄기세포, iPSC, 일명 OS-Bio Cell를 발견했다고 발표했습니다. 장애와 질병 앞에 힘없이 무릎 꿇던 인간은 무병장수를 위한 길에 한 걸음 다가섰습니다. 앞으로 인간이 만들어낼 최초의 장기가 무엇이 될지, 그 결과에 귀추가 주목됩니다.</p>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section class="scene" id="s6">
+      <p class="slug"><span class="num">6.</span>INT. 국무회의실 - 낮</p>
+      <p class="action">긴 탁자. 대통령, 총리, 장관들. 장관들이 삿대질하고 멱살을 잡는다. 대통령(나이 들어 보임, 사랑의 열매 핀)은 화가 난 옆모습. 창밖으로 이 결정이 오송으로 떨어질 것임이 느껴진다.</p>
+      <div class="dialogue-block">
+        <p class="character">미래창조과학부 장관</p>
+        <p class="line">인간의 뇌로 분화시켜 로봇에 이식해야 합니다. 어설픈 인공지능을 대신해 산업에 활용해야 합니다.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">보건복지부 장관</p>
+        <p class="line shout">무슨 소립니까. 사람의 생명이 우선입니다. 인체 장기로 분화시켜야 합니다.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">기획재정부 장관</p>
+        <p class="line">내수 경제 위축으로 국민들이 고통스러워한 지 너무 오래됐습니다. 산업에 활용해야 합니다.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">보건복지부 장관</p>
+        <p class="line shout">사람의 생명보다 돈이 더 중요합니까?</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">기획재정부 장관</p>
+        <p class="line">가계부채로 자살하는 이들이 훨씬 많습니다. 소수의 비정상인 사람들을 위해 다수의 정상인들이 희생해야 합니까?</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">보건복지부 장관</p>
+        <p class="line shout">말 조심하세요. 비정상이라니요.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">총리</p>
+        <p class="line">진정들 하세요. 싸우자고 여기 모인 게 아닙니다. 보건복지부 장관 말도, 미래창조과학부, 기획재정부 장관 말도 모두 일리가 있습니다. 하지만 잘못 결정했다가 오히려 세계 각국의 비난을 받고, 국내 바이오 산업 자체가 무너질 수 있습니다. 또 이 OS-Bio Cell 덕분에 바닥을 치던 대통령 지지율도 상승하고 있습니다. 국민들의 의견을 묻는단 핑계로 총선 뒤로 미뤄야 합니다.</p>
+      </div>
+      <p class="action">침묵.</p>
+      <div class="dialogue-block">
+        <p class="character">대통령</p>
+        <p class="line">총리 의견에 동의합니다. 단순 돌연변이라면 처음이자 마지막일 수도 있습니다. 신중하게 결정해야 합니다.</p>
+      </div>
+      <p class="action">장관들, 말이 없다. 카메라는 대통령의 손을 본다. 손이 살짝 떨린다.</p>
+    </section>
+
+    <!-- 7 -->
+    <section class="scene" id="s7">
+      <p class="slug"><span class="num">7.</span>INT. OS-Bio Complex 연구소 - 낮</p>
+      <p class="action">오성은 박사가 홀로 실험 중이다. 문이 쾅 열린다.</p>
+      <div class="dialogue-block">
+        <p class="character">연구원1</p>
+        <p class="paren">(다급하게)</p>
+        <p class="line shout">박사님, 큰일 났습니다. OS-Bio Cell가 사라졌습니다.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">오성은 박사</p>
+        <p class="line">뭐라고?</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">연구원1</p>
+        <p class="line">실험 데이터도 모두 사라졌습니다. 이선우 연구원도 안 보입니다. 몇 시간 전 누가 찾아왔는데, 그 사람에게 넘긴 것 같습니다.</p>
+      </div>
+      <p class="action">오성은 박사는 의자에 주저앉는다. 표정은 충격처럼 보이지만, 카메라는 그의 주먹을 한 박자 더 본다. 너무 꼭 쥐고 있다.</p>
+    </section>
+
+    <!-- 8 -->
+    <section class="scene" id="s8">
+      <p class="slug"><span class="num">8.</span>INT. 서울역 - 낮</p>
+      <p class="action">TV 앞에 사람들이 몰려 있다.</p>
+      <div class="dialogue-block">
+        <p class="character">앵커</p>
+        <p class="line">OS-Bio Cell이 사라졌습니다. 오성은 박사팀의 이모 연구원이 누군가에게 넘긴 것으로 추정되며, 경찰은 최초 발견자를 용의자로 보고 있습니다.</p>
+      </div>
+    </section>
+
+    <!-- 9-11 24 style -->
+    <section class="scene" id="s9">
+      <p class="slug"><span class="num">9.</span>INT. OS 제약 대표실 - 낮</p>
+      <p class="action">미국 드라마 24처럼, 화면이 나뉜다. 서울역 뉴스가 한 칸으로 밀리고 대표실이 앞으로 나온다.</p>
+      <div class="dialogue-block">
+        <p class="character">OS 제약 대표</p>
+        <p class="line shout">어떻게 된 겁니까? 분명히 확보했다고 하셨잖습니까.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">미래창조과학부 장관</p>
+        <p class="line">우리 손에 들어올 거니까 걱정 마십시오.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">OS 제약 대표</p>
+        <p class="line">이선우 연구원의 전화기도 꺼져 있고 위치 추적도 안 되는데.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">기획재정부 장관</p>
+        <p class="line">경찰청장에게 말해 뒀습니다. 찾으면 가장 먼저 우리에게 연락 줍니다.</p>
+      </div>
+    </section>
+
+    <section class="scene" id="s10">
+      <p class="slug"><span class="num">10.</span>INT. 보건복지부 장관실 - 낮</p>
+      <p class="action">4분할. 이설은 영화제용 파인 드레스 차림으로 장관 앞 책상 가장자리에 걸터 앉은 듯 서 있다. 스캔들 사진 3장을 책상 위에 흩뿌린다 — ① 호텔·와인잔·러브샷 ② 장관 재킷 벗고 풀셔츠 포옹 ③ 리조트 수영장 <b>이설 비키니 선명</b>. 장관: 나이 든 장동건 톤 <b>근육질 미남</b>, 검은 장발 어깨 아래.</p>
+      <div class="dialogue-block">
+        <p class="character">이설</p>
+        <p class="line">장기로 바꾸기로 결정만 나면 국립 생명공학 연구원에서 바꿔치기할 수 있다고 하셨잖아요. 피부로 만들어 이식해 주시겠다고. 제 아름다움을 영원히 유지시켜 주겠다고. 반드시 찾아주세요.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">보건복지부 장관</p>
+        <p class="line shout">이게 뭐 하는 짓이야.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">이설</p>
+        <p class="line">저야 한 번의 스캔들로 끝나지만, 장관님 정치 인생은 완전히 끝나는 거예요.</p>
+      </div>
+    </section>
+
+    <section class="scene" id="s11">
+      <p class="slug"><span class="num">11.</span>INT. 어둠 속 사무실 - 밤</p>
+      <p class="action">총리의 뒷모습. 통화.</p>
+      <div class="dialogue-block">
+        <p class="character">총리</p>
+        <p class="line">확실히 한 거 맞지? 자네, 누가 그 자리 맡겨 준 지 알고 있지. 내가 추천서 안 써 줬으면 OS-Bio Cell도 없었어.</p>
+      </div>
+      <p class="action">총리가 돌아 다른 사람에게 보고한다.</p>
+      <div class="dialogue-block">
+        <p class="character">총리</p>
+        <p class="line">OS-Bio Cell, 확보했습니다.</p>
+      </div>
+      <p class="action">PAN UP. 발부터 얼굴까지. 대통령이다.</p>
+      <div class="dialogue-block">
+        <p class="character">대통령</p>
+        <p class="line">수고했네.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">총리</p>
+        <p class="line">축하드립니다, 각하. 진시황이 이루지 못했던 불로장생의 꿈을 각하께서는 이루실 수 있게 됐습니다.</p>
+      </div>
+    </section>
+
+    <section class="scene" id="s12">
+      <p class="slug"><span class="num">12.</span>INT. OS-Bio Complex 연구소 - 낮</p>
+      <p class="action">어수선하다. 오성은 박사는 그 모습을 착잡하게 본다.</p>
+      <div class="dialogue-block">
+        <p class="character">연구원2</p>
+        <p class="line">몇 년을 고생한 노력이 물거품이야.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">연구원4</p>
+        <p class="line">연구비가 끊기기라도 하면 우린 다 끝장이야.</p>
+      </div>
+    </section>
+
+    <section class="scene" id="s13">
+      <p class="slug"><span class="num">13.</span>INT. 오성은 박사의 집 - 저녁</p>
+      <p class="action">부인이 걱정스럽게 본다.</p>
+      <div class="dialogue-block">
+        <p class="character">한수진</p>
+        <p class="line">힘내요. 세포는 다시 만들면 되잖아요. 세포가 사라졌다고 기술도 사라진 게 아니잖아요.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">오성은 박사</p>
+        <p class="line weak">……</p>
+      </div>
+      <p class="action">서재. 한숨. FADE OUT.</p>
+    </section>
+
+    <section class="scene" id="s14">
+      <p class="slug"><span class="num">14.</span>EXT. 충북의 산길 - 낮</p>
+      <p class="action">FADE IN. 오성은 박사의 차. 라디오에서 실종 뉴스가 흐른다. 그의 얼굴은 어둡다. 창문 밖으로는 그와 전혀 다른, 충북의 능선과 맑은 하늘이 스친다. 논이 열리고, 산이 굽고, 구불구불한 도로가 이어진다. 잠시 차창에 오성은 박사의 눈이 비친다. 그는 라디오를 끈다. 호스피스 간판이 천천히 커진다.</p>
+    </section>
+
+    <section class="scene" id="s15">
+      <p class="slug"><span class="num">15.</span>INT. 호스피스 병동 - 낮</p>
+      <p class="action">문틈으로 앙상한 지성. 인기척에 고개를 돌린다.</p>
+      <div class="dialogue-block">
+        <p class="character">김지성</p>
+        <p class="line">어, 성은이 아냐?</p>
+      </div>
+      <p class="action">오성은 박사는 슬픈 미소로 손을 흔든다.</p>
+    </section>
+
+    <section class="scene" id="s16">
+      <p class="slug"><span class="num">16.</span>EXT. 호스피스 공원 - 낮</p>
+      <p class="action">오성은 박사가 휠체어를 민다. 삐그덕 소리만. 충청 사투리가 정적을 깬다.</p>
+      <div class="dialogue-block">
+        <p class="character">김지성</p>
+        <p class="line">그래서, 그 뭐시기. OS-Bio Cell인가 뭔가 하는 건 아예 물 건너간 거여?</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">오성은 박사</p>
+        <p class="line weak">……</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">김지성</p>
+        <p class="line">지연이가 많이 좋아했는데…</p>
+      </div>
+      <p class="action">다시 정적. 병실로 돌아온다.</p>
+      <div class="dialogue-block">
+        <p class="character">김지성</p>
+        <p class="line">조심히 들어가.</p>
+      </div>
+      <p class="action">오성은 박사는 고개만 끄덕인다.</p>
+    </section>
+
+    <section class="scene" id="s17">
+      <p class="slug"><span class="num">17.</span>EXT. 호스피스 주차장 / 산길 - 낮</p>
+      <p class="action">차 안에서 한숨. 다시 산길. 아름다운 경관과 안 좋은 표정.</p>
+    </section>
+
+    <section class="scene" id="s18">
+      <p class="slug"><span class="num">18.</span>INT. 청남대 인근 여관 - 낮</p>
+      <p class="action">빈 주차장. 최민재가 놀란 얼굴로 반긴다.</p>
+      <div class="dialogue-block">
+        <p class="character">최민재</p>
+        <p class="line">이게 무슨 일이여.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">오성은 박사</p>
+        <p class="line">그냥. 좀 답답해서.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">최민재</p>
+        <p class="line">그려. 안 좋은 일 있을 때 청남대만 한 곳이 없지. 대통령도 안 좋은 일 있으면 청남대 와서 쉬었다잖여.</p>
+      </div>
+    </section>
+
+    <section class="scene" id="s19">
+      <p class="slug"><span class="num">19.</span>EXT. 청남대 - 낮</p>
+      <p class="action">본관. 산길. 연못으로 이어지는 산책로. 두 사람이 걷는다. 오성은 박사의 심정과 상관없이 청남대는 아름답다. 관광객은 거의 없다. 최민재가 빈 벤치를 손끝으로 가리킨다.</p>
+      <div class="dialogue-block">
+        <p class="character">최민재</p>
+        <p class="line">예전엔 수학여행 오던 애들도 있었는데. 요즘은 길도 이렇게 호젓혀.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">최민재</p>
+        <p class="line">그려. 그 OS-Bio Cell인가 하는 그거는 다시 못 만드는 거여?</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">오성은 박사</p>
+        <p class="line">아니. 언젠간 밝혀내겠지.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">최민재</p>
+        <p class="line">그럼 걱정할 거 하나 없구만. 다시 만들면 되잖여.</p>
+      </div>
+      <p class="action">호수. 오성은 박사가 물결을 본다. 바람이 일면 얼굴이 물에 깨진다.</p>
+    </section>
+
+    <section class="scene" id="s20">
+      <p class="slug"><span class="num">20.</span>INT. 연구소 주차장 차 안 - 밤 (회상)</p>
+      <p class="action">FADE IN. 거의 빈 주차장. 가로등. 오성은 박사 옆에 서류, USB, OS-Bio Cell.</p>
+      <div class="dialogue-block">
+        <p class="character">남자1</p>
+        <p class="paren">(전화기 너머)</p>
+        <p class="line">확실히 한 거 맞지?</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">오성은 박사</p>
+        <p class="line">네. 지금 제가 가지고 있습니다.</p>
+      </div>
+    </section>
+
+    <section class="scene" id="s21">
+      <p class="slug"><span class="num">21.</span>EXT. 청남대 호수 - 낮</p>
+      <p class="action">전화벨. 오성은 박사의 눈이 커진다.</p>
+      <div class="dialogue-block">
+        <p class="character">최민재</p>
+        <p class="line">왜 그래. 무슨 일 있어?</p>
+      </div>
+    </section>
+
+    <section class="scene" id="s22">
+      <p class="slug"><span class="num">22.</span>INT. 장례식장 - 낮</p>
+      <p class="action">지연과 어린 아들이 상주. 영정 속 지성은 환하게 웃는다. 지연, 두 사람을 보자 더 운다.</p>
+    </section>
+
+    <section class="scene" id="s23">
+      <p class="slug"><span class="num">23.</span>EXT. 충북의 개울 - 낮 (유년)</p>
+      <p class="action">남자아이 셋, 여자아이 하나. 물장난. 햇살이 물에 부서진다.</p>
+    </section>
+
+    <section class="scene" id="s24">
+      <p class="slug"><span class="num">24.</span>INT. 장례식장 - 낮</p>
+      <p class="action">육개장. 오성은 박사, 최민재, 강지훈.</p>
+      <div class="dialogue-block">
+        <p class="character">강지훈</p>
+        <p class="line">cis-AB형이 대체 뭐야. 하필 한중일에서만 극히 드물게 나온다는 희귀 혈액형일 게 뭐람. 심장 이식 시도도 못 해보고.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">최민재</p>
+        <p class="line">고향 떠나서 한 번도 못 보던 우리가 지성 덕에 한자리에 모였네. 그래, 사업은 잘 돼가?</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">강지훈</p>
+        <p class="paren">(망설이며)</p>
+        <p class="line">사실, 우리 회사 부도 났어. 서버가 디도스 공격으로 생산량을 잘못 계산해서…</p>
+      </div>
+      <p class="action">최민재는 위로한다. 오성은 박사의 얼굴에는 죄책감만 남는다.</p>
+    </section>
+
+    <section class="scene" id="s25">
+      <p class="slug"><span class="num">25.</span>INT. 차 안 - 저녁</p>
+      <p class="action">오성은 박사가 유년 사진을 만진다. 조수석에 서류봉투, USB, OS-Bio Cell.</p>
+    </section>
+
+    <section class="scene" id="s26">
+      <p class="slug"><span class="num">26.</span>EXT. 충주 탄금대 - 비</p>
+      <p class="action">남한강과 달천이 맞닿는 절벽. 비. 강물이 빠르다. 멀리 바위와 비석이 젖어 있다. 이곳은 예전에, 패한 사람들이 강으로 몸을 던진 자리이기도 하다.</p>
+      <p class="action">검은 우산들. 이지연이 유골함을 연다. <b>하얀</b> 유골가루를 강에 뿌린다. 물이 받아, 흘려보낸다. 어린 아들이 그 등을 본다.</p>
+      <p class="action">사람들이 떠난다. 오성은 박사만 남는다. 우산을 떨어뜨리고 무릎 꿇는다. (트레일러: 원경·짙은 연무)</p>
+      <div class="dialogue-block">
+        <p class="character">오성은 박사</p>
+        <p class="paren">(울면서)</p>
+        <p class="line shout">미안해. 정말 미안해.</p>
+      </div>
+      <p class="action">카메라가 하늘로 올라간다. 절벽과 강, 작아지는 그의 등.</p>
+    </section>
+
+    <section class="scene" id="s27">
+      <p class="slug"><span class="num">27.</span>INT. OS-Bio Complex 연구소 - 밤</p>
+      <p class="action">오성은 박사가 배양 용기를 제자리에 돌려놓는다. USB를 꽂고 데이터를 되돌린다. 모니터 불빛이 그의 젖은 얼굴을 비춘다. 그는 한참을 보다가 돌아선다.</p>
+    </section>
+
+    <section class="scene" id="s28">
+      <p class="slug"><span class="num">28.</span>EXT. 옥외 전광판 - 밤</p>
+      <div class="dialogue-block">
+        <p class="character">앵커</p>
+        <p class="line">사라졌던 OS-Bio Cell가 돌아왔습니다.</p>
+      </div>
+    </section>
+
+    <section class="scene" id="s29">
+      <p class="slug"><span class="num">29.</span>EXT. 오송생명과학단지 - 낮</p>
+      <p class="action heavy">자막: 3년 후.</p>
+      <p class="action">오송생명과학단지. 입구부터 사람이 많다. 안내 방송. 아이들은 유리 너머를 본다. 부모들이 그 뒤를 찍는다. 오송의 하늘이 넓다. 카메라가 단지 밖으로 빠지며, 사람들이 버스와 택시로 흩어진다. 그중 한 대의 행선이 청남대다.</p>
+    </section>
+
+    <section class="scene" id="s30">
+      <p class="slug"><span class="num">30.</span>INT. 최민재의 숙박업소 - 낮</p>
+      <div class="dialogue-block">
+        <p class="character">최민재</p>
+        <p class="line">죄송합니다. 빈 방이 없습니다.</p>
+      </div>
+      <p class="action">그가 웃는다. 창밖으로 청남대로 가는 차들이 지나간다.</p>
+    </section>
+
+    <section class="scene" id="s31">
+      <p class="slug"><span class="num">31.</span>INT. 충북 산업단지 공장 - 낮</p>
+      <p class="action">라인이 돌아간다. 노동자들의 얼굴이 편하다.</p>
+      <div class="dialogue-block">
+        <p class="character">직원1</p>
+        <p class="line">사장님, 공장 라인 더 늘려야겠는데요. 주문이 엄청 밀려 있어요.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">강지훈</p>
+        <p class="line">그래. 라인도 늘리고 신입 채용 공고도 내. 상여금도 좀 줘야겠어.</p>
+      </div>
+    </section>
+
+    <section class="scene" id="s32">
+      <p class="slug"><span class="num">32.</span>INT. 오송 바이오 장기이식센터 - 낮</p>
+      <div class="dialogue-block">
+        <p class="character">의사</p>
+        <p class="line">많이도 망가졌네. 담배를 얼마나 피워 댄 거예요. 폐가 완전히 맛이 갔네.</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">환자</p>
+        <p class="line">저, 얼마 남았나요?</p>
+      </div>
+      <div class="dialogue-block">
+        <p class="character">의사</p>
+        <p class="line">그걸 제가 어떻게 알아요. 폐 떼어내고 새로 달기만 하면 되는데. 오늘 끝나고 검사 받고 가세요. 환자분한테 맞는 폐 만들어야 하니까. 다음 환자분.</p>
+      </div>
+      <p class="action">환자는 울먹이며 감사한다. 의사는 모니터만 본다. 이제 일상이 된 기적.</p>
+    </section>
+
+    <section class="scene" id="s33">
+      <p class="slug"><span class="num">33.</span>INT. OS-Bio Complex 연구소 - 낮</p>
+      <p class="action">복도. 다리만. 문을 여는 손만. 연구원들이 일제히 문을 본다. 오성은 박사다. 씨익, 그때 그 미소.</p>
+      <div class="dialogue-block">
+        <p class="character">오성은 박사</p>
+        <p class="line">자, 그럼 다음 연구 시작해볼까?</p>
+      </div>
+      <p class="action">지미집, 하늘로. 오송생명과학단지 전체가 잡힌다. 충북의 빛이 유리에 내려앉는다.</p>
+      <p class="trans">FADE OUT</p>
+    </section>
+
+    <p class="end-mark">Fine.</p>
+  
+    </article>
+  </div>
+
+  <footer>
+    <div class="foot-inner">
+      <div class="copy">© 도진우 OS-Bio Cell : 제 2의 초전도체</div>
+    </div>
+  </footer>
+
+  <script>
+    function enterPage(name) {
+      document.body.classList.remove("gated");
+      showView(name);
+    }
+    document.querySelectorAll("[data-enter]").forEach((el) => {
+      el.addEventListener("click", () => enterPage(el.dataset.enter));
+    });
+    function showView(name) {
+      document.body.classList.remove("view-syn", "view-script");
+      document.body.classList.add(name === "script" ? "view-script" : "view-syn");
+      document.querySelectorAll("nav.menu button").forEach((b) => {
+        b.classList.toggle("on", b.dataset.view === (name === "script" ? "script" : "syn"));
+      });
+      window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+    }
+    document.querySelectorAll("[data-view]").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.preventDefault();
+        showView(el.dataset.view);
+      });
+    });
+    const buttons = document.querySelectorAll(".tabs button");
+    const panels = document.querySelectorAll(".panel");
+    buttons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        buttons.forEach((b) => b.classList.remove("on"));
+        panels.forEach((p) => p.classList.remove("on"));
+        btn.classList.add("on");
+        document.getElementById(btn.dataset.tab).classList.add("on");
+        const main = document.querySelector("main");
+        if (main) window.scrollTo({ top: main.offsetTop - 80, behavior: "smooth" });
+      });
+    });
+    document.querySelectorAll('.syn-only a[href^="#"]').forEach((a) => {
+      a.addEventListener("click", (e) => {
+        const id = a.getAttribute("href").slice(1);
+        const tab = document.querySelector('.tabs button[data-tab="' + id + '"]');
+        if (tab) {
+          e.preventDefault();
+          showView("syn");
+          tab.click();
+        }
+      });
+    });
+  </script>
+<a href="index.html" class="back-portfolio">← Back to Portfolio</a>
+
+<!-- Trailer popup -->
+<div class="trailer-popup" id="trailerPopup" aria-hidden="true" role="dialog">
+  <div class="trailer-popup__card">
+    <span class="trailer-popup__label">◉ Trailer</span>
+    <p class="trailer-popup__msg">면접에서 <span class="hl">보여드리겠습니다.</span></p>
+    <p class="trailer-popup__sub">30초 예고편은 대면 면접 자리에서 직접 공개합니다.</p>
+    <button type="button" class="trailer-popup__close" data-trailer-close>확인</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var pop = document.getElementById('trailerPopup');
+  if(!pop) return;
+  function open(){ pop.classList.add('on'); pop.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; }
+  function close(){ pop.classList.remove('on'); pop.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+  document.querySelectorAll('[data-trailer-popup]').forEach(function(el){
+    el.addEventListener('click', function(e){ e.preventDefault(); open(); });
+  });
+  document.querySelectorAll('[data-trailer-close]').forEach(function(el){
+    el.addEventListener('click', close);
+  });
+  pop.addEventListener('click', function(e){ if(e.target === pop) close(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') close(); });
+})();
+</script>
+</body>
+</html>
