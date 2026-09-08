@@ -215,7 +215,7 @@
         isolation: isolate;
         position: relative;
         display: grid;
-        grid-template-columns: 250px minmax(0, 1fr) 360px;
+        grid-template-columns: minmax(0, 1fr) 250px 360px;
         align-items: center;
         gap: 38px;
         min-height: 610px;
@@ -247,6 +247,8 @@
       }
 
       .hero-photo-frame {
+        grid-column: 2;
+        grid-row: 1;
         position: relative;
         z-index: 1;
         display: grid;
@@ -271,7 +273,7 @@
         height: 290px;
         border-radius: 15px;
         object-fit: cover;
-        object-position: 54% center;
+        object-position: 62% center;
         transform: translateZ(0);
         transition: transform 240ms ease;
       }
@@ -281,6 +283,8 @@
       }
 
       .hero-intro {
+        grid-column: 1;
+        grid-row: 1;
         position: relative;
         z-index: 1;
         transform: translate3d(var(--pointer-x), var(--pointer-y), 0);
@@ -377,6 +381,8 @@
       }
 
       .hero-contact {
+        grid-column: 3;
+        grid-row: 1;
         align-self: stretch;
         display: flex;
         flex-direction: column;
@@ -862,7 +868,7 @@
 
       @media (max-width: 1050px) {
         .hero {
-          grid-template-columns: 220px minmax(0, 1fr) 280px;
+          grid-template-columns: minmax(0, 1fr) 220px 280px;
           gap: 28px;
           padding-top: 126px;
           padding-right: 56px;
@@ -892,7 +898,7 @@
 
       @media (max-width: 820px) {
         .hero {
-          grid-template-columns: 190px minmax(0, 1fr);
+          grid-template-columns: minmax(0, 1fr) 190px;
           align-items: start;
           min-height: 0;
           padding-top: 116px;
@@ -911,6 +917,7 @@
 
         .hero-contact {
           grid-column: 1 / -1;
+          grid-row: 2;
           display: grid;
           grid-template-columns: 120px 1fr;
           column-gap: 24px;
@@ -1017,6 +1024,8 @@
         }
 
         .hero-photo-frame {
+          grid-column: 1;
+          grid-row: 2;
           width: 180px;
           height: 232px;
         }
@@ -1045,6 +1054,7 @@
 
         .hero-contact {
           grid-template-columns: 1fr;
+          grid-row: 3;
           gap: 16px;
         }
 
