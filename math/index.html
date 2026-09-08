@@ -149,7 +149,7 @@
 
       .site-nav nav {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         min-width: 0;
       }
 
@@ -210,6 +210,7 @@
       }
 
       .hero {
+        --hero-content-width: 900px;
         --pointer-x: 0px;
         --pointer-y: 0px;
         isolation: isolate;
@@ -218,9 +219,9 @@
         grid-template-columns: minmax(0, 1fr) 250px;
         grid-template-rows: auto auto;
         align-items: center;
-        gap: 38px 68px;
-        min-height: 680px;
-        padding: 132px 84px 64px;
+        gap: 38px 44px;
+        min-height: 580px;
+        padding: 132px max(84px, calc((100vw - var(--hero-content-width)) / 2)) 64px;
         border-bottom: 1px solid var(--line);
       }
 
@@ -251,6 +252,7 @@
         grid-column: 2;
         grid-row: 1;
         justify-self: end;
+        align-self: center;
         position: relative;
         z-index: 1;
         display: grid;
@@ -287,6 +289,7 @@
       .hero-intro {
         grid-column: 1;
         grid-row: 1;
+        align-self: center;
         position: relative;
         z-index: 1;
         transform: translate3d(var(--pointer-x), var(--pointer-y), 0);
@@ -382,17 +385,18 @@
         color: var(--paper);
       }
 
-      .hero-contact {
-        grid-column: 1 / -1;
-        grid-row: 2;
+      .contact-section {
+        padding: 0 84px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .contact-section-inner {
         display: grid;
         grid-template-columns: 112px minmax(0, 1fr);
         grid-template-rows: auto auto;
-        align-self: stretch;
         align-items: start;
         gap: 0 32px;
-        padding: 24px 0 0;
-        border-top: 1px solid var(--line);
+        padding: 24px 0 18px;
       }
 
       .contact-title {
@@ -440,6 +444,12 @@
         gap: 14px;
         padding-top: 17px;
         border-top: 1px solid var(--line);
+      }
+
+      .hero-scroll-cue {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        margin-top: 0;
       }
 
       .hero-nav a {
@@ -491,9 +501,6 @@
       }
 
       .ability-section {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        gap: 78px;
         min-height: 560px;
       }
 
@@ -502,8 +509,18 @@
         border-right: 1px solid var(--line);
       }
 
+      .about-section {
+        min-height: 420px;
+      }
+
+      .about-section .about-column {
+        padding-right: 0;
+        border-right: 0;
+      }
+
       .about-cards {
         display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 20px;
         margin-top: 42px;
       }
@@ -721,6 +738,10 @@
         margin-top: 8px;
       }
 
+      .education-timeline::before {
+        bottom: 0;
+      }
+
       .timeline-item {
         position: relative;
         display: grid;
@@ -884,7 +905,8 @@
       @media (max-width: 1050px) {
         .hero {
           grid-template-columns: minmax(0, 1fr) 220px;
-          min-height: 640px;
+          grid-template-rows: auto auto;
+          min-height: 560px;
           gap: 28px;
           padding-top: 126px;
           padding-right: 56px;
@@ -902,6 +924,7 @@
         }
 
         .section-block,
+        .contact-section,
         .footer {
           padding-right: 56px;
           padding-left: 56px;
@@ -931,13 +954,15 @@
           height: 226px;
         }
 
-        .hero-contact {
-          grid-column: 1 / -1;
-          grid-row: 2;
+        .contact-section-inner {
           display: grid;
           grid-template-columns: 120px 1fr;
           column-gap: 24px;
-          padding: 0;
+        }
+
+        .hero-scroll-cue {
+          grid-column: 1 / -1;
+          grid-row: 2;
         }
 
         .contact-title {
@@ -955,14 +980,15 @@
         }
 
         .ability-section {
-          grid-template-columns: 1fr;
-          gap: 56px;
+          min-height: 0;
         }
 
-        .about-column {
-          padding: 0 0 56px;
-          border-right: 0;
-          border-bottom: 1px solid var(--line);
+        .about-section .about-column {
+          padding: 0;
+        }
+
+        .about-section .about-cards {
+          grid-template-columns: 1fr;
         }
 
         .section-index-spacer {
@@ -1067,11 +1093,20 @@
           margin-top: 42px;
         }
 
-        .hero-contact {
+        .contact-section {
+          padding-right: 24px;
+          padding-left: 24px;
+        }
+
+        .contact-section-inner {
           grid-template-columns: 1fr;
           grid-template-rows: auto auto auto;
-          grid-row: 3;
           gap: 16px;
+        }
+
+        .hero-scroll-cue {
+          grid-column: 1;
+          grid-row: 3;
         }
 
         .contact-list {
@@ -1189,9 +1224,10 @@
         <div class="site-nav">
           <a class="site-mark" href="#top">DJ<span>•</span></a>
           <nav aria-label="주요 섹션">
-            <a href="#about">01 / ABOUT <span>↗</span></a>
-            <a href="#education">02 / EDUCATION <span>↗</span></a>
-            <a href="#experience">03 / EXPERIENCE <span>↗</span></a>
+            <a href="#ability">01 / ABILITY <span>↗</span></a>
+            <a href="#about">02 / ABOUT <span>↗</span></a>
+            <a href="#education">03 / EDUCATION <span>↗</span></a>
+            <a href="#experience">04 / EXPERIENCE <span>↗</span></a>
           </nav>
           <a class="site-cta" href="#contact">CONTACT <span>↗</span></a>
         </div>
@@ -1215,13 +1251,17 @@
           <p class="hero-role">MATH TEACHER</p>
           <div class="cyan-rule"></div>
           <p class="hero-summary">중등 대수 특화 <span>·</span> 속진 · 심화 학습</p>
-          <a class="scroll-cue" href="#about">
-            <span>SCROLL TO EXPLORE</span>
-            <b>↓</b>
-          </a>
         </div>
 
-        <div class="hero-contact" data-reveal>
+        <a class="scroll-cue hero-scroll-cue" href="#ability">
+          <span>SCROLL TO EXPLORE</span>
+          <b>↓</b>
+        </a>
+
+      </header>
+
+      <section class="contact-section" id="contact">
+        <div class="contact-section-inner" data-reveal>
           <p class="contact-title">CONTACT</p>
           <div class="contact-list">
             <a href="tel:01094051916"><span>TEL</span><strong>010-9405-1916</strong></a>
@@ -1229,34 +1269,21 @@
             <div><span>BASE</span><strong>서울 강남구 대치동</strong></div>
           </div>
           <nav class="hero-nav" aria-label="페이지 이동">
+            <a href="#ability">TEACHING ABILITY</a>
             <a href="#about">ABOUT ME</a>
             <a href="#education">EDUCATION</a>
             <a href="#experience">EXPERIENCE</a>
           </nav>
         </div>
-      </header>
+      </section>
 
-      <section class="section-block ability-section" id="about">
-        <div class="about-column" data-reveal>
-          <p class="section-index">02</p>
-          <h2>ABOUT ME</h2>
-          <div class="about-cards">
-            <article class="about-card about-card-blue" data-reveal>
-              <h3>중등 대수 특화</h3>
-              <p>방정식 및 함수</p>
-              <p>대상 : 노베이스 학생</p>
-            </article>
-            <article class="about-card about-card-gray" data-reveal>
-              <h3>속진 · 심화 학습</h3>
-              <p>대치동 기준 빠른 진도</p>
-              <p>대상 : 극상위권 학생</p>
-            </article>
+      <section class="section-block ability-section" id="ability">
+        <div class="editorial-layout ability-layout" data-reveal>
+          <div class="editorial-heading">
+            <p class="section-index">01</p>
+            <h2>TEACHING ABILITY</h2>
           </div>
-        </div>
-
-        <div class="ability-column">
-          <p class="section-index section-index-spacer" aria-hidden="true">02</p>
-          <h2>TEACHING ABILITY</h2>
+          <div class="ability-column">
           <div class="ratings" aria-label="강의 역량" data-reveal>
             <div class="rating-row" data-reveal>
               <span class="rating-label">실력</span>
@@ -1288,6 +1315,28 @@
             <div class="skill-row" data-reveal><span>학생 친화</span><span class="skill-track"><span style="--skill-value: 82%"></span></span></div>
             <div class="skill-row" data-reveal><span>상담 스킬</span><span class="skill-track"><span style="--skill-value: 78%"></span></span></div>
             <div class="skill-row" data-reveal><span>개인 수업</span><span class="skill-track"><span style="--skill-value: 100%"></span></span></div>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-block about-section" id="about">
+        <div class="about-layout" data-reveal>
+          <div class="about-column">
+            <p class="section-index">02</p>
+            <h2>ABOUT ME</h2>
+            <div class="about-cards">
+              <article class="about-card about-card-blue" data-reveal>
+                <h3>중등 대수 특화</h3>
+                <p>방정식 및 함수</p>
+                <p>대상 : 노베이스 학생</p>
+              </article>
+              <article class="about-card about-card-gray" data-reveal>
+                <h3>속진 · 심화 학습</h3>
+                <p>대치동 기준 빠른 진도</p>
+                <p>대상 : 극상위권 학생</p>
+              </article>
+            </div>
           </div>
         </div>
       </section>
@@ -1327,7 +1376,7 @@
               <div class="timeline-year"></div><div class="timeline-marker"></div>
               <div class="timeline-copy"><h3>생각하는 황소</h3><p>초등 수학 — 일품 · 실력 · 심화 · 경시</p><p>중등 수학 — 프라임 · 어드밴스 · 에센스 · 챌린지</p><p>고등 수학 — 수학의 샘 · 기본 정석 · 실력 정석</p></div>
             </article>
-            <article class="timeline-item" data-reveal>
+            <article class="timeline-item experience-gap" data-reveal>
               <div class="timeline-year"></div><div class="timeline-marker"></div>
               <div class="timeline-copy"><h3>CMS 대치 영재관</h3><p>초등 수학 — 최상위 수학</p><p>중등 기본 — Unlimited Core</p><p>중등 기초 — Unlimited Challenge</p><p>경시 — 중등 대수 기하</p></div>
             </article>
@@ -1355,7 +1404,7 @@
       (() => {
         const root = document.querySelector('.resume-shell');
         const hero = document.querySelector('.hero');
-        const sections = ['top', 'about', 'education', 'experience', 'contact'];
+        const sections = ['top', 'ability', 'about', 'education', 'experience', 'contact'];
         const navLinks = [...document.querySelectorAll('.site-nav nav a')];
         const revealItems = [...document.querySelectorAll('[data-reveal]')];
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
