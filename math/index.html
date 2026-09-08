@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="도진우 수학 강사 프로필 — 중등 대수 특화, 속진·심화 학습"
+      content="도진우 수학 강사 프로필 — 중등 대수 특화, 속진 · 심화 학습"
     />
     <meta name="theme-color" content="#23323a" />
     <title>도진우 | MATH TEACHER</title>
@@ -215,10 +215,11 @@
         isolation: isolate;
         position: relative;
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 250px 360px;
+        grid-template-columns: minmax(0, 1fr) 250px;
+        grid-template-rows: auto auto;
         align-items: center;
-        gap: 38px;
-        min-height: 610px;
+        gap: 38px 68px;
+        min-height: 680px;
         padding: 132px 84px 64px;
         border-bottom: 1px solid var(--line);
       }
@@ -249,6 +250,7 @@
       .hero-photo-frame {
         grid-column: 2;
         grid-row: 1;
+        justify-self: end;
         position: relative;
         z-index: 1;
         display: grid;
@@ -381,24 +383,31 @@
       }
 
       .hero-contact {
-        grid-column: 3;
-        grid-row: 1;
+        grid-column: 1 / -1;
+        grid-row: 2;
+        display: grid;
+        grid-template-columns: 112px minmax(0, 1fr);
+        grid-template-rows: auto auto;
         align-self: stretch;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding: 10px 4px 0 0;
+        align-items: start;
+        gap: 0 32px;
+        padding: 24px 0 0;
+        border-top: 1px solid var(--line);
       }
 
       .contact-title {
-        padding-bottom: 15px;
-        border-bottom: 1px solid var(--line);
+        grid-column: 1;
+        grid-row: 1;
+        padding-top: 3px;
       }
 
       .contact-list {
+        grid-column: 2;
+        grid-row: 1;
         display: grid;
-        gap: 23px;
-        padding: 26px 0 30px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 24px;
+        padding: 0;
       }
 
       .contact-list a,
@@ -424,6 +433,8 @@
       }
 
       .hero-nav {
+        grid-column: 2;
+        grid-row: 2;
         display: flex;
         justify-content: space-between;
         gap: 14px;
@@ -793,6 +804,10 @@
         min-height: 59px;
       }
 
+      .experience-timeline .experience-gap {
+        margin-top: 18px;
+      }
+
       .footer {
         display: grid;
         grid-template-columns: 1fr 2fr 1fr 1fr;
@@ -868,7 +883,8 @@
 
       @media (max-width: 1050px) {
         .hero {
-          grid-template-columns: minmax(0, 1fr) 220px 280px;
+          grid-template-columns: minmax(0, 1fr) 220px;
+          min-height: 640px;
           gap: 28px;
           padding-top: 126px;
           padding-right: 56px;
@@ -926,13 +942,12 @@
 
         .contact-title {
           align-self: start;
-          padding-top: 3px;
-          border-bottom: 0;
         }
 
         .contact-list {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 12px;
-          padding: 0 0 22px;
+          padding: 0;
         }
 
         .hero-nav {
@@ -1054,11 +1069,14 @@
 
         .hero-contact {
           grid-template-columns: 1fr;
+          grid-template-rows: auto auto auto;
           grid-row: 3;
           gap: 16px;
         }
 
         .contact-list {
+          grid-column: 1;
+          grid-template-columns: 1fr;
           padding: 0 0 8px;
         }
 
@@ -1067,6 +1085,7 @@
         }
 
         .hero-nav {
+          grid-column: 1;
           flex-wrap: wrap;
           justify-content: flex-start;
           gap: 12px 20px;
@@ -1195,7 +1214,7 @@
           <h1>도진우</h1>
           <p class="hero-role">MATH TEACHER</p>
           <div class="cyan-rule"></div>
-          <p class="hero-summary">중등 대수 특화 <span>·</span> 속진·심화 학습</p>
+          <p class="hero-summary">중등 대수 특화 <span>·</span> 속진 · 심화 학습</p>
           <a class="scroll-cue" href="#about">
             <span>SCROLL TO EXPLORE</span>
             <b>↓</b>
@@ -1228,7 +1247,7 @@
               <p>대상 : 노베이스 학생</p>
             </article>
             <article class="about-card about-card-gray" data-reveal>
-              <h3>속진·심화 학습</h3>
+              <h3>속진 · 심화 학습</h3>
               <p>대치동 기준 빠른 진도</p>
               <p>대상 : 극상위권 학생</p>
             </article>
@@ -1312,7 +1331,7 @@
               <div class="timeline-year"></div><div class="timeline-marker"></div>
               <div class="timeline-copy"><h3>CMS 대치 영재관</h3><p>초등 수학 — 최상위 수학</p><p>중등 기본 — Unlimited Core</p><p>중등 기초 — Unlimited Challenge</p><p>경시 — 중등 대수 기하</p></div>
             </article>
-            <article class="timeline-item" data-reveal>
+            <article class="timeline-item experience-gap" data-reveal>
               <div class="timeline-year"></div><div class="timeline-marker"></div>
               <div class="timeline-copy"><h3>M 대치 의대관</h3></div>
             </article>
