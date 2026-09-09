@@ -22,8 +22,7 @@
         --warm-accent: #f47a45;
         --chrome: #16346b;
         --soft-blue: #eef4ff;
-        --soft-slate: #e7eef7;
-        --card-bar: #3b5b9a;
+        --soft-neutral: #f1f3f7;
         --font-sans: Pretendard, 'Noto Sans KR', 'Apple SD Gothic Neo',
           'Malgun Gothic', system-ui, sans-serif;
       }
@@ -555,7 +554,7 @@
         position: absolute;
         inset: 16px auto 16px 27px;
         width: 4px;
-        background: var(--card-bar);
+        background: var(--accent);
         content: '';
       }
 
@@ -581,8 +580,8 @@
         background: var(--soft-blue);
       }
 
-      .about-card-slate {
-        background: var(--soft-slate);
+      .about-card-neutral {
+        background: var(--soft-neutral);
       }
 
 
@@ -763,9 +762,7 @@
 
       .timeline-item {
         position: relative;
-        display: grid;
-        grid-template-columns: 48px minmax(0, 1fr);
-        align-items: start;
+        display: block;
         min-height: 73px;
         border-radius: 14px;
         transition: background 200ms ease, transform 200ms ease;
@@ -782,7 +779,7 @@
         z-index: 1;
         width: 12px;
         height: 12px;
-        margin: 5px 0 0 16px;
+        margin: 0 0 0 16px;
         border: 3px solid var(--paper);
         border-radius: 50%;
         background: var(--accent);
@@ -800,8 +797,31 @@
         min-width: 0;
       }
 
+      .timeline-head,
+      .timeline-details {
+        display: grid;
+        grid-template-columns: 48px minmax(0, 1fr);
+      }
+
+      .timeline-head {
+        align-items: center;
+      }
+
+      .timeline-head h3 {
+        grid-column: 2;
+        margin: 0;
+      }
+
+      .timeline-details {
+        margin-top: 6px;
+      }
+
+      .timeline-details p {
+        grid-column: 2;
+      }
+
       .timeline-copy h3 {
-        margin: 0 0 6px;
+        margin: 0;
         color: #28457f;
         font-size: 17px;
         font-weight: 850;
@@ -817,10 +837,6 @@
         font-weight: 600;
         letter-spacing: 0.02em;
         line-height: 1.25;
-      }
-
-      .education-timeline .timeline-copy h3 {
-        margin-bottom: 6px;
       }
 
       .experience-section {
@@ -840,7 +856,6 @@
       }
 
       .experience-timeline .timeline-item {
-        grid-template-columns: 48px minmax(0, 1fr);
         min-height: 59px;
       }
 
@@ -1203,10 +1218,6 @@
           left: 22px;
         }
 
-        .timeline-item {
-          grid-template-columns: 48px minmax(0, 1fr);
-        }
-
         .timeline-marker {
           margin-left: 16px;
         }
@@ -1372,7 +1383,7 @@
                 <p>방정식 및 함수</p>
                 <p>대상 : 노베이스 학생</p>
               </article>
-              <article class="about-card about-card-slate" data-reveal>
+              <article class="about-card about-card-neutral" data-reveal>
                 <h3>속진 · 심화 학습</h3>
                 <p>대치동 기준 빠른 진도</p>
                 <p>대상 : 극상위권 학생</p>
@@ -1390,16 +1401,22 @@
           </div>
           <div class="timeline education-timeline">
             <article class="timeline-item" data-reveal>
-              <div class="timeline-marker"></div>
-              <div class="timeline-copy"><h3>전북과학고 영재교육원</h3><p>수학 · 물리 · 화학 · 생물 · 지구과학</p><p>국어 · 영어</p></div>
+              <div class="timeline-copy">
+                <div class="timeline-head"><div class="timeline-marker" aria-hidden="true"></div><h3>전북과학고 영재교육원</h3></div>
+                <div class="timeline-details"><p>수학 · 물리 · 화학 · 생물 · 지구과학</p><p>국어 · 영어</p></div>
+              </div>
             </article>
             <article class="timeline-item" data-reveal>
-              <div class="timeline-marker"></div>
-              <div class="timeline-copy"><h3>한국교통대학교 (구. 철도대)</h3><p>건설교통대학 도시공학과</p><p>수석 입학 · 중퇴</p></div>
+              <div class="timeline-copy">
+                <div class="timeline-head"><div class="timeline-marker" aria-hidden="true"></div><h3>한국교통대학교 (구. 철도대)</h3></div>
+                <div class="timeline-details"><p>건설교통대학 도시공학과</p><p>수석 입학 · 중퇴</p></div>
+              </div>
             </article>
             <article class="timeline-item" data-reveal>
-              <div class="timeline-marker"></div>
-              <div class="timeline-copy"><h3>독학학위제</h3><p>심리학</p><p>교육 심리학</p><p>인지신경과학</p></div>
+              <div class="timeline-copy">
+                <div class="timeline-head"><div class="timeline-marker" aria-hidden="true"></div><h3>독학학위제</h3></div>
+                <div class="timeline-details"><p>심리학</p><p>교육 심리학</p><p>인지신경과학</p></div>
+              </div>
             </article>
           </div>
         </div>
@@ -1414,20 +1431,26 @@
           </div>
           <div class="timeline experience-timeline">
             <article class="timeline-item" data-reveal>
-              <div class="timeline-marker"></div>
-              <div class="timeline-copy"><h3>생각하는 황소</h3><p>초등 수학 — 일품 · 실력 · 심화 · 경시</p><p>중등 수학 — 프라임 · 어드밴스 · 에센스 · 챌린지</p><p>고등 수학 — 수학의 샘 · 기본 정석 · 실력 정석</p></div>
+              <div class="timeline-copy">
+                <div class="timeline-head"><div class="timeline-marker" aria-hidden="true"></div><h3>생각하는 황소</h3></div>
+                <div class="timeline-details"><p>초등 수학 — 일품 · 실력 · 심화 · 경시</p><p>중등 수학 — 프라임 · 어드밴스 · 에센스 · 챌린지</p><p>고등 수학 — 수학의 샘 · 기본 정석 · 실력 정석</p></div>
+              </div>
             </article>
             <article class="timeline-item experience-gap" data-reveal>
-              <div class="timeline-marker"></div>
-              <div class="timeline-copy"><h3>CMS 대치 영재관</h3><p>초등 수학 — 최상위 수학</p><p>중등 기본 — Unlimited Core</p><p>중등 기초 — Unlimited Challenge</p><p>경시 — 중등 대수 기하</p></div>
+              <div class="timeline-copy">
+                <div class="timeline-head"><div class="timeline-marker" aria-hidden="true"></div><h3>CMS 대치 영재관</h3></div>
+                <div class="timeline-details"><p>초등 수학 — 최상위 수학</p><p>중등 기본 — Unlimited Core</p><p>중등 기초 — Unlimited Challenge</p><p>경시 — 중등 대수 기하</p></div>
+              </div>
             </article>
             <article class="timeline-item experience-gap" data-reveal>
-              <div class="timeline-marker"></div>
-              <div class="timeline-copy"><h3>M 대치 의대관</h3></div>
+              <div class="timeline-copy">
+                <div class="timeline-head"><div class="timeline-marker" aria-hidden="true"></div><h3>M 대치 의대관</h3></div>
+              </div>
             </article>
             <article class="timeline-item" data-reveal>
-              <div class="timeline-marker"></div>
-              <div class="timeline-copy"><h3>블랙라벨 검토위원</h3></div>
+              <div class="timeline-copy">
+                <div class="timeline-head"><div class="timeline-marker" aria-hidden="true"></div><h3>블랙라벨 검토위원</h3></div>
+              </div>
             </article>
           </div>
         </div>
