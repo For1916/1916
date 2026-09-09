@@ -119,11 +119,10 @@
 
       .site-nav {
         display: grid;
-        grid-template-columns: 112px minmax(0, 1fr) 144px;
+        grid-template-columns: minmax(0, 1fr) 144px;
         height: 58px;
       }
 
-      .site-mark,
       .site-nav nav a,
       .site-cta {
         display: flex;
@@ -134,18 +133,6 @@
         font-weight: 800;
         letter-spacing: 0.1em;
         transition: background 180ms ease, color 180ms ease, transform 180ms ease;
-      }
-
-      .site-mark {
-        border-right: 1px solid var(--line);
-        color: var(--ink);
-        font-size: 16px;
-        letter-spacing: 0.09em;
-      }
-
-      .site-mark span {
-        margin-left: 5px;
-        color: var(--accent);
       }
 
       .site-nav nav {
@@ -255,6 +242,8 @@
         justify-self: end;
         align-self: center;
         position: relative;
+        top: 78px;
+        left: -10px;
         z-index: 1;
         display: grid;
         place-items: center;
@@ -292,6 +281,7 @@
         grid-row: 1;
         align-self: center;
         position: relative;
+        left: 10px;
         z-index: 1;
         transform: translate3d(var(--pointer-x), var(--pointer-y), 0);
         transition: transform 350ms ease-out;
@@ -392,6 +382,10 @@
         border-bottom: 1px solid var(--line);
       }
 
+      .contact-section {
+        scroll-margin-top: 116px;
+      }
+
       .section-nav-inner {
         display: flex;
         justify-content: space-between;
@@ -400,34 +394,28 @@
       }
 
       .contact-details {
-        display: grid;
-        grid-template-columns: 112px minmax(0, 1fr);
-        align-items: start;
-        gap: 0 32px;
-        padding: 24px 0 18px;
+        display: block;
+        padding: 24px 0 22px;
       }
 
       .contact-title {
-        grid-column: 1;
-        grid-row: 1;
         padding-top: 3px;
+        margin-bottom: 18px;
       }
 
       .contact-list {
-        grid-column: 2;
-        grid-row: 1;
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 24px;
+        grid-template-columns: minmax(0, 760px);
+        gap: 12px;
         padding: 0;
       }
 
       .contact-list a,
       .contact-list div {
         display: grid;
-        grid-template-columns: 64px 1fr;
+        grid-template-columns: 72px minmax(0, 1fr);
         align-items: baseline;
-        gap: 8px;
+        gap: 12px;
       }
 
       .contact-list span {
@@ -570,6 +558,10 @@
         min-width: 0;
       }
 
+      .ability-layout .ratings {
+        margin-top: 12px;
+      }
+
       .section-index-spacer {
         visibility: hidden;
       }
@@ -686,14 +678,13 @@
 
       .editorial-layout {
         display: grid;
-        grid-template-columns: 320px minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr);
         align-items: start;
-        gap: 70px;
+        gap: 42px;
       }
 
       .editorial-heading {
-        position: sticky;
-        top: 112px;
+        position: static;
         align-self: start;
       }
 
@@ -719,7 +710,7 @@
         position: absolute;
         top: 18px;
         bottom: 24px;
-        left: 124px;
+        left: 22px;
         width: 2px;
         background: #b8b2a8;
         content: '';
@@ -728,6 +719,7 @@
       .education-timeline {
         gap: 8px;
         margin-top: 8px;
+        margin-left: 24px;
       }
 
       .education-timeline::before {
@@ -737,7 +729,7 @@
       .timeline-item {
         position: relative;
         display: grid;
-        grid-template-columns: 98px 52px minmax(0, 1fr);
+        grid-template-columns: 48px minmax(0, 1fr);
         align-items: start;
         min-height: 73px;
         border-radius: 14px;
@@ -750,20 +742,12 @@
         transform: translateX(8px);
       }
 
-      .timeline-year {
-        padding-top: 1px;
-        color: var(--accent);
-        font-size: 21px;
-        font-weight: 850;
-        letter-spacing: 0.02em;
-      }
-
       .timeline-marker {
         position: relative;
         z-index: 1;
         width: 12px;
         height: 12px;
-        margin: 5px 0 0 20px;
+        margin: 5px 0 0 16px;
         border: 3px solid var(--paper);
         border-radius: 50%;
         background: var(--accent);
@@ -806,14 +790,17 @@
       .experience-timeline {
         gap: 15px;
         margin-top: 8px;
+        margin-left: 24px;
       }
 
       .experience-timeline::before {
         top: 17px;
         bottom: 17px;
+        left: 22px;
       }
 
       .experience-timeline .timeline-item {
+        grid-template-columns: 48px minmax(0, 1fr);
         min-height: 59px;
       }
 
@@ -906,6 +893,7 @@
         }
 
         .hero-photo-frame {
+          top: 72px;
           width: 220px;
           height: 284px;
         }
@@ -929,12 +917,6 @@
       }
 
       @media (max-width: 820px) {
-        .site-mark {
-          font-size: 13px;
-          letter-spacing: 0.08em;
-          white-space: nowrap;
-        }
-
         .site-nav nav {
           grid-template-columns: repeat(4, minmax(120px, 1fr));
           overflow-x: auto;
@@ -954,6 +936,7 @@
         }
 
         .hero-photo-frame {
+          top: 58px;
           width: 190px;
           height: 250px;
         }
@@ -963,19 +946,8 @@
           height: 226px;
         }
 
-      .contact-details {
-        grid-template-columns: 120px 1fr;
-        column-gap: 24px;
-      }
-
-        .contact-title {
-          align-self: start;
-        }
-
         .contact-list {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 18px;
-          padding: 0;
+          gap: 14px;
         }
 
       .ability-section {
@@ -1032,9 +1004,12 @@
           height: 55px;
         }
 
-        .site-mark,
         .site-cta {
           padding: 0 20px;
+        }
+
+        .site-cta {
+          grid-column: 2;
         }
 
         .site-nav nav {
@@ -1067,6 +1042,8 @@
           grid-column: 1;
           grid-row: 2;
           justify-self: start;
+          top: 0;
+          left: 0;
           width: 180px;
           height: 232px;
         }
@@ -1079,6 +1056,10 @@
         .hero-intro h1 {
           margin-top: 18px;
           font-size: 62px;
+        }
+
+        .hero-intro {
+          left: 0;
         }
 
         .hero-role {
@@ -1100,16 +1081,18 @@
       }
 
       .contact-details {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto;
-        gap: 16px;
+        padding-top: 22px;
       }
 
         .contact-list {
-          grid-column: 1;
-          grid-row: 2;
           grid-template-columns: 1fr;
           padding: 0 0 8px;
+        }
+
+        .contact-list a,
+        .contact-list div {
+          grid-template-columns: 64px minmax(0, 1fr);
+          gap: 8px;
         }
 
         .contact-list strong {
@@ -1162,15 +1145,15 @@
         }
 
         .timeline::before {
-          left: 74px;
+          left: 22px;
         }
 
         .timeline-item {
-          grid-template-columns: 52px 46px minmax(0, 1fr);
+          grid-template-columns: 48px minmax(0, 1fr);
         }
 
         .timeline-marker {
-          margin-left: 17px;
+          margin-left: 16px;
         }
 
         .timeline-copy h3 {
@@ -1223,7 +1206,6 @@
           <span class="ticker-year">2026</span>
         </div>
         <div class="site-nav">
-          <a class="site-mark" href="#top">DOJIN U<span>•</span></a>
           <nav aria-label="주요 섹션">
             <a href="#ability">01 / ABILITY <span>↗</span></a>
             <a href="#about">02 / ABOUT <span>↗</span></a>
@@ -1353,15 +1335,15 @@
           </div>
           <div class="timeline education-timeline">
             <article class="timeline-item" data-reveal>
-              <div class="timeline-year">2005</div><div class="timeline-marker"></div>
+              <div class="timeline-marker"></div>
               <div class="timeline-copy"><h3>전북과학고 영재교육원</h3><p>수학 · 물리 · 화학 · 생물 · 지구과학</p><p>국어 · 영어</p></div>
             </article>
             <article class="timeline-item" data-reveal>
-              <div class="timeline-year">2013</div><div class="timeline-marker"></div>
+              <div class="timeline-marker"></div>
               <div class="timeline-copy"><h3>한국교통대학교 (구. 철도대)</h3><p>건설교통대학 도시공학과</p><p>수석 입학 · 중퇴</p></div>
             </article>
             <article class="timeline-item" data-reveal>
-              <div class="timeline-year">2015</div><div class="timeline-marker"></div>
+              <div class="timeline-marker"></div>
               <div class="timeline-copy"><h3>독학학위제</h3><p>심리학</p><p>교육 심리학</p><p>인지신경과학</p></div>
             </article>
           </div>
@@ -1377,19 +1359,19 @@
           </div>
           <div class="timeline experience-timeline">
             <article class="timeline-item" data-reveal>
-              <div class="timeline-year"></div><div class="timeline-marker"></div>
+              <div class="timeline-marker"></div>
               <div class="timeline-copy"><h3>생각하는 황소</h3><p>초등 수학 — 일품 · 실력 · 심화 · 경시</p><p>중등 수학 — 프라임 · 어드밴스 · 에센스 · 챌린지</p><p>고등 수학 — 수학의 샘 · 기본 정석 · 실력 정석</p></div>
             </article>
             <article class="timeline-item experience-gap" data-reveal>
-              <div class="timeline-year"></div><div class="timeline-marker"></div>
+              <div class="timeline-marker"></div>
               <div class="timeline-copy"><h3>CMS 대치 영재관</h3><p>초등 수학 — 최상위 수학</p><p>중등 기본 — Unlimited Core</p><p>중등 기초 — Unlimited Challenge</p><p>경시 — 중등 대수 기하</p></div>
             </article>
             <article class="timeline-item experience-gap" data-reveal>
-              <div class="timeline-year"></div><div class="timeline-marker"></div>
+              <div class="timeline-marker"></div>
               <div class="timeline-copy"><h3>M 대치 의대관</h3></div>
             </article>
             <article class="timeline-item" data-reveal>
-              <div class="timeline-year"></div><div class="timeline-marker"></div>
+              <div class="timeline-marker"></div>
               <div class="timeline-copy"><h3>블랙라벨 검토위원</h3></div>
             </article>
           </div>
@@ -1408,7 +1390,7 @@
       (() => {
         const root = document.querySelector('.resume-shell');
         const hero = document.querySelector('.hero');
-        const sections = ['top', 'ability', 'about', 'education', 'experience', 'contact'];
+        const sections = ['top', 'contact', 'ability', 'about', 'education', 'experience'];
         const navLinks = [...document.querySelectorAll('.site-nav nav a')];
         const revealItems = [...document.querySelectorAll('[data-reveal]')];
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
