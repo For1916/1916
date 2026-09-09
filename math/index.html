@@ -10,6 +10,8 @@
     <meta name="theme-color" content="#23323a" />
     <title>도진우 | MATH TEACHER</title>
     <style>
+      @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+
       :root {
         --paper: #faf8f4;
         --ink: #23323a;
@@ -242,8 +244,8 @@
         justify-self: end;
         align-self: center;
         position: relative;
-        top: 78px;
-        left: -10px;
+        top: 39px;
+        left: -18px;
         z-index: 1;
         display: grid;
         place-items: center;
@@ -407,6 +409,7 @@
         display: grid;
         grid-template-columns: minmax(0, 760px);
         gap: 12px;
+        margin-left: 16px;
         padding: 0;
       }
 
@@ -500,15 +503,16 @@
 
       .about-cards {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 20px;
+        grid-template-columns: 1fr;
+        gap: 16px;
         margin-top: 42px;
+        width: min(100%, 560px);
       }
 
       .about-card {
         position: relative;
         min-height: 128px;
-        padding: 26px 28px 22px 38px;
+        padding: 26px 28px 22px 46px;
         overflow: hidden;
         border-radius: 17px;
         transition: box-shadow 220ms ease, transform 220ms ease, background 220ms ease;
@@ -570,6 +574,7 @@
         display: grid;
         gap: 22px;
         margin-top: 43px;
+        margin-left: 16px;
         padding-bottom: 28px;
         border-bottom: 1px solid var(--line);
       }
@@ -642,6 +647,8 @@
       .skill-list {
         display: grid;
         gap: 18px;
+        max-width: 520px;
+        margin-left: 16px;
       }
 
       .skill-row {
@@ -893,7 +900,7 @@
         }
 
         .hero-photo-frame {
-          top: 72px;
+          top: 33px;
           width: 220px;
           height: 284px;
         }
@@ -936,7 +943,8 @@
         }
 
         .hero-photo-frame {
-          top: 58px;
+          left: -10px;
+          top: 19px;
           width: 190px;
           height: 250px;
         }
@@ -1035,7 +1043,7 @@
         .hero {
           grid-template-columns: 1fr;
           gap: 30px;
-          padding: 149px 24px 38px;
+          padding: 149px 16px 38px 32px;
         }
 
         .hero-photo-frame {
@@ -1076,8 +1084,8 @@
 
       .section-nav-section,
       .contact-section {
-        padding-right: 24px;
-        padding-left: 24px;
+        padding-right: 16px;
+        padding-left: 32px;
       }
 
       .contact-details {
@@ -1111,7 +1119,7 @@
         }
 
         .section-block {
-          padding: 42px 24px 46px;
+          padding: 42px 16px 46px 32px;
         }
 
         .section-block h2 {
@@ -1167,7 +1175,7 @@
         .footer {
           grid-template-columns: 1fr 1fr;
           gap: 12px 20px;
-          padding: 20px 24px;
+          padding: 20px 16px 20px 32px;
         }
 
         .footer a:nth-last-child(-n + 2) {
