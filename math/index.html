@@ -21,8 +21,10 @@
         --accent-text: #255bd8;
         --warm-accent: #f47a45;
         --chrome: #16346b;
-        --soft-blue: #eaf0ff;
-        --soft-violet: #f0eeff;
+        --soft-blue: #edf3ff;
+        --soft-violet: #f4f0ff;
+        --card-bar-blue: #255bd8;
+        --card-bar-violet: #7254d9;
         --font-sans: Pretendard, 'Noto Sans KR', 'Apple SD Gothic Neo',
           'Malgun Gothic', system-ui, sans-serif;
       }
@@ -554,7 +556,7 @@
         position: absolute;
         inset: 16px auto 16px 27px;
         width: 4px;
-        background: var(--accent);
+        background: var(--card-bar-blue);
         content: '';
       }
 
@@ -580,8 +582,16 @@
         background: var(--soft-blue);
       }
 
+      .about-card-blue::before {
+        background: var(--card-bar-blue);
+      }
+
       .about-card-violet {
         background: var(--soft-violet);
+      }
+
+      .about-card-violet::before {
+        background: var(--card-bar-violet);
       }
 
       .ability-column {
