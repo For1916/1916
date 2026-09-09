@@ -22,7 +22,7 @@
         --warm-accent: #f47a45;
         --chrome: #16346b;
         --soft-blue: #eef4ff;
-        --soft-cream: #fff4de;
+        --soft-sage: #eaf4ed;
         --card-bar: #6f84b8;
         --font-sans: Pretendard, 'Noto Sans KR', 'Apple SD Gothic Neo',
           'Malgun Gothic', system-ui, sans-serif;
@@ -572,6 +572,7 @@
       }
 
       .about-card p {
+        padding-left: 12px;
         color: var(--muted);
         font-size: 15px;
         font-weight: 600;
@@ -581,8 +582,8 @@
         background: var(--soft-blue);
       }
 
-      .about-card-cream {
-        background: var(--soft-cream);
+      .about-card-sage {
+        background: var(--soft-sage);
       }
 
 
@@ -765,6 +766,7 @@
         position: relative;
         display: block;
         min-height: 73px;
+        padding-block: 14px 18px;
         border-radius: 14px;
         transition: background 200ms ease, transform 200ms ease;
       }
@@ -1215,6 +1217,11 @@
           font-size: 14px;
         }
 
+        .skill-track {
+          width: min(100%, 160px);
+          justify-self: start;
+        }
+
         .timeline::before {
           left: 22px;
         }
@@ -1384,7 +1391,7 @@
                 <p>방정식 및 함수</p>
                 <p>대상 : 노베이스 학생</p>
               </article>
-              <article class="about-card about-card-cream" data-reveal>
+              <article class="about-card about-card-sage" data-reveal>
                 <h3>속진 · 심화 학습</h3>
                 <p>대치동 기준 빠른 진도</p>
                 <p>대상 : 극상위권 학생</p>
