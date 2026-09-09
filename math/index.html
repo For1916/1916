@@ -1315,13 +1315,23 @@
 
       <header class="hero">
         <div class="hero-photo-frame" data-reveal>
-          <img
-            class="hero-photo"
-            src="./dojin-u-math-teacher-profile.png"
-            alt="도진우 프로필 사진"
-            width="226"
-            height="290"
-          />
+          <picture>
+            <source
+              type="image/webp"
+              srcset="./dojin-u-math-teacher-profile-640.webp 640w, ./dojin-u-math-teacher-profile-960.webp 960w, ./dojin-u-math-teacher-profile-1200.webp 1200w"
+              sizes="(max-width: 560px) 180px, 226px"
+            />
+            <img
+              class="hero-photo"
+              src="./dojin-u-math-teacher-profile.png"
+              alt="도진우 프로필 사진"
+              width="226"
+              height="290"
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
+            />
+          </picture>
         </div>
 
         <div class="hero-intro" data-reveal>
