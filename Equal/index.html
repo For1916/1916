@@ -340,23 +340,21 @@
     .heart-ten { left: 82%; bottom: 24%; font-size: 24px; }
     .heart-eleven { left: 52%; bottom: 20%; font-size: 20px; }
     .is-open .flap {
-      top: -42%;
       z-index: 1;
-      height: 72%;
-      clip-path: polygon(50% 0, 100% 100%, 0 100%);
-      transform: none;
+      transform: rotate(180deg);
+      transform-origin: 50% 0;
     }
 
     .is-open .envelope::before {
       z-index: 1;
-      clip-path: polygon(100% 0, 0 42%, 0 58%, 100% 100%);
-      transform: translateX(-64%) rotate(-7deg);
+      clip-path: polygon(0 0, 50% 50%, 0 100%);
+      transform: translateX(-48%) rotate(-7deg);
     }
 
     .is-open .envelope::after {
       z-index: 1;
-      clip-path: polygon(0 0, 100% 42%, 100% 58%, 0 100%);
-      transform: translateX(64%) rotate(7deg);
+      clip-path: polygon(100% 0, 50% 50%, 100% 100%);
+      transform: translateX(48%) rotate(7deg);
     }
 
     .is-open .envelope {
@@ -367,7 +365,7 @@
     .is-open .letter-sheet {
       left: 17%;
       width: 66%;
-      bottom: 12%;
+      bottom: 18px;
       transform: rotate(0deg);
     }
 
