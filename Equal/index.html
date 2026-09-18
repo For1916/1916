@@ -346,31 +346,31 @@
     }
 
     .is-open .envelope::before {
-      z-index: 1;
+      z-index: 3;
       clip-path: polygon(0 0, 50% 50%, 0 100%);
-      transform: translateX(-48%) rotate(-7deg);
+      transform: none;
     }
 
     .is-open .envelope::after {
-      z-index: 1;
+      z-index: 3;
       clip-path: polygon(100% 0, 50% 50%, 100% 100%);
-      transform: translateX(48%) rotate(7deg);
+      transform: none;
     }
 
     .is-open .envelope {
-      background: transparent;
-      box-shadow: none;
+      background: var(--pink-soft);
+      box-shadow: var(--shadow);
     }
 
     .is-open .letter-sheet {
-      left: 17%;
-      width: 66%;
+      left: 8%;
+      width: 84%;
       bottom: 18px;
       transform: rotate(0deg);
     }
 
     .is-open .letter-sheet strong {
-      transform: translateY(-42px);
+      transform: translateY(-8px);
     }
 
     .is-open .intro {
