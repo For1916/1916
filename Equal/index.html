@@ -84,6 +84,7 @@
 
     .intro {
       animation: intro-in .9s cubic-bezier(.2,.75,.25,1) both;
+      transition: transform 5s ease-in-out;
     }
 
     .heart-mark {
@@ -126,8 +127,7 @@
     .envelope {
       position: relative;
       height: clamp(220px, 61vw, 238px);
-      overflow: hidden;
-      perspective: 900px;
+      overflow: visible;
       border-radius: 22px;
       background: var(--pink-soft);
       box-shadow: var(--shadow);
@@ -144,9 +144,8 @@
       height: 100%;
       content: "";
       pointer-events: none;
-      transform-style: preserve-3d;
-      backface-visibility: hidden;
-      transition: transform 4.2s cubic-bezier(.2,.8,.2,1);
+      transition: transform 5s ease-in-out;
+      will-change: transform;
     }
 
     .envelope::before {
@@ -180,7 +179,7 @@
       background: var(--paper);
       box-shadow: 0 10px 30px rgba(132, 69, 83, .12);
       transform: rotate(-1.5deg);
-      transition: transform 4.2s cubic-bezier(.2,.8,.2,1), bottom 4.2s cubic-bezier(.2,.8,.2,1);
+      transition: transform 5s ease-in-out, bottom 5s ease-in-out;
     }
 
     .letter-sheet p {
@@ -209,10 +208,8 @@
       background: #f3bdc8;
       clip-path: polygon(0 0, 100% 0, 50% 78%);
       transform-origin: top center;
-      transform-style: preserve-3d;
-      backface-visibility: hidden;
-      transition: transform 4.2s cubic-bezier(.2,.8,.2,1);
-      transition: transform 2.7s cubic-bezier(.2,.8,.2,1);
+      transition: transform 5s ease-in-out;
+      will-change: transform;
     }
 
     .seal {
@@ -275,7 +272,7 @@
       font-family: "SSVeryBadHandwriting", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
       text-align: left;
       transform: translateY(14px);
-      transition: max-height 4.8s cubic-bezier(.2,.8,.2,1), opacity 3.6s .55s ease, transform 3.6s .55s ease;
+      transition: max-height 5s ease-in-out, opacity 5s ease-in-out, transform 5s ease-in-out;
     }
 
     .hanja {
@@ -340,20 +337,24 @@
     .heart-ten { left: 82%; bottom: 24%; font-size: 24px; }
     .heart-eleven { left: 52%; bottom: 20%; font-size: 20px; }
     .is-open .flap {
-      transform: rotateX(-180deg);
+      transform: translateY(-118%) rotate(-2deg);
     }
 
     .is-open .envelope::before {
-      transform: rotateY(-105deg);
+      transform: translateX(-105%) rotate(-5deg);
     }
 
     .is-open .envelope::after {
-      transform: rotateY(105deg);
+      transform: translateX(105%) rotate(5deg);
     }
 
     .is-open .letter-sheet {
-      bottom: 23%;
+      bottom: 28%;
       transform: rotate(0deg);
+    }
+
+    .is-open .intro {
+      transform: translateY(-28px);
     }
 
     .is-open .seal,
@@ -415,12 +416,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: .01ms !important;
-        animation-iteration-count: 1 !important;
-        scroll-behavior: auto !important;
-        transition-duration: .01ms !important;
-      }
+      html { scroll-behavior: auto !important; }
     }
   </style>
 </head>
@@ -494,7 +490,6 @@
 
       if (isOpen) {
         setLetterHeight(true);
-        document.fonts?.ready.then(() => setLetterHeight(true));
       } else {
         setLetterHeight(true);
         requestAnimationFrame(() => {
