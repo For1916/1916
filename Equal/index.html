@@ -133,6 +133,7 @@
       box-shadow: var(--shadow);
       cursor: pointer;
       isolation: isolate;
+      transition: background 5s ease-in-out, box-shadow 5s ease-in-out;
     }
 
     .envelope::before,
@@ -341,11 +342,18 @@
     }
 
     .is-open .envelope::before {
-      transform: translateX(-105%) rotate(-5deg);
+      z-index: 1;
+      transform: translateX(-64%) rotate(-7deg);
     }
 
     .is-open .envelope::after {
-      transform: translateX(105%) rotate(5deg);
+      z-index: 1;
+      transform: translateX(64%) rotate(7deg);
+    }
+
+    .is-open .envelope {
+      background: transparent;
+      box-shadow: none;
     }
 
     .is-open .letter-sheet {
