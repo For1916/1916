@@ -84,7 +84,7 @@
 
     .intro {
       animation: intro-in .9s cubic-bezier(.2,.75,.25,1) both;
-      transition: transform 5s ease-in-out;
+      transition: transform 5s ease-in-out, clip-path 5s ease-in-out;
     }
 
     .heart-mark {
@@ -180,7 +180,7 @@
       background: var(--paper);
       box-shadow: 0 10px 30px rgba(132, 69, 83, .12);
       transform: rotate(-1.5deg);
-      transition: transform 5s ease-in-out, bottom 5s ease-in-out;
+      transition: transform 5s ease-in-out, left 5s ease-in-out, width 5s ease-in-out, bottom 5s ease-in-out;
     }
 
     .letter-sheet p {
@@ -199,6 +199,7 @@
       font-weight: 600;
       text-align: center;
       transform: translateY(-8px);
+      transition: transform 5s ease-in-out;
     }
 
     .flap {
@@ -209,7 +210,7 @@
       background: #f3bdc8;
       clip-path: polygon(0 0, 100% 0, 50% 78%);
       transform-origin: top center;
-      transition: transform 5s ease-in-out;
+      transition: transform 5s ease-in-out, top 5s ease-in-out, height 5s ease-in-out, clip-path 5s ease-in-out;
       will-change: transform;
     }
 
@@ -338,16 +339,22 @@
     .heart-ten { left: 82%; bottom: 24%; font-size: 24px; }
     .heart-eleven { left: 52%; bottom: 20%; font-size: 20px; }
     .is-open .flap {
-      transform: translateY(-118%) rotate(-2deg);
+      top: -42%;
+      z-index: 1;
+      height: 72%;
+      clip-path: polygon(50% 0, 100% 100%, 0 100%);
+      transform: none;
     }
 
     .is-open .envelope::before {
       z-index: 1;
+      clip-path: polygon(100% 0, 0 42%, 0 58%, 100% 100%);
       transform: translateX(-64%) rotate(-7deg);
     }
 
     .is-open .envelope::after {
       z-index: 1;
+      clip-path: polygon(0 0, 100% 42%, 100% 58%, 0 100%);
       transform: translateX(64%) rotate(7deg);
     }
 
@@ -357,8 +364,14 @@
     }
 
     .is-open .letter-sheet {
-      bottom: 28%;
+      left: 17%;
+      width: 66%;
+      bottom: 12%;
       transform: rotate(0deg);
+    }
+
+    .is-open .letter-sheet strong {
+      transform: translateY(-42px);
     }
 
     .is-open .intro {
