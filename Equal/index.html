@@ -81,7 +81,7 @@
       min-height: 100svh;
       min-height: 100dvh;
       margin: 0 auto;
-      padding: calc(30px + env(safe-area-inset-top))
+      padding: calc(36px + env(safe-area-inset-top))
         20px
         calc(50px + env(safe-area-inset-bottom));
       text-align: center;
@@ -103,6 +103,7 @@
       animation: intro-in .9s cubic-bezier(.2,.75,.25,1);
       transition: transform 5s ease-in-out, clip-path 5s ease-in-out;
       width: 100%;
+      margin-bottom: 12px;
     }
 
     .heart-mark {
@@ -139,7 +140,7 @@
       z-index: 1;
       width: 100%;
       max-width: 350px;
-      margin: 28px auto 22px;
+      margin: 88px auto 22px;
       animation: float-in 1s .1s cubic-bezier(.2,.75,.25,1);
       transition: transform 5s ease-in-out;
     }
@@ -521,7 +522,7 @@
     const letterCopy = document.querySelector("#letterCopy");
     const letterCopyInner = letterCopy.querySelector(".letter-copy-inner");
     const music = document.querySelector("#music");
-    const musicUrl = "https://www.youtube.com/embed/HyTmG2aaQTg?autoplay=1&loop=1&playlist=HyTmG2aaQTg&playsinline=1&rel=0";
+    const musicUrl = "https://www.youtube.com/embed/aKUXeiuby_A?autoplay=1&loop=1&playlist=aKUXeiuby_A&playsinline=1&rel=0";
 
     function setLetterHeight(open) {
       const height = letterCopyInner.scrollHeight;
