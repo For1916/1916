@@ -529,26 +529,19 @@
       letterCopy.style.maxHeight = open ? `${height}px` : "0px";
     }
 
-    function toggleLetter() {
-      const isOpen = page.classList.toggle("is-open");
-      envelope.setAttribute("aria-expanded", String(isOpen));
-
-      if (isOpen) {
-        if (!music.src) music.src = musicUrl;
-        setLetterHeight(true);
-      } else {
-        setLetterHeight(true);
-        requestAnimationFrame(() => {
-          setLetterHeight(false);
-        });
-      }
+    function openLetter() {
+      if (page.classList.contains("is-open")) return;
+      page.classList.add("is-open");
+      envelope.setAttribute("aria-expanded", "true");
+      if (!music.src) music.src = musicUrl;
+      setLetterHeight(true);
     }
 
-    envelope.addEventListener("click", toggleLetter);
+    envelope.addEventListener("click", openLetter);
     envelope.addEventListener("keydown", (event) => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
-        toggleLetter();
+        openLetter();
       }
     });
   </script>
