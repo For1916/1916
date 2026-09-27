@@ -660,9 +660,11 @@
     const music = document.querySelector("#music");
     const musicStatus = document.querySelector("#musicStatus");
     let lastPointerActivation = 0;
+    let hasStartedPlaying = false;
 
     function setMusicState(state) {
-      musicStatus.hidden = state === "idle";
+      if (state === "playing") hasStartedPlaying = true;
+      musicStatus.hidden = !hasStartedPlaying;
       musicStatus.classList.toggle("is-loading", state === "loading");
       musicStatus.classList.toggle("is-playing", state === "playing");
       musicStatus.classList.toggle("is-paused", state === "paused");
