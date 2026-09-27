@@ -29,6 +29,7 @@
       --pink-pale: #fff0f3;
       --line: rgba(219, 137, 153, .35);
       --shadow: 0 22px 70px rgba(151, 87, 103, .16);
+      --letter-width: min(760px, 68vw);
     }
 
     * { box-sizing: border-box; }
@@ -46,19 +47,20 @@
 
     .music-status {
       position: sticky;
-      top: calc(50svh - 17px);
-      grid-column: 2;
+      top: calc(50dvh - 17px);
+      grid-column: 3;
       grid-row: 1;
       align-self: start;
+      justify-self: center;
       margin: 24px 0 0;
       z-index: 20;
       display: flex;
       width: fit-content;
       align-items: center;
-      gap: 7px;
-      min-width: 48px;
-      min-height: 34px;
-      padding: 7px 10px;
+      gap: clamp(5px, 1.7vw, 7px);
+      min-width: clamp(44px, 12vw, 48px);
+      min-height: clamp(31px, 8.3vw, 34px);
+      padding: clamp(4px, 1.1vw, 8px) clamp(4px, 1.1vw, 8px);
       border: 1px solid var(--line);
       border-radius: 999px;
       color: var(--muted);
@@ -68,14 +70,7 @@
       cursor: pointer;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
-      transform: translateX(31px);
       transition: color .25s ease, background .25s ease, opacity .25s ease;
-    }
-
-    .page > .music-status {
-      align-self: flex-end;
-      margin-top: -100px;
-      margin-bottom: 66px;
     }
 
     .music-status[hidden] { display: none; }
@@ -93,7 +88,7 @@
     }
 
     .music-note {
-      font-size: 17px;
+      font-size: clamp(14px, 4vw, 17px);
       line-height: 1;
     }
 
@@ -101,8 +96,8 @@
       display: inline-flex;
       align-items: center;
       gap: 2px;
-      width: 17px;
-      height: 16px;
+      width: clamp(14px, 4.2vw, 17px);
+      height: clamp(14px, 4vw, 16px);
     }
 
     .music-bars span {
@@ -171,12 +166,12 @@
       align-items: center;
       justify-content: flex-start;
       width: 100%;
-      max-width: 430px;
+      max-width: none;
       min-height: 100svh;
       min-height: 100dvh;
       margin: 0 auto;
       padding: calc(36px + env(safe-area-inset-top))
-        20px
+        16px
         calc(50px + env(safe-area-inset-bottom));
       overflow-anchor: none;
       text-align: center;
@@ -189,7 +184,8 @@
       align-items: center;
       justify-content: center;
       width: 100%;
-      min-height: calc(100dvh - 86px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+      max-width: 430px;
+      min-height: min(calc(100dvh - 86px - env(safe-area-inset-top) - env(safe-area-inset-bottom)), 660px);
     }
 
     .page::after {
@@ -245,7 +241,7 @@
       z-index: 1;
       width: 100%;
       max-width: 350px;
-      margin: 88px auto 22px;
+      margin: 148px auto 22px;
       animation: float-in 1s .1s cubic-bezier(.2,.75,.25,1);
       transition: transform 5s ease-in-out;
     }
@@ -399,14 +395,13 @@
 
     .letter-stage {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 54px;
-      column-gap: 8px;
+      grid-template-columns: minmax(0, 1fr) var(--letter-width) minmax(0, 1fr);
       align-items: start;
       width: 100%;
     }
 
     .letter-copy {
-      grid-column: 1;
+      grid-column: 2;
       grid-row: 1;
       min-width: 0;
       max-height: 0;
@@ -415,7 +410,7 @@
       opacity: 0;
       font-family: "SSVeryBadHandwriting", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
       text-align: left;
-      transform: translate(31px, 14px);
+      transform: translateY(14px);
       transition: max-height 5s ease-in-out, opacity 5s ease-in-out, transform 5s ease-in-out;
     }
 
@@ -429,7 +424,7 @@
     .letter-copy-inner {
       min-height: 0;
       overflow: hidden;
-      padding: 30px clamp(28px, 9vw, 40px) 28px;
+      padding: 30px clamp(20px, 5vw, 48px) 28px;
       border: 1px solid rgba(219, 137, 153, .25);
       border-radius: 18px;
       background: rgba(255,255,255,.74);
@@ -482,14 +477,10 @@
       box-shadow: var(--shadow);
     }
 
-    .is-letter-revealed .letter-sheet {
+    .is-open .letter-sheet {
       z-index: 2;
       visibility: visible;
-      animation: letter-sheet-rise 5s ease-in-out both;
-    }
-
-    .is-letter-prepared .letter-sheet {
-      visibility: visible;
+      animation: letter-sheet-rise 5s 6s ease-in-out both;
     }
 
     .is-open .seal,
@@ -500,7 +491,7 @@
     .is-open .seal { transform: translateX(-50%) scale(.7); }
 
     .is-letter-revealed .letter-copy {
-      transform: translateX(31px);
+      transform: translateY(0);
       animation: letter-copy-reveal 5s ease-in-out both;
     }
 
@@ -543,39 +534,6 @@
       to { max-height: var(--letter-copy-height); opacity: 1; }
     }
 
-    @media (max-width: 600px) {
-      .letter-stage {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 54px;
-        column-gap: 8px;
-        align-items: start;
-      }
-
-      .letter-copy {
-        grid-column: 1 / -1;
-        grid-row: 1;
-        width: calc(100% - 120px);
-        transform: translateY(14px);
-      }
-
-      .is-letter-revealed .letter-copy {
-        transform: translateY(0);
-      }
-
-      .music-status {
-        position: sticky;
-        top: calc(50svh - 17px);
-        top: calc(50dvh - 17px);
-        left: auto;
-        grid-column: 2;
-        grid-row: 1;
-        align-self: start;
-        justify-self: start;
-        margin: 24px 0 0;
-        transform: translateX(0);
-      }
-    }
-
   </style>
 </head>
 
@@ -605,13 +563,6 @@
       <footer class="footer">WITH GRATITUDE</footer>
     </div>
 
-    <div class="music-status" id="musicStatus" role="status" aria-live="polite" aria-label="배경음악" hidden>
-      <span class="music-note" aria-hidden="true">♪</span>
-      <span class="music-bars" aria-hidden="true">
-        <span></span><span></span><span></span><span></span>
-      </span>
-    </div>
-
     <div class="letter-stage">
       <article class="letter-copy" id="letterCopy" aria-live="polite">
         <div class="letter-copy-inner">
@@ -630,6 +581,12 @@
           <p class="closing">도진우 드림</p>
         </div>
       </article>
+      <div class="music-status" id="musicStatus" role="status" aria-live="polite" aria-label="배경음악" hidden>
+        <span class="music-note" aria-hidden="true">♪</span>
+        <span class="music-bars" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+        </span>
+      </div>
     </div>
 
   </main>
@@ -643,8 +600,58 @@
     const musicStatus = document.querySelector("#musicStatus");
     let hasStartedPlaying = false;
     let playAttempt = 0;
+    let manualScrollRequested = false;
+    let gentleScrollFrame = 0;
+    let gentleScrollActive = false;
     const envelopeTransitionMs = 5000;
     const letterPauseMs = 1000;
+
+    function stopGentleScroll() {
+      if (!gentleScrollActive) return;
+      gentleScrollActive = false;
+      window.cancelAnimationFrame(gentleScrollFrame);
+      gentleScrollFrame = 0;
+    }
+
+    function noteManualScroll() {
+      manualScrollRequested = true;
+      stopGentleScroll();
+    }
+
+    function gentlyScrollToLetter() {
+      if (manualScrollRequested) return;
+
+      const startY = window.scrollY;
+      const targetY = Math.max(
+        0,
+        startY + letterCopy.getBoundingClientRect().top - Math.round(window.innerHeight * 0.14)
+      );
+      const distance = targetY - startY;
+      if (distance < 8) return;
+
+      const startedAt = performance.now();
+      const duration = 5200;
+      gentleScrollActive = true;
+
+      function animateScroll(now) {
+        if (!gentleScrollActive) return;
+        const progress = Math.min(1, (now - startedAt) / duration);
+        const eased = progress * progress * (3 - 2 * progress);
+        window.scrollTo(0, startY + distance * eased);
+
+        if (progress < 1) {
+          gentleScrollFrame = window.requestAnimationFrame(animateScroll);
+        } else {
+          gentleScrollActive = false;
+          gentleScrollFrame = 0;
+        }
+      }
+
+      gentleScrollFrame = window.requestAnimationFrame(animateScroll);
+    }
+
+    window.addEventListener("wheel", noteManualScroll, { passive: true });
+    window.addEventListener("touchmove", noteManualScroll, { passive: true });
 
     function setMusicState(state) {
       if (state === "playing") hasStartedPlaying = true;
@@ -695,13 +702,9 @@
     }
 
     function revealLetter() {
-      page.classList.add("is-letter-prepared");
-      window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => {
-          page.classList.add("is-letter-revealed");
-          setLetterHeight(true);
-        });
-      });
+      page.classList.add("is-letter-revealed");
+      setLetterHeight(true);
+      window.setTimeout(gentlyScrollToLetter, 450);
     }
 
     function openLetter({ startMusic = true } = {}) {
