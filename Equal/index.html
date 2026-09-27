@@ -559,6 +559,15 @@
       100% { opacity: 0; transform: translateY(-260px) scale(1.25) rotate(18deg); }
     }
 
+    @media (max-width: 600px) {
+      .music-status {
+        position: static;
+        top: auto;
+        justify-self: start;
+        margin-top: 24px;
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto !important; }
       .music-bars span { animation: none !important; }
