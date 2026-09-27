@@ -163,7 +163,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       width: 100%;
       max-width: 430px;
       min-height: 100svh;
@@ -172,7 +172,18 @@
       padding: calc(36px + env(safe-area-inset-top))
         20px
         calc(50px + env(safe-area-inset-bottom));
+      overflow-anchor: none;
       text-align: center;
+    }
+
+    .opening-scene {
+      display: flex;
+      flex: 0 0 auto;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: calc(100dvh - 86px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     }
 
     .page::after {
@@ -290,8 +301,9 @@
       border-radius: 12px;
       background: var(--paper);
       box-shadow: 0 10px 30px rgba(132, 69, 83, .12);
-      transform: none;
-      transition: bottom 5s ease-in-out;
+      visibility: hidden;
+      opacity: 0;
+      transform: translateY(0);
     }
 
     .letter-sheet p {
@@ -487,21 +499,12 @@
 
     .is-letter-revealed .letter-sheet {
       z-index: 2;
-      bottom: 100px;
-      transform: none;
+      visibility: visible;
+      animation: letter-sheet-rise 5s ease-in-out both;
     }
 
-    .is-open .intro {
-      transform: translateY(-24px);
-    }
-
-    .page.is-open {
-      justify-content: flex-start;
-    }
-
-    .is-open .envelope-wrap {
-      transform: translateY(55px);
-      margin-bottom: 75px;
+    .is-letter-prepared .letter-sheet {
+      visibility: visible;
     }
 
     .is-open .seal,
@@ -512,8 +515,8 @@
     .is-open .seal { transform: translateX(-50%) scale(.7); }
 
     .is-letter-revealed .letter-copy {
-      opacity: 1;
       transform: translateX(31px);
+      animation: letter-copy-reveal 5s ease-in-out both;
     }
 
     .is-open .floating-heart {
@@ -565,6 +568,16 @@
       15% { opacity: .95; }
       70% { opacity: .95; }
       100% { opacity: 0; transform: translateY(-260px) scale(1.25) rotate(18deg); }
+    }
+
+    @keyframes letter-sheet-rise {
+      from { opacity: 0; transform: translateY(0); }
+      to { opacity: 1; transform: translateY(-82px); }
+    }
+
+    @keyframes letter-copy-reveal {
+      from { max-height: 0; opacity: 0; }
+      to { max-height: var(--letter-copy-height); opacity: 1; }
     }
 
     @media (max-width: 600px) {
@@ -620,22 +633,26 @@
     <span class="floating-heart heart-ten" aria-hidden="true">♥</span>
     <span class="floating-heart heart-eleven" aria-hidden="true">♥</span>
 
-    <header class="intro">
-      <span class="heart-mark" aria-hidden="true">♥</span>
-      <p class="eyebrow">A LITTLE NOTE FOR YOU</p>
-      <h1>작은 마음을 담아</h1>
-    </header>
+    <div class="opening-scene">
+      <header class="intro">
+        <span class="heart-mark" aria-hidden="true">♥</span>
+        <p class="eyebrow">A LITTLE NOTE FOR YOU</p>
+        <h1>작은 마음을 담아</h1>
+      </header>
 
-    <section class="envelope-wrap" aria-label="편지 봉투">
-      <div class="envelope" id="envelope" role="button" tabindex="0" aria-label="봉투 열기" aria-expanded="false">
-        <div class="letter-sheet" aria-hidden="true">
-          <strong>감사한 마음을 담았습니다</strong>
+      <section class="envelope-wrap" aria-label="편지 봉투">
+        <div class="envelope" id="envelope" role="button" tabindex="0" aria-label="봉투 열기" aria-expanded="false">
+          <div class="letter-sheet" aria-hidden="true">
+            <strong>감사한 마음을 담았습니다</strong>
+          </div>
+          <div class="flap"></div>
+          <div class="seal" aria-hidden="true">♥</div>
         </div>
-        <div class="flap"></div>
-        <div class="seal" aria-hidden="true">♥</div>
-      </div>
-      <p class="hint" id="hint">봉투를 열면 편지가 시작됩니다</p>
-    </section>
+        <p class="hint" id="hint">봉투를 열면 편지가 시작됩니다</p>
+      </section>
+
+      <footer class="footer">WITH GRATITUDE</footer>
+    </div>
 
     <div class="letter-stage">
       <div class="music-status" id="musicStatus" role="status" aria-live="polite" aria-label="배경음악" hidden>
@@ -663,7 +680,6 @@
       </article>
     </div>
 
-    <footer class="footer">WITH GRATITUDE</footer>
   </main>
 
   <script>
@@ -675,7 +691,6 @@
     const musicStatus = document.querySelector("#musicStatus");
     let hasStartedPlaying = false;
     let playAttempt = 0;
-    let revealScrollFrame = 0;
     const envelopeTransitionMs = 5000;
     const letterPauseMs = 1000;
 
@@ -724,21 +739,17 @@
     function setLetterHeight(open) {
       const height = letterCopyInner.scrollHeight;
       letterCopy.style.maxHeight = open ? `${height}px` : "0px";
+      if (open) letterCopy.style.setProperty("--letter-copy-height", `${height}px`);
     }
 
     function revealLetter() {
-      const revealScrollTop = window.scrollY;
-      page.classList.add("is-letter-revealed");
-      setLetterHeight(true);
-
-      const keepRevealPosition = () => {
-        window.scrollTo(0, revealScrollTop);
-        revealScrollFrame = window.requestAnimationFrame(keepRevealPosition);
-      };
-
-      window.scrollTo(0, revealScrollTop);
-      revealScrollFrame = window.requestAnimationFrame(keepRevealPosition);
-      window.setTimeout(() => window.cancelAnimationFrame(revealScrollFrame), 5200);
+      page.classList.add("is-letter-prepared");
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          page.classList.add("is-letter-revealed");
+          setLetterHeight(true);
+        });
+      });
     }
 
     function scrollToLetterStart() {
