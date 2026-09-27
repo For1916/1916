@@ -65,6 +65,9 @@
       background: rgba(255, 255, 255, .72);
       box-shadow: 0 8px 22px rgba(151, 87, 103, .1);
       opacity: .86;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
       transform: none;
       transition: color .25s ease, background .25s ease, opacity .25s ease;
     }
@@ -234,6 +237,8 @@
       background: var(--pink-soft);
       box-shadow: var(--shadow);
       cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
       isolation: isolate;
       transition: background 5s ease-in-out, box-shadow 5s ease-in-out;
     }
@@ -562,7 +567,7 @@
 </head>
 
 <body>
-  <audio id="music" preload="auto" loop>
+  <audio id="music" preload="auto" playsinline webkit-playsinline loop>
     <source src="./Equal.mp3" type="audio/mpeg">
   </audio>
   <main class="page" id="page">
@@ -631,6 +636,7 @@
     const letterCopyInner = letterCopy.querySelector(".letter-copy-inner");
     const music = document.querySelector("#music");
     const musicStatus = document.querySelector("#musicStatus");
+    let lastPointerActivation = 0;
 
     function setMusicState(state) {
       musicStatus.hidden = state === "idle";
@@ -650,6 +656,8 @@
 
     function playMusic() {
       setMusicState("loading");
+      music.muted = false;
+      music.volume = 1;
       const playRequest = music.play();
       if (playRequest && typeof playRequest.catch === "function") {
         playRequest.catch(() => setMusicState("error"));
@@ -675,7 +683,17 @@
     music.addEventListener("ended", () => setMusicState("paused"));
     music.addEventListener("error", () => setMusicState("error"));
 
-    envelope.addEventListener("click", openLetter);
+    envelope.addEventListener("pointerdown", () => {
+      lastPointerActivation = performance.now();
+      openLetter();
+    });
+    envelope.addEventListener("click", (event) => {
+      if (event.detail > 0 && performance.now() - lastPointerActivation < 800) return;
+      openLetter();
+    });
+    musicStatus.addEventListener("pointerdown", () => {
+      if (music.paused) playMusic();
+    });
     envelope.addEventListener("keydown", (event) => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
