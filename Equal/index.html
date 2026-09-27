@@ -68,7 +68,7 @@
       cursor: pointer;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
-      transform: none;
+      transform: translateX(31px);
       transition: color .25s ease, background .25s ease, opacity .25s ease;
     }
 
@@ -393,7 +393,7 @@
       opacity: 0;
       font-family: "SSVeryBadHandwriting", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
       text-align: left;
-      transform: translateY(14px);
+      transform: translate(31px, 14px);
       transition: max-height 5s ease-in-out, opacity 5s ease-in-out, transform 5s ease-in-out;
     }
 
@@ -505,7 +505,7 @@
 
     .is-open .letter-copy {
       opacity: 1;
-      transform: translateY(0);
+      transform: translateX(31px);
     }
 
     .is-open .floating-heart {
@@ -560,11 +560,26 @@
     }
 
     @media (max-width: 600px) {
+      .letter-stage {
+        position: relative;
+        display: block;
+      }
+
+      .letter-copy {
+        width: calc(100% - 90px);
+        transform: translateY(14px);
+      }
+
+      .is-open .letter-copy {
+        transform: translateY(0);
+      }
+
       .music-status {
-        position: static;
-        top: auto;
-        justify-self: start;
-        margin-top: 24px;
+        position: absolute;
+        top: 24px;
+        left: calc(100% - 37px);
+        margin: 0;
+        transform: none;
       }
     }
 
