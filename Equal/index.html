@@ -46,8 +46,8 @@
 
     .music-status {
       position: absolute;
-      top: calc(18px + env(safe-area-inset-top));
-      right: 24px;
+      top: 24px;
+      right: -8px;
       z-index: 20;
       display: inline-flex;
       align-items: center;
@@ -366,7 +366,13 @@
 
     .open-button:active { transform: translateY(0); }
 
+    .letter-stage {
+      position: relative;
+      width: 100%;
+    }
+
     .letter-copy {
+      position: relative;
       max-height: 0;
       margin: 0 auto;
       overflow: hidden;
@@ -551,12 +557,6 @@
     <source src="./Equal.mp3" type="audio/mpeg">
   </audio>
   <main class="page" id="page">
-    <div class="music-status" id="musicStatus" role="status" aria-live="polite" aria-label="배경음악" hidden>
-      <span class="music-note" aria-hidden="true">♪</span>
-      <span class="music-bars" aria-hidden="true">
-        <span></span><span></span><span></span><span></span>
-      </span>
-    </div>
     <span class="floating-heart heart-one" aria-hidden="true">♥</span>
     <span class="floating-heart heart-two" aria-hidden="true">♥</span>
     <span class="floating-heart heart-three" aria-hidden="true">♡</span>
@@ -586,23 +586,31 @@
       <p class="hint" id="hint">봉투를 열면 편지가 시작됩니다</p>
     </section>
 
-    <article class="letter-copy" id="letterCopy" aria-live="polite">
-      <div class="letter-copy-inner">
-        <h2>테디케이트 송동일 대표님께</h2>
+    <div class="letter-stage">
+      <div class="music-status" id="musicStatus" role="status" aria-live="polite" aria-label="배경음악" hidden>
+        <span class="music-note" aria-hidden="true">♪</span>
+        <span class="music-bars" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+        </span>
+      </div>
+      <article class="letter-copy" id="letterCopy" aria-live="polite">
+        <div class="letter-copy-inner">
+          <h2>테디케이트 송동일 대표님께</h2>
 
-        <p>안녕하세요, 도진우입니다.<br>이제서야 용기를 내어 감사 인사 드립니다. 많이 늦었고 작은 선물이지만, 감사한 마음을 꼭 전하고 싶었습니다.</p>
+          <p>안녕하세요, 도진우입니다.<br>이제서야 용기를 내어 감사 인사 드립니다. 많이 늦었고 작은 선물이지만, 감사한 마음을 꼭 전하고 싶었습니다.</p>
 
           <p>기억하실지 모르겠지만, 콴다일로 김학호 본부장님께서 연락을 주신 적이 있습니다.<br>테디케이트 소개라고 하셨는데, 포지션이 맞지 않아 인연으로 이어지지는 못했지만, 기회를 주셨던 대표님의 따뜻한 마음은 가슴 깊이 간직하고 있습니다.</p>
 
-        <p>대표님의 생신과 1년 중 가장 큰 달이 뜨는 추석을 맞아, 감사의 마음을 담은 조은술세종 양조장의 <span class="hanja">異道</span>를 보내드립니다. <span class="hanja">異道</span>는 우리 모두의 스승이신 <span class="hanja">李祹</span>께 바치는 마음으로 우리 쌀로 정성스레 빚어낸 술입니다.</p>
+          <p>대표님의 생신과 1년 중 가장 큰 달이 뜨는 추석을 맞아, 감사의 마음을 담은 조은술세종 양조장의 <span class="hanja">異道</span>를 보내드립니다. <span class="hanja">異道</span>는 우리 모두의 스승이신 <span class="hanja">李祹</span>께 바치는 마음으로 우리 쌀로 정성스레 빚어낸 술입니다.</p>
 
-        <p>참된 스승이 되시길 바라는 마음과 남들과는 다른 길을 가시길 바라는 마음을 모두 담고자, 시간에 공을 쌓아 올려 골랐습니다.<br>눈이 아플 만큼 부족한 글씨지만, 이렇게 몇 자 적어봅니다.</p>
+          <p>참된 스승이 되시길 바라는 마음과 남들과는 다른 길을 가시길 바라는 마음을 모두 담고자, 시간에 공을 쌓아 올려 골랐습니다.<br>눈이 아플 만큼 부족한 글씨지만, 이렇게 몇 자 적어봅니다.</p>
 
-        <p><span class="hanja">李祹</span>의 날을 모르는 이가 없듯, 많은 사람들이 대표님의 생신을 뜻깊은 날로 기억하고, 대표님 가시는 길에 가장 큰 달이 뜨길 기원하겠습니다.</p>
+          <p><span class="hanja">李祹</span>의 날을 모르는 이가 없듯, 많은 사람들이 대표님의 생신을 뜻깊은 날로 기억하고, 대표님 가시는 길에 가장 큰 달이 뜨길 기원하겠습니다.</p>
 
-        <p class="closing">도진우 드림</p>
-      </div>
-    </article>
+          <p class="closing">도진우 드림</p>
+        </div>
+      </article>
+    </div>
 
     <footer class="footer">WITH GRATITUDE</footer>
   </main>
