@@ -570,7 +570,7 @@
       .letter-copy {
         grid-column: 1 / -1;
         grid-row: 1;
-        width: calc(100% - 90px);
+        width: calc(100% - 108px);
         transform: translateY(14px);
       }
 
@@ -584,6 +584,7 @@
         left: auto;
         grid-column: 2;
         grid-row: 1;
+        align-self: start;
         justify-self: start;
         margin: 0;
         transform: none;
@@ -713,6 +714,14 @@
       letterCopy.style.maxHeight = open ? `${height}px` : "0px";
     }
 
+    function scrollToLetterStart() {
+      const targetTop = window.scrollY + letterCopy.getBoundingClientRect().top - 24;
+      window.scrollTo({
+        top: Math.max(0, targetTop),
+        behavior: "smooth"
+      });
+    }
+
     function openLetter({ startMusic = true } = {}) {
       if (page.classList.contains("is-open")) {
         if (startMusic && music.paused) playMusic();
@@ -723,6 +732,7 @@
       envelope.setAttribute("aria-expanded", "true");
       if (startMusic) playMusic();
       setLetterHeight(true);
+      window.setTimeout(scrollToLetterStart, 5200);
     }
 
     music.addEventListener("play", () => {
@@ -752,6 +762,7 @@
         openLetter();
       }
     });
+
   </script>
 </body>
 </html>
