@@ -561,11 +561,15 @@
 
     @media (max-width: 600px) {
       .letter-stage {
-        position: relative;
-        display: block;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 54px;
+        column-gap: 8px;
+        align-items: start;
       }
 
       .letter-copy {
+        grid-column: 1 / -1;
+        grid-row: 1;
         width: calc(100% - 90px);
         transform: translateY(14px);
       }
@@ -575,9 +579,12 @@
       }
 
       .music-status {
-        position: absolute;
-        top: 24px;
-        left: calc(100% - 37px);
+        position: relative;
+        top: auto;
+        left: auto;
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: start;
         margin: 0;
         transform: none;
       }
@@ -656,12 +663,12 @@
     const letterCopyInner = letterCopy.querySelector(".letter-copy-inner");
     const music = document.querySelector("#music");
     const musicStatus = document.querySelector("#musicStatus");
-    let lastPointerActivation = 0;
     let hasStartedPlaying = false;
+    let playAttempt = 0;
 
     function setMusicState(state) {
       if (state === "playing") hasStartedPlaying = true;
-      musicStatus.hidden = !hasStartedPlaying;
+      musicStatus.hidden = !(hasStartedPlaying || state === "error");
       musicStatus.classList.toggle("is-loading", state === "loading");
       musicStatus.classList.toggle("is-playing", state === "playing");
       musicStatus.classList.toggle("is-paused", state === "paused");
@@ -677,12 +684,27 @@
     }
 
     function playMusic() {
+      const currentAttempt = ++playAttempt;
       setMusicState("loading");
       music.muted = false;
       music.volume = 1;
-      const playRequest = music.play();
-      if (playRequest && typeof playRequest.catch === "function") {
-        playRequest.catch(() => setMusicState("error"));
+      let playRequest;
+
+      try {
+        playRequest = music.play();
+      } catch (error) {
+        setMusicState("error");
+        return;
+      }
+
+      if (playRequest && typeof playRequest.then === "function") {
+        playRequest.then(() => {
+          if (currentAttempt === playAttempt && !music.paused) {
+            setMusicState("playing");
+          }
+        }).catch(() => {
+          if (currentAttempt === playAttempt) setMusicState("error");
+        });
       }
     }
 
@@ -691,29 +713,37 @@
       letterCopy.style.maxHeight = open ? `${height}px` : "0px";
     }
 
-    function openLetter() {
-      if (page.classList.contains("is-open")) return;
+    function openLetter({ startMusic = true } = {}) {
+      if (page.classList.contains("is-open")) {
+        if (startMusic && music.paused) playMusic();
+        return;
+      }
+
       page.classList.add("is-open");
       envelope.setAttribute("aria-expanded", "true");
-      playMusic();
+      if (startMusic) playMusic();
       setLetterHeight(true);
     }
 
+    music.addEventListener("play", () => {
+      if (!music.paused) setMusicState("playing");
+    });
     music.addEventListener("playing", () => setMusicState("playing"));
+    music.addEventListener("timeupdate", () => {
+      if (!music.paused && music.currentTime > 0) setMusicState("playing");
+    });
     music.addEventListener("waiting", () => setMusicState("loading"));
     music.addEventListener("pause", () => setMusicState("paused"));
     music.addEventListener("ended", () => setMusicState("paused"));
     music.addEventListener("error", () => setMusicState("error"));
 
     envelope.addEventListener("pointerdown", () => {
-      lastPointerActivation = performance.now();
-      openLetter();
+      openLetter({ startMusic: false });
     });
-    envelope.addEventListener("click", (event) => {
-      if (event.detail > 0 && performance.now() - lastPointerActivation < 800) return;
-      openLetter();
+    envelope.addEventListener("click", () => {
+      openLetter({ startMusic: true });
     });
-    musicStatus.addEventListener("pointerdown", () => {
+    musicStatus.addEventListener("click", () => {
       if (music.paused) playMusic();
     });
     envelope.addEventListener("keydown", (event) => {
