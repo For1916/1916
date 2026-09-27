@@ -44,6 +44,83 @@
       pointer-events: none;
     }
 
+    .music-status {
+      position: absolute;
+      top: calc(18px + env(safe-area-inset-top));
+      right: 24px;
+      z-index: 20;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 48px;
+      min-height: 34px;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, .72);
+      box-shadow: 0 8px 22px rgba(151, 87, 103, .1);
+      opacity: .86;
+      transform: translateY(0);
+      transition: color .25s ease, background .25s ease, opacity .25s ease;
+    }
+
+    .music-status[hidden] { display: none; }
+
+    .music-status.is-playing {
+      color: var(--pink);
+      background: rgba(255, 255, 255, .86);
+    }
+
+    .music-status.is-loading { opacity: .62; }
+
+    .music-status.is-error {
+      color: #b46b79;
+      opacity: .58;
+    }
+
+    .music-note {
+      font-size: 17px;
+      line-height: 1;
+    }
+
+    .music-bars {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      width: 17px;
+      height: 16px;
+    }
+
+    .music-bars span {
+      display: block;
+      width: 3px;
+      height: 5px;
+      border-radius: 999px;
+      background: currentColor;
+      animation: music-wave 1s ease-in-out infinite;
+      animation-play-state: paused;
+    }
+
+    .music-bars span:nth-child(2) { animation-delay: -.7s; }
+    .music-bars span:nth-child(3) { animation-delay: -.45s; }
+    .music-bars span:nth-child(4) { animation-delay: -.2s; }
+
+    .music-status.is-playing .music-bars span {
+      animation-play-state: running;
+    }
+
+    .music-status.is-loading .music-bars span {
+      animation-play-state: running;
+      animation-duration: 1.4s;
+    }
+
+    .music-status.is-paused .music-bars span,
+    .music-status.is-error .music-bars span {
+      height: 4px;
+      animation: none;
+    }
+
     html { min-height: 100%; }
 
     body {
@@ -450,6 +527,11 @@
       16% { transform: scale(1); }
     }
 
+    @keyframes music-wave {
+      0%, 100% { height: 5px; }
+      50% { height: 16px; }
+    }
+
     @keyframes rise {
       0% { opacity: 0; transform: translateY(20px) scale(.8) rotate(0); }
       15% { opacity: .95; }
@@ -459,13 +541,22 @@
 
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto !important; }
+      .music-bars span { animation: none !important; }
     }
   </style>
 </head>
 
 <body>
-  <iframe id="music" title="배경음악" allow="autoplay; encrypted-media" loading="eager"></iframe>
+  <audio id="music" preload="auto" loop>
+    <source src="./Equal.mp3" type="audio/mpeg">
+  </audio>
   <main class="page" id="page">
+    <div class="music-status" id="musicStatus" role="status" aria-live="polite" aria-label="배경음악" hidden>
+      <span class="music-note" aria-hidden="true">♪</span>
+      <span class="music-bars" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+      </span>
+    </div>
     <span class="floating-heart heart-one" aria-hidden="true">♥</span>
     <span class="floating-heart heart-two" aria-hidden="true">♥</span>
     <span class="floating-heart heart-three" aria-hidden="true">♡</span>
@@ -522,7 +613,31 @@
     const letterCopy = document.querySelector("#letterCopy");
     const letterCopyInner = letterCopy.querySelector(".letter-copy-inner");
     const music = document.querySelector("#music");
-    const musicUrl = "https://www.youtube.com/embed/aKUXeiuby_A?autoplay=1&loop=1&playlist=aKUXeiuby_A&playsinline=1&rel=0";
+    const musicStatus = document.querySelector("#musicStatus");
+
+    function setMusicState(state) {
+      musicStatus.hidden = state === "idle";
+      musicStatus.classList.toggle("is-loading", state === "loading");
+      musicStatus.classList.toggle("is-playing", state === "playing");
+      musicStatus.classList.toggle("is-paused", state === "paused");
+      musicStatus.classList.toggle("is-error", state === "error");
+
+      const labels = {
+        loading: "배경음악 로딩 중",
+        playing: "배경음악 재생 중",
+        paused: "배경음악 일시정지",
+        error: "배경음악 재생 오류"
+      };
+      musicStatus.setAttribute("aria-label", labels[state] || "배경음악");
+    }
+
+    function playMusic() {
+      setMusicState("loading");
+      const playRequest = music.play();
+      if (playRequest && typeof playRequest.catch === "function") {
+        playRequest.catch(() => setMusicState("error"));
+      }
+    }
 
     function setLetterHeight(open) {
       const height = letterCopyInner.scrollHeight;
@@ -533,9 +648,15 @@
       if (page.classList.contains("is-open")) return;
       page.classList.add("is-open");
       envelope.setAttribute("aria-expanded", "true");
-      if (!music.src) music.src = musicUrl;
+      playMusic();
       setLetterHeight(true);
     }
+
+    music.addEventListener("playing", () => setMusicState("playing"));
+    music.addEventListener("waiting", () => setMusicState("loading"));
+    music.addEventListener("pause", () => setMusicState("paused"));
+    music.addEventListener("ended", () => setMusicState("paused"));
+    music.addEventListener("error", () => setMusicState("error"));
 
     envelope.addEventListener("click", openLetter);
     envelope.addEventListener("keydown", (event) => {
