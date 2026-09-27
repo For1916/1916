@@ -45,11 +45,12 @@
     }
 
     .music-status {
-      position: absolute;
-      top: 24px;
-      right: -8px;
+      position: sticky;
+      top: calc(50svh - 17px);
+      margin: 0 0 -34px auto;
       z-index: 20;
-      display: inline-flex;
+      display: flex;
+      width: fit-content;
       align-items: center;
       gap: 7px;
       min-width: 48px;
@@ -61,7 +62,7 @@
       background: rgba(255, 255, 255, .72);
       box-shadow: 0 8px 22px rgba(151, 87, 103, .1);
       opacity: .86;
-      transform: translateY(0);
+      transform: translateX(8px);
       transition: color .25s ease, background .25s ease, opacity .25s ease;
     }
 
