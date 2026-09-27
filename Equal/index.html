@@ -47,7 +47,10 @@
     .music-status {
       position: sticky;
       top: calc(50svh - 17px);
-      margin: 0 0 -34px auto;
+      grid-column: 2;
+      grid-row: 1;
+      align-self: start;
+      margin: 24px 0 0;
       z-index: 20;
       display: flex;
       width: fit-content;
@@ -62,7 +65,7 @@
       background: rgba(255, 255, 255, .72);
       box-shadow: 0 8px 22px rgba(151, 87, 103, .1);
       opacity: .86;
-      transform: translateX(8px);
+      transform: none;
       transition: color .25s ease, background .25s ease, opacity .25s ease;
     }
 
@@ -368,12 +371,17 @@
     .open-button:active { transform: translateY(0); }
 
     .letter-stage {
-      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 54px;
+      column-gap: 8px;
+      align-items: start;
       width: 100%;
     }
 
     .letter-copy {
-      position: relative;
+      grid-column: 1;
+      grid-row: 1;
+      min-width: 0;
       max-height: 0;
       margin: 0 auto;
       overflow: hidden;
