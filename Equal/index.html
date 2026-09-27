@@ -72,6 +72,12 @@
       transition: color .25s ease, background .25s ease, opacity .25s ease;
     }
 
+    .page > .music-status {
+      align-self: flex-end;
+      margin-top: -100px;
+      margin-bottom: 66px;
+    }
+
     .music-status[hidden] { display: none; }
 
     .music-status.is-playing {
@@ -453,27 +459,6 @@
       text-align: right;
     }
 
-    .floating-heart {
-      position: fixed;
-      z-index: 2;
-      color: rgba(210, 103, 128, .82);
-      font-size: 20px;
-      opacity: 0;
-      pointer-events: none;
-      text-shadow: 0 2px 10px rgba(210, 103, 128, .2);
-    }
-
-    .heart-one { left: 18%; bottom: 25%; }
-    .heart-two { right: 17%; bottom: 30%; font-size: 15px; }
-    .heart-three { left: 70%; bottom: 18%; font-size: 12px; }
-    .heart-four { right: 35%; bottom: 22%; font-size: 16px; }
-    .heart-five { left: 42%; bottom: 32%; font-size: 13px; }
-    .heart-six { right: 6%; bottom: 20%; font-size: 11px; }
-    .heart-seven { left: 6%; bottom: 28%; font-size: 14px; }
-    .heart-eight { left: 30%; bottom: 16%; font-size: 22px; }
-    .heart-nine { right: 27%; bottom: 36%; font-size: 19px; }
-    .heart-ten { left: 82%; bottom: 24%; font-size: 24px; }
-    .heart-eleven { left: 52%; bottom: 20%; font-size: 20px; }
     .is-open .flap {
       z-index: 1;
       background-color: var(--pink-soft);
@@ -519,21 +504,6 @@
       animation: letter-copy-reveal 5s ease-in-out both;
     }
 
-    .is-open .floating-heart {
-      animation: rise 5.5s ease-out infinite;
-    }
-
-    .is-open .heart-two { animation-delay: .55s; }
-    .is-open .heart-three { animation-delay: 1.1s; }
-    .is-open .heart-four { animation-delay: 1.65s; }
-    .is-open .heart-five { animation-delay: 2.2s; }
-    .is-open .heart-six { animation-delay: 2.75s; }
-    .is-open .heart-seven { animation-delay: 3.3s; }
-    .is-open .heart-eight { animation-delay: 3.85s; }
-    .is-open .heart-nine { animation-delay: 4.4s; }
-    .is-open .heart-ten { animation-delay: 4.95s; }
-    .is-open .heart-eleven { animation-delay: 5.5s; }
-
     .footer {
       margin-top: 42px;
       color: rgba(154, 104, 115, .72);
@@ -561,13 +531,6 @@
     @keyframes music-wave {
       0%, 100% { height: 5px; }
       50% { height: 16px; }
-    }
-
-    @keyframes rise {
-      0% { opacity: 0; transform: translateY(20px) scale(.8) rotate(0); }
-      15% { opacity: .95; }
-      70% { opacity: .95; }
-      100% { opacity: 0; transform: translateY(-260px) scale(1.25) rotate(18deg); }
     }
 
     @keyframes letter-sheet-rise {
@@ -621,18 +584,6 @@
     <source src="./Equal.mp3" type="audio/mpeg">
   </audio>
   <main class="page" id="page">
-    <span class="floating-heart heart-one" aria-hidden="true">♥</span>
-    <span class="floating-heart heart-two" aria-hidden="true">♥</span>
-    <span class="floating-heart heart-three" aria-hidden="true">♡</span>
-    <span class="floating-heart heart-four" aria-hidden="true">♥</span>
-    <span class="floating-heart heart-five" aria-hidden="true">♡</span>
-    <span class="floating-heart heart-six" aria-hidden="true">♥</span>
-    <span class="floating-heart heart-seven" aria-hidden="true">♡</span>
-    <span class="floating-heart heart-eight" aria-hidden="true">♥</span>
-    <span class="floating-heart heart-nine" aria-hidden="true">♡</span>
-    <span class="floating-heart heart-ten" aria-hidden="true">♥</span>
-    <span class="floating-heart heart-eleven" aria-hidden="true">♥</span>
-
     <div class="opening-scene">
       <header class="intro">
         <span class="heart-mark" aria-hidden="true">♥</span>
@@ -654,13 +605,14 @@
       <footer class="footer">WITH GRATITUDE</footer>
     </div>
 
+    <div class="music-status" id="musicStatus" role="status" aria-live="polite" aria-label="배경음악" hidden>
+      <span class="music-note" aria-hidden="true">♪</span>
+      <span class="music-bars" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+      </span>
+    </div>
+
     <div class="letter-stage">
-      <div class="music-status" id="musicStatus" role="status" aria-live="polite" aria-label="배경음악" hidden>
-        <span class="music-note" aria-hidden="true">♪</span>
-        <span class="music-bars" aria-hidden="true">
-          <span></span><span></span><span></span><span></span>
-        </span>
-      </div>
       <article class="letter-copy" id="letterCopy" aria-live="polite">
         <div class="letter-copy-inner">
           <h2>테디케이트 송동일 대표님께</h2>
@@ -696,7 +648,7 @@
 
     function setMusicState(state) {
       if (state === "playing") hasStartedPlaying = true;
-      musicStatus.hidden = !(hasStartedPlaying || state === "error");
+      musicStatus.hidden = !(hasStartedPlaying || state === "error" || state === "loading");
       musicStatus.classList.toggle("is-loading", state === "loading");
       musicStatus.classList.toggle("is-playing", state === "playing");
       musicStatus.classList.toggle("is-paused", state === "paused");
@@ -752,14 +704,6 @@
       });
     }
 
-    function scrollToLetterStart() {
-      const targetTop = window.scrollY + letterCopy.getBoundingClientRect().top - 24;
-      window.scrollTo({
-        top: Math.max(0, targetTop),
-        behavior: "smooth"
-      });
-    }
-
     function openLetter({ startMusic = true } = {}) {
       if (page.classList.contains("is-open")) {
         if (startMusic && music.paused) playMusic();
@@ -770,7 +714,6 @@
       envelope.setAttribute("aria-expanded", "true");
       if (startMusic) playMusic();
       window.setTimeout(revealLetter, envelopeTransitionMs + letterPauseMs);
-      window.setTimeout(scrollToLetterStart, envelopeTransitionMs + letterPauseMs + 5200);
     }
 
     music.addEventListener("play", () => {
