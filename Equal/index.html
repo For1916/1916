@@ -128,13 +128,17 @@
       animation: none;
     }
 
-    html { min-height: 100%; }
+    html {
+      min-height: 100%;
+      overflow-anchor: none;
+    }
 
     body {
       min-height: 100svh;
       min-height: 100dvh;
       margin: 0;
       overflow-x: hidden;
+      overflow-anchor: none;
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
       color: var(--ink);
@@ -481,7 +485,7 @@
       box-shadow: var(--shadow);
     }
 
-    .is-open .letter-sheet {
+    .is-letter-revealed .letter-sheet {
       z-index: 2;
       bottom: 100px;
       transform: none;
@@ -489,6 +493,10 @@
 
     .is-open .intro {
       transform: translateY(-24px);
+    }
+
+    .page.is-open {
+      justify-content: flex-start;
     }
 
     .is-open .envelope-wrap {
@@ -503,7 +511,7 @@
 
     .is-open .seal { transform: translateX(-50%) scale(.7); }
 
-    .is-open .letter-copy {
+    .is-letter-revealed .letter-copy {
       opacity: 1;
       transform: translateX(31px);
     }
@@ -570,11 +578,11 @@
       .letter-copy {
         grid-column: 1 / -1;
         grid-row: 1;
-    width: calc(100% - 120px);
+        width: calc(100% - 120px);
         transform: translateY(14px);
       }
 
-      .is-open .letter-copy {
+      .is-letter-revealed .letter-copy {
         transform: translateY(0);
       }
 
@@ -588,7 +596,7 @@
         align-self: start;
         justify-self: start;
         margin: 24px 0 0;
-        transform: translateX(clamp(10px, 3.5vw, 16px));
+        transform: translateX(0);
       }
     }
 
@@ -667,6 +675,9 @@
     const musicStatus = document.querySelector("#musicStatus");
     let hasStartedPlaying = false;
     let playAttempt = 0;
+    let revealScrollFrame = 0;
+    const envelopeTransitionMs = 5000;
+    const letterPauseMs = 1000;
 
     function setMusicState(state) {
       if (state === "playing") hasStartedPlaying = true;
@@ -715,6 +726,21 @@
       letterCopy.style.maxHeight = open ? `${height}px` : "0px";
     }
 
+    function revealLetter() {
+      const revealScrollTop = window.scrollY;
+      page.classList.add("is-letter-revealed");
+      setLetterHeight(true);
+
+      const keepRevealPosition = () => {
+        window.scrollTo(0, revealScrollTop);
+        revealScrollFrame = window.requestAnimationFrame(keepRevealPosition);
+      };
+
+      window.scrollTo(0, revealScrollTop);
+      revealScrollFrame = window.requestAnimationFrame(keepRevealPosition);
+      window.setTimeout(() => window.cancelAnimationFrame(revealScrollFrame), 5200);
+    }
+
     function scrollToLetterStart() {
       const targetTop = window.scrollY + letterCopy.getBoundingClientRect().top - 24;
       window.scrollTo({
@@ -732,8 +758,8 @@
       page.classList.add("is-open");
       envelope.setAttribute("aria-expanded", "true");
       if (startMusic) playMusic();
-      setLetterHeight(true);
-      window.setTimeout(scrollToLetterStart, 5200);
+      window.setTimeout(revealLetter, envelopeTransitionMs + letterPauseMs);
+      window.setTimeout(scrollToLetterStart, envelopeTransitionMs + letterPauseMs + 5200);
     }
 
     music.addEventListener("play", () => {
