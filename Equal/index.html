@@ -604,6 +604,7 @@
     let gentleScrollActive = false;
     const envelopeTransitionMs = 5000;
     const letterPauseMs = 1000;
+    const gratitudeCardRiseMs = 5000;
 
     function stopGentleScroll() {
       if (!gentleScrollActive) return;
@@ -715,7 +716,10 @@
       page.classList.add("is-open");
       envelope.setAttribute("aria-expanded", "true");
       if (startMusic) playMusic();
-      window.setTimeout(revealLetter, envelopeTransitionMs + letterPauseMs);
+      window.setTimeout(
+        revealLetter,
+        envelopeTransitionMs + letterPauseMs + gratitudeCardRiseMs
+      );
     }
 
     music.addEventListener("play", () => {
