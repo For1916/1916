@@ -202,7 +202,7 @@
       position: relative;
       z-index: 10;
       animation: intro-in .9s cubic-bezier(.2,.75,.25,1);
-      transition: transform 5s ease-in-out, clip-path 5s ease-in-out;
+      transition: transform 4.167s ease-in-out, clip-path 4.167s ease-in-out;
       width: 100%;
       margin-bottom: 12px;
     }
@@ -243,7 +243,7 @@
       max-width: 350px;
       margin: 148px auto 22px;
       animation: float-in 1s .1s cubic-bezier(.2,.75,.25,1);
-      transition: transform 5s ease-in-out;
+      transition: transform 4.167s ease-in-out;
     }
 
     .envelope {
@@ -257,7 +257,7 @@
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
       isolation: isolate;
-      transition: background 5s ease-in-out, box-shadow 5s ease-in-out;
+      transition: background 4.167s ease-in-out, box-shadow 4.167s ease-in-out;
     }
 
     .envelope::before,
@@ -269,7 +269,7 @@
       height: 100%;
       content: "";
       pointer-events: none;
-      transition: transform 5s ease-in-out, clip-path 5s ease-in-out;
+      transition: transform 4.167s ease-in-out, clip-path 4.167s ease-in-out;
       will-change: transform;
     }
 
@@ -337,7 +337,7 @@
       transform: perspective(900px) rotateX(0deg);
       backface-visibility: visible;
       -webkit-backface-visibility: visible;
-      transition: transform 5s ease-in-out, background-color 5s ease-in-out, z-index 0s 2.5s;
+      transition: transform 4.167s ease-in-out, background-color 4.167s ease-in-out, z-index 0s 2.0835s;
       will-change: transform;
     }
 
@@ -479,7 +479,7 @@
 
     .is-open .letter-sheet {
       z-index: 2;
-      animation: letter-sheet-rise 5s 6s ease-in-out both;
+      animation: letter-sheet-rise 5s 4.167s ease-in-out both;
     }
 
     .is-open .seal,
@@ -602,8 +602,7 @@
     let manualScrollRequested = false;
     let gentleScrollFrame = 0;
     let gentleScrollActive = false;
-    const envelopeTransitionMs = 5000;
-    const letterPauseMs = 1000;
+    const envelopeTransitionMs = 4167;
     const gratitudeCardRiseMs = 5000;
 
     function stopGentleScroll() {
@@ -630,7 +629,7 @@
       if (distance < 8) return;
 
       const startedAt = performance.now();
-      const duration = 5200;
+      const duration = 10400;
       gentleScrollActive = true;
 
       function animateScroll(now) {
@@ -718,7 +717,7 @@
       if (startMusic) playMusic();
       window.setTimeout(
         revealLetter,
-        envelopeTransitionMs + letterPauseMs + gratitudeCardRiseMs
+        envelopeTransitionMs + gratitudeCardRiseMs
       );
     }
 
