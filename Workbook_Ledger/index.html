@@ -210,7 +210,7 @@
   .badge-expense { background: var(--red-soft); color: var(--red); }
   .badge-order { background: var(--accent-soft); color: var(--accent); }
   .badge-muted { background: var(--surface2); color: var(--text2); }
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
   .stat-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -311,6 +311,7 @@
     color: var(--text2);
   }
   .footer-note { margin-top: 18px; font-size: 12px; color: var(--text2); }
+  .section-label { font-size: 13px; font-weight: 800; margin: 18px 0 8px; }
   @media (max-width: 720px) {
     .content { padding: 16px 16px calc(24px + env(safe-area-inset-bottom)); }
     .form-grid, .stats, .compare { grid-template-columns: 1fr 1fr; }
@@ -356,7 +357,7 @@
 </div>
 <div class="content">
   <section id="tab-summary" class="panel active">
-    <p class="lead">주문 수입, 기타 수입, 지출만으로 그 달의 이익을 봅니다. 주문자 정보는 이 장부에 없습니다.</p>
+    <p class="lead">판매와 지출만으로 그 달의 이익을 봅니다. 주문자 정보는 이 장부에 없습니다.</p>
     <div id="summary-source" class="source-note" style="display:none"></div>
     <div class="month-row">
       <div class="field" style="min-width:200px">
@@ -366,7 +367,7 @@
     </div>
     <div class="stats" id="stats"></div>
     <div class="form-card">
-      <h2>수입과 지출</h2>
+      <h2>판매와 지출</h2>
       <div class="compare" id="compare"></div>
       <h2>지출 분류</h2>
       <div class="bars" id="bars"></div>
@@ -376,9 +377,11 @@
         <thead>
           <tr>
             <th>월</th>
-            <th class="num">주문 수입</th>
-            <th class="num">기타 수입</th>
-            <th class="num">총수입</th>
+            <th class="num">판매</th>
+            <th class="num">제본</th>
+            <th class="num">AI</th>
+            <th class="num">광고</th>
+            <th class="num">박스</th>
             <th class="num">총지출</th>
             <th class="num">순이익</th>
             <th class="num">이익률</th>
@@ -387,65 +390,56 @@
         <tbody id="month-body"></tbody>
       </table>
     </div>
-    <p class="footer-note">이익률은 순이익 ÷ 총수입입니다. 주문 수입은 주문 연동에서 집계에 포함된 금액만, 기타 수입은 구분이 기타 수입인 행만 합산합니다.</p>
+    <p class="footer-note">이익률은 순이익 ÷ 판매입니다. 판매는 취소·환불이 아닌 주문 금액입니다. 주문에 없는 판매만 수입 시트에 날짜·금액·메모로 적으며, 같은 금액을 양쪽에 적으면 두 번 합산됩니다.</p>
   </section>
 
   <section id="tab-add" class="panel">
-    <div class="seg" role="tablist">
-      <button type="button" class="active" id="mode-expense">지출</button>
-      <button type="button" id="mode-income">기타 수입</button>
-    </div>
     <form id="expense-form" class="form-card">
       <h2>지출 입력</h2>
       <div class="form-grid">
         <div class="field"><label for="ex-date">날짜</label><input id="ex-date" type="date" required></div>
         <div class="field"><label for="ex-category">분류</label><select id="ex-category" required></select></div>
-        <div class="field"><label for="ex-item">항목</label><input id="ex-item" type="text" maxlength="200" placeholder="예: 내지 인쇄"></div>
-        <div class="field"><label for="ex-vendor">거래처</label><input id="ex-vendor" type="text" maxlength="200" placeholder="예: 인쇄소"></div>
         <div class="field"><label for="ex-amount">금액</label><input id="ex-amount" type="text" inputmode="decimal" required placeholder="4500"></div>
-        <div class="field"><label for="ex-method">결제수단</label><select id="ex-method"></select></div>
-        <div class="field full"><label for="ex-memo">메모</label><textarea id="ex-memo" maxlength="2000" placeholder="교재·수량처럼 업무 메모만 적습니다"></textarea></div>
+        <div class="field full"><label for="ex-memo">메모</label><textarea id="ex-memo" maxlength="2000" placeholder="필요한 메모만 적습니다"></textarea></div>
       </div>
       <div class="form-actions"><button class="btn btn-primary" type="submit" id="ex-submit">지출 저장</button></div>
-    </form>
-    <form id="income-form" class="form-card" style="display:none">
-      <h2>기타 수입 입력</h2>
-      <p class="lead">주문 입금은 여기 넣지 않습니다. 주문 수입은 주문 연동 시트가 집계합니다.</p>
-      <div class="form-grid">
-        <div class="field"><label for="in-date">날짜</label><input id="in-date" type="date" required></div>
-        <div class="field"><label for="in-amount">금액</label><input id="in-amount" type="text" inputmode="decimal" required placeholder="10000"></div>
-        <div class="field full"><label for="in-detail">내용 (교재·권수)</label><input id="in-detail" type="text" maxlength="200" placeholder="예: 워크북 3권"></div>
-        <div class="field full"><label for="in-memo">메모</label><textarea id="in-memo" maxlength="2000"></textarea></div>
-      </div>
-      <div class="form-actions"><button class="btn btn-primary" type="submit" id="in-submit">기타 수입 저장</button></div>
     </form>
   </section>
 
   <section id="tab-list" class="panel">
     <div class="filter-bar">
-      <input id="list-search" type="search" placeholder="항목, 교재, 거래처, 메모 검색">
-      <select id="list-kind">
-        <option value="all">전체</option>
-        <option value="expense">지출</option>
-        <option value="income">기타 수입</option>
-        <option value="order">주문 연동 (읽기)</option>
-      </select>
+      <input id="list-search" type="search" placeholder="메모 검색">
       <select id="list-month"><option value="">모든 달</option></select>
       <button class="btn btn-ghost btn-sm" type="button" id="btn-reload">새로고침</button>
     </div>
+    <h2 class="section-label">지출</h2>
     <div class="table-wrap desk-only">
       <table>
         <thead>
           <tr>
-            <th>날짜</th><th>종류</th><th>내용</th><th class="num">금액</th><th>메모</th><th></th>
+            <th>날짜</th><th>분류</th><th class="num">금액</th><th>메모</th><th></th>
           </tr>
         </thead>
         <tbody id="list-body"></tbody>
       </table>
     </div>
     <div class="cards" id="list-cards"></div>
-    <div id="list-empty" class="empty" style="display:none"><p>표시할 내역이 없어요</p></div>
+    <div id="list-empty" class="empty" style="display:none"><p>표시할 지출이 없어요</p></div>
     <p class="footer-note" id="list-more"></p>
+    <h2 class="section-label">판매</h2>
+    <p class="lead">주문 금액입니다. 취소·환불은 이익에 넣지 않고, 주문 행은 수정하지 않습니다. 수입 시트에 직접 적은 판매만 여기서 고치거나 지울 수 있습니다.</p>
+    <div class="table-wrap desk-only">
+      <table>
+        <thead>
+          <tr>
+            <th>날짜</th><th>상태</th><th class="num">금액</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="sales-body"></tbody>
+      </table>
+    </div>
+    <div class="cards" id="sales-cards"></div>
+    <div id="sales-empty" class="empty" style="display:none"><p>표시할 판매가 없어요</p></div>
   </section>
 </div>
 </div>
@@ -466,8 +460,8 @@
 // 비밀번호는 이 파일에 적지 않습니다. 스크립트 속성에만 있습니다.
 var SCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
 var SS_KEY = 'hwangso-workbook-ledger-password';
-var DEFAULT_CATEGORIES = ['교재 제작비', '교재 구매비', '박스·포장재', '택배비', '광고비', '구독료(AI·툴)', '수수료', '기타'];
-var state = { meta: { expenseCategories: DEFAULT_CATEGORIES.slice(), paymentMethods: [] }, summary: null, income: [], expense: [], orders: [], selected: '합계', editing: null, showAll: false };
+var DEFAULT_CATEGORIES = ['제본', 'AI', '광고', '박스'];
+var state = { meta: { expenseCategories: DEFAULT_CATEGORIES.slice() }, summary: null, income: [], expense: [], orders: [], selected: '합계', editing: null, showAll: false };
 
 function scriptUrl() { return String(SCRIPT_URL || '').trim(); }
 function isConfigured() { return /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec\/?$/.test(scriptUrl()); }
@@ -561,10 +555,9 @@ function fillSelect(el, values, placeholder) {
   });
 }
 
+function categories() { return DEFAULT_CATEGORIES.slice(); }
 function applyMeta() {
-  var cats = (state.meta.expenseCategories && state.meta.expenseCategories.length) ? state.meta.expenseCategories : DEFAULT_CATEGORIES;
-  fillSelect($('ex-category'), cats, '선택');
-  fillSelect($('ex-method'), state.meta.paymentMethods || [], '선택 안 함');
+  fillSelect($('ex-category'), categories(), '선택');
 }
 
 function summaryRows() {
@@ -608,7 +601,7 @@ function renderSummary() {
   if (total) {
     html += '<tr class="clickable' + (state.selected === '합계' ? ' selected' : '') + '" data-month="합계"><td><strong>합계</strong></td>' + amountCells(total) + '</tr>';
   }
-  body.innerHTML = html || '<tr><td colspan="7">요약이 없습니다</td></tr>';
+  body.innerHTML = html || '<tr><td colspan="9">요약이 없습니다</td></tr>';
   var note = $('summary-source');
   if (state.summary && state.summary.source === 'computed') {
     note.style.display = 'block';
@@ -626,10 +619,13 @@ function renderSummary() {
 function monthCells(label, row) {
   return '<td>' + escapeHtml(label) + '</td>' + amountCells(row);
 }
+function expenseOf(row, name) {
+  var expenses = (row && row.expenses) || {};
+  return expenses[name] || 0;
+}
 function amountCells(row) {
-  return '<td class="num">' + fmt(row.orderIncome) + '</td>' +
-    '<td class="num">' + fmt(row.otherIncome) + '</td>' +
-    '<td class="num">' + fmt(row.totalIncome) + '</td>' +
+  return '<td class="num">' + fmt(row.sales) + '</td>' +
+    DEFAULT_CATEGORIES.map(function(name) { return '<td class="num">' + fmt(expenseOf(row, name)) + '</td>'; }).join('') +
     '<td class="num">' + fmt(row.totalExpense) + '</td>' +
     '<td class="num ' + moneyClass(row.profit) + '">' + fmt(row.profit) + '</td>' +
     '<td class="num ' + moneyClass(row.profit) + '">' + fmtPct(row.margin) + '</td>';
@@ -640,9 +636,7 @@ function renderSelected() {
   var stats = $('stats');
   if (!row) { stats.innerHTML = ''; $('bars').innerHTML = ''; $('compare').innerHTML = ''; return; }
   var cards = [
-    ['주문 수입', fmt(row.orderIncome), ''],
-    ['기타 수입', fmt(row.otherIncome), ''],
-    ['총수입', fmt(row.totalIncome), ''],
+    ['판매', fmt(row.sales), ''],
     ['총지출', fmt(row.totalExpense), ''],
     ['순이익', fmt(row.profit), moneyClass(row.profit)],
     ['이익률', fmtPct(row.margin), moneyClass(row.profit)]
@@ -650,13 +644,17 @@ function renderSelected() {
   stats.innerHTML = cards.map(function(c) {
     return '<div class="stat-card"><div class="label">' + c[0] + '</div><div class="value ' + c[2] + '">' + c[1] + '</div><div class="sub">' + escapeHtml(monthLabel(state.selected)) + '</div></div>';
   }).join('');
-  var income = Math.abs(row.totalIncome || 0);
+  var sales = Math.abs(row.sales || 0);
   var expense = Math.abs(row.totalExpense || 0);
-  var max = Math.max(income, expense, 1);
+  var max = Math.max(sales, expense, 1);
   $('compare').innerHTML =
-    '<div><div class="label">총수입</div><strong>' + fmt(row.totalIncome) + '</strong><div class="track"><div class="fill-in" style="width:' + (income / max * 100) + '%"></div></div></div>' +
+    '<div><div class="label">판매</div><strong>' + fmt(row.sales) + '</strong><div class="track"><div class="fill-in" style="width:' + (sales / max * 100) + '%"></div></div></div>' +
     '<div><div class="label">총지출</div><strong>' + fmt(row.totalExpense) + '</strong><div class="track"><div class="fill-out" style="width:' + (expense / max * 100) + '%"></div></div></div>';
-  var expenses = row.expenses || {};
+  var expenses = {};
+  categories().forEach(function(name) { expenses[name] = expenseOf(row, name); });
+  Object.keys(row.expenses || {}).forEach(function(name) {
+    if (DEFAULT_CATEGORIES.indexOf(name) === -1) expenses[name] = row.expenses[name] || 0;
+  });
   var names = Object.keys(expenses);
   var top = names.reduce(function(m, name) { return Math.max(m, Math.abs(expenses[name] || 0)); }, 0);
   if (!names.length || top === 0) {
@@ -671,59 +669,36 @@ function renderSelected() {
   }).join('');
 }
 
-function combinedRows() {
+function matchesFilter(row, fields) {
   var q = ($('list-search').value || '').trim().toLowerCase();
-  var kind = $('list-kind').value;
   var month = $('list-month').value;
-  var rows = [];
-  if (kind === 'all' || kind === 'expense') {
-    state.expense.forEach(function(r) { rows.push({ kind: 'expense', sort: r.date || '', row: r }); });
-  }
-  if (kind === 'all' || kind === 'income') {
-    state.income.forEach(function(r) { rows.push({ kind: 'income', sort: r.date || '', row: r }); });
-  }
-  if (kind === 'all' || kind === 'order') {
-    state.orders.forEach(function(r) { rows.push({ kind: 'order', sort: r.date || '', row: r }); });
-  }
-  rows = rows.filter(function(item) {
-    if (month && String(item.row.date || '').slice(0, 7) !== month) return false;
-    if (!q) return true;
-    var blob = [item.row.item, item.row.detail, item.row.book, item.row.vendor, item.row.memo, item.row.category, item.row.status, item.row.type].join(' ').toLowerCase();
-    return blob.indexOf(q) !== -1;
-  });
-  rows.sort(function(a, b) { return String(b.sort).localeCompare(String(a.sort)); });
-  return rows;
+  if (month && String(row.date || '').slice(0, 7) !== month) return false;
+  if (!q) return true;
+  var blob = fields.map(function(key) { return row[key] || ''; }).join(' ').toLowerCase();
+  return blob.indexOf(q) !== -1;
 }
-
-function rowTitle(item) {
-  if (item.kind === 'expense') return item.row.item || item.row.category || '지출';
-  if (item.kind === 'income') return item.row.detail || '기타 수입';
-  return item.row.book || '주문';
+function expenseRows() {
+  return state.expense.filter(function(row) {
+    return matchesFilter(row, ['category', 'item', 'memo']);
+  }).sort(function(a, b) { return String(b.date || '').localeCompare(String(a.date || '')); });
 }
-function rowMeta(item) {
-  if (item.kind === 'expense') return [item.row.category, item.row.vendor, item.row.method].filter(Boolean).join(' · ');
-  if (item.kind === 'income') return item.row.counts ? '기타 수입' : ((item.row.type || '수입') + ' · 월별 합계 제외');
-  return [item.row.status, item.row.included ? '집계 포함' : '집계 제외'].filter(Boolean).join(' · ');
-}
-function rowBadge(item) {
-  if (item.kind === 'expense') return '<span class="badge badge-expense">지출</span>';
-  if (item.kind === 'income') return '<span class="badge ' + (item.row.counts ? 'badge-income' : 'badge-muted') + '">' + escapeHtml(item.row.type || '수입') + '</span>';
-  return '<span class="badge ' + (item.row.included ? 'badge-order' : 'badge-muted') + '">' + (item.row.included ? '주문' : '주문 제외') + '</span>';
+function salesRows() {
+  return state.orders.filter(function(row) {
+    return matchesFilter(row, ['status', 'memo']);
+  }).sort(function(a, b) { return String(b.date || '').localeCompare(String(a.date || '')); });
 }
 
 function renderList() {
-  var rows = combinedRows();
+  var rows = expenseRows();
   var shown = state.showAll ? rows : rows.slice(0, 300);
-  $('list-body').innerHTML = shown.map(function(item, index) {
-    var actions = item.kind === 'order' ? '' : '<button type="button" class="btn btn-ghost btn-sm" data-edit="' + index + '">수정</button>';
-    return '<tr><td>' + escapeHtml(item.row.date || '-') + '</td><td>' + rowBadge(item) + '</td><td>' + escapeHtml(rowTitle(item)) + '<div style="color:var(--text2);font-size:12px">' + escapeHtml(rowMeta(item)) + '</div></td><td class="num ' + (item.kind === 'expense' ? 'neg' : 'pos') + '">' + fmt(item.row.amount) + '</td><td>' + escapeHtml(item.row.memo || '') + '</td><td>' + actions + '</td></tr>';
+  $('list-body').innerHTML = shown.map(function(row, index) {
+    return '<tr><td>' + escapeHtml(row.date || '-') + '</td><td>' + escapeHtml(row.category || '-') + (row.item ? '<div style="color:var(--text2);font-size:12px">' + escapeHtml(row.item) + '</div>' : '') + '</td><td class="num neg">' + fmt(row.amount) + '</td><td>' + escapeHtml(row.memo || '') + '</td><td><button type="button" class="btn btn-ghost btn-sm" data-edit="' + index + '">수정</button></td></tr>';
   }).join('');
-  $('list-cards').innerHTML = shown.map(function(item, index) {
-    var actions = item.kind === 'order' ? '' : '<div class="card-actions"><button type="button" class="btn btn-ghost btn-sm" data-edit="' + index + '">수정</button></div>';
-    return '<article class="trade-card"><div class="trade-card-header"><div class="trade-card-title">' + escapeHtml(rowTitle(item)) + '</div>' + rowBadge(item) + '</div><div class="trade-card-meta">' + escapeHtml(item.row.date || '-') + ' · ' + escapeHtml(rowMeta(item)) + '</div><strong class="' + (item.kind === 'expense' ? 'neg' : 'pos') + '">' + fmt(item.row.amount) + '</strong>' + (item.row.memo ? '<div class="trade-card-meta">' + escapeHtml(item.row.memo) + '</div>' : '') + actions + '</article>';
+  $('list-cards').innerHTML = shown.map(function(row, index) {
+    return '<article class="trade-card"><div class="trade-card-header"><div class="trade-card-title">' + escapeHtml(row.category || '지출') + '</div><span class="badge badge-expense">지출</span></div><div class="trade-card-meta">' + escapeHtml(row.date || '-') + (row.item ? ' · ' + escapeHtml(row.item) : '') + '</div><strong class="neg">' + fmt(row.amount) + '</strong>' + (row.memo ? '<div class="trade-card-meta">' + escapeHtml(row.memo) + '</div>' : '') + '<div class="card-actions"><button type="button" class="btn btn-ghost btn-sm" data-edit="' + index + '">수정</button></div></article>';
   }).join('');
   $('list-empty').style.display = rows.length ? 'none' : 'block';
-  $('list-more').textContent = rows.length > shown.length ? ('최근 순서로 ' + shown.length + '건만 표시 중입니다. 검색이나 달 필터로 좁히거나, 아래를 누르세요.') : (rows.length ? (rows.length + '건') : '');
+  $('list-more').textContent = rows.length > shown.length ? ('최근 순서로 ' + shown.length + '건만 표시 중입니다.') : (rows.length ? (rows.length + '건') : '');
   if (rows.length > shown.length) {
     var more = document.createElement('button');
     more.type = 'button';
@@ -735,47 +710,63 @@ function renderList() {
   document.querySelectorAll('[data-edit]').forEach(function(btn) {
     btn.addEventListener('click', function() { openEdit(shown[Number(btn.getAttribute('data-edit'))]); });
   });
+  var sales = salesRows();
+  var manuals = state.income.filter(function(row) { return row.counts && matchesFilter(row, ['memo']); });
+  var salesHtml = sales.map(function(row) {
+    var badge = row.included ? '<span class="badge badge-order">주문</span>' : '<span class="badge badge-muted">제외</span>';
+    return '<tr><td>' + escapeHtml(row.date || '-') + '</td><td>' + escapeHtml(row.status || '-') + '</td><td class="num ' + (row.included ? 'pos' : '') + '">' + fmt(row.amount) + '</td><td>' + badge + '</td></tr>';
+  }).join('');
+  salesHtml += manuals.map(function(row, index) {
+    return '<tr><td>' + escapeHtml(row.date || '-') + '</td><td>직접 입력' + (row.memo ? '<div style="color:var(--text2);font-size:12px">' + escapeHtml(row.memo) + '</div>' : '') + '</td><td class="num pos">' + fmt(row.amount) + '</td><td><button type="button" class="btn btn-ghost btn-sm" data-income="' + index + '">수정</button></td></tr>';
+  }).join('');
+  $('sales-body').innerHTML = salesHtml;
+  var salesCards = sales.map(function(row) {
+    var badge = row.included ? '<span class="badge badge-order">주문</span>' : '<span class="badge badge-muted">제외</span>';
+    return '<article class="trade-card"><div class="trade-card-header"><div class="trade-card-title">' + escapeHtml(row.date || '-') + '</div>' + badge + '</div><div class="trade-card-meta">' + escapeHtml(row.status || '상태 없음') + '</div><strong class="' + (row.included ? 'pos' : '') + '">' + fmt(row.amount) + '</strong></article>';
+  }).join('');
+  salesCards += manuals.map(function(row, index) {
+    return '<article class="trade-card"><div class="trade-card-header"><div class="trade-card-title">직접 입력</div><span class="badge badge-income">판매</span></div><div class="trade-card-meta">' + escapeHtml(row.date || '-') + (row.memo ? ' · ' + escapeHtml(row.memo) : '') + '</div><strong class="pos">' + fmt(row.amount) + '</strong><div class="card-actions"><button type="button" class="btn btn-ghost btn-sm" data-income="' + index + '">수정</button></div></article>';
+  }).join('');
+  $('sales-cards').innerHTML = salesCards;
+  $('sales-empty').style.display = (sales.length || manuals.length) ? 'none' : 'block';
+  document.querySelectorAll('[data-income]').forEach(function(btn) {
+    btn.addEventListener('click', function() { openIncomeEdit(manuals[Number(btn.getAttribute('data-income'))]); });
+  });
 }
 
 function fieldHtml(id, label, control) {
   return '<div class="field"><label for="' + id + '">' + label + '</label>' + control + '</div>';
 }
-function openEdit(item) {
-  if (!item || item.kind === 'order') return;
-  state.editing = item;
-  $('edit-title').textContent = item.kind === 'expense' ? '지출 수정' : '기타 수입 수정';
-  var r = item.row;
+function openEdit(row) {
+  if (!row) return;
+  state.editing = row;
+  $('edit-title').textContent = '지출 수정';
   var form = $('edit-form');
-  if (item.kind === 'expense') {
-    form.innerHTML = '<div class="form-grid">' +
-      fieldHtml('ed-date', '날짜', '<input id="ed-date" type="date" required value="' + escapeHtml(r.date) + '">') +
-      fieldHtml('ed-category', '분류', '<select id="ed-category" required></select>') +
-      fieldHtml('ed-item', '항목', '<input id="ed-item" type="text" maxlength="200" value="' + escapeHtml(r.item || '') + '">') +
-      fieldHtml('ed-vendor', '거래처', '<input id="ed-vendor" type="text" maxlength="200" value="' + escapeHtml(r.vendor || '') + '">') +
-      fieldHtml('ed-amount', '금액', '<input id="ed-amount" type="text" inputmode="decimal" required value="' + escapeHtml(r.amount == null ? '' : r.amount) + '">') +
-      fieldHtml('ed-method', '결제수단', '<select id="ed-method"></select>') +
-      '<div class="field full"><label for="ed-memo">메모</label><textarea id="ed-memo" maxlength="2000">' + escapeHtml(r.memo || '') + '</textarea></div></div>' +
-      '<div class="form-actions"><button class="btn btn-danger" type="button" id="ed-delete">삭제</button><button class="btn btn-primary" type="submit">저장</button></div>';
-    var cats = (state.meta.expenseCategories || []).slice();
-    if (r.category && cats.indexOf(r.category) === -1) cats.push(r.category);
-    fillSelect($('ed-category'), cats, null);
-    $('ed-category').value = r.category || '';
-    var methods = (state.meta.paymentMethods || []).slice();
-    if (r.method && methods.indexOf(r.method) === -1) methods.push(r.method);
-    fillSelect($('ed-method'), methods, '선택 안 함');
-    $('ed-method').value = r.method || '';
-  } else {
-    form.innerHTML = '<div class="form-grid">' +
-      fieldHtml('ed-date', '날짜', '<input id="ed-date" type="date" required value="' + escapeHtml(r.date) + '">') +
-      fieldHtml('ed-amount', '금액', '<input id="ed-amount" type="text" inputmode="decimal" required value="' + escapeHtml(r.amount == null ? '' : r.amount) + '">') +
-      '<div class="field full"><label for="ed-detail">내용 (교재·권수)</label><input id="ed-detail" type="text" maxlength="200" value="' + escapeHtml(r.detail || '') + '"></div>' +
-      '<div class="field full"><label for="ed-memo">메모</label><textarea id="ed-memo" maxlength="2000">' + escapeHtml(r.memo || '') + '</textarea></div></div>' +
-      '<p class="lead">구분: ' + escapeHtml(r.type || '기타 수입') + (r.counts ? '' : ' (월별 합계에는 넣지 않음)') + '</p>' +
-      '<div class="form-actions"><button class="btn btn-danger" type="button" id="ed-delete">삭제</button><button class="btn btn-primary" type="submit">저장</button></div>';
-  }
+  form.innerHTML = '<div class="form-grid">' +
+    fieldHtml('ed-date', '날짜', '<input id="ed-date" type="date" required value="' + escapeHtml(row.date) + '">') +
+    fieldHtml('ed-category', '분류', '<select id="ed-category" required></select>') +
+    fieldHtml('ed-amount', '금액', '<input id="ed-amount" type="text" inputmode="decimal" required value="' + escapeHtml(row.amount == null ? '' : row.amount) + '">') +
+    '<div class="field full"><label for="ed-memo">메모</label><textarea id="ed-memo" maxlength="2000">' + escapeHtml(row.memo || '') + '</textarea></div></div>' +
+    '<div class="form-actions"><button class="btn btn-danger" type="button" id="ed-delete">삭제</button><button class="btn btn-primary" type="submit">저장</button></div>';
+  var cats = categories();
+  if (row.category && cats.indexOf(row.category) === -1) cats = cats.concat([row.category]);
+  fillSelect($('ed-category'), cats, null);
+  $('ed-category').value = cats.indexOf(row.category) === -1 ? '' : row.category;
   $('detail-overlay').style.display = 'flex';
-  var del = $('ed-delete');
-  if (del) del.addEventListener('click', deleteEditing);
+  $('ed-delete').addEventListener('click', deleteEditing);
+}
+function openIncomeEdit(row) {
+  if (!row) return;
+  state.editing = { kind: 'income', row: row };
+  $('edit-title').textContent = '직접 입력한 판매';
+  $('edit-form').innerHTML = '<div class="form-grid">' +
+    fieldHtml('ed-date', '날짜', '<input id="ed-date" type="date" required value="' + escapeHtml(row.date) + '">') +
+    fieldHtml('ed-amount', '금액', '<input id="ed-amount" type="text" inputmode="decimal" required value="' + escapeHtml(row.amount == null ? '' : row.amount) + '">') +
+    '<div class="field full"><label for="ed-memo">메모</label><textarea id="ed-memo" maxlength="2000">' + escapeHtml(row.memo || '') + '</textarea></div></div>' +
+    '<p class="lead">주문 연동에 있는 판매라면 여기서 지우세요. 양쪽에 있으면 두 번 합산됩니다.</p>' +
+    '<div class="form-actions"><button class="btn btn-danger" type="button" id="ed-delete">삭제</button><button class="btn btn-primary" type="submit">저장</button></div>';
+  $('detail-overlay').style.display = 'flex';
+  $('ed-delete').addEventListener('click', deleteEditing);
 }
 function closeEdit() {
   state.editing = null;
@@ -787,7 +778,9 @@ async function deleteEditing() {
   if (!item) return;
   if (!confirm('이 내역을 삭제할까요?')) return;
   try {
-    await api('delete', { sheet: item.kind === 'expense' ? '지출' : '수입', row: item.row.row, match: { date: item.row.date, amount: item.row.amount } });
+    var target = item.kind === 'income' ? item.row : item;
+    var sheet = item.kind === 'income' ? '수입' : '지출';
+    await api('delete', { sheet: sheet, row: target.row, match: { date: target.date, amount: target.amount } });
     closeEdit();
     toast('삭제했습니다');
     await reload();
@@ -811,12 +804,6 @@ async function reload() {
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach(function(tab) { tab.classList.toggle('active', tab.getAttribute('data-tab') === name); });
   document.querySelectorAll('.panel').forEach(function(panel) { panel.classList.toggle('active', panel.id === 'tab-' + name); });
-}
-function setEntryMode(mode) {
-  $('mode-expense').classList.toggle('active', mode === 'expense');
-  $('mode-income').classList.toggle('active', mode === 'income');
-  $('expense-form').style.display = mode === 'expense' ? 'block' : 'none';
-  $('income-form').style.display = mode === 'income' ? 'block' : 'none';
 }
 function unlock() {
   $('lock-overlay').style.display = 'none';
@@ -842,7 +829,6 @@ async function submitPassword() {
     unlock();
     await reload();
     $('ex-date').value = $('ex-date').value || todayISO();
-    $('in-date').value = $('in-date').value || todayISO();
   } catch (err) {
     sessionStorage.removeItem(SS_KEY);
     $('pw-error').textContent = err.message;
@@ -863,10 +849,7 @@ $('month-body').addEventListener('click', function(event) {
   state.selected = tr.getAttribute('data-month');
   renderSummary();
 });
-$('mode-expense').addEventListener('click', function() { setEntryMode('expense'); });
-$('mode-income').addEventListener('click', function() { setEntryMode('income'); });
 $('list-search').addEventListener('input', function() { state.showAll = false; renderList(); });
-$('list-kind').addEventListener('change', function() { state.showAll = false; renderList(); });
 $('list-month').addEventListener('change', function() { state.showAll = false; renderList(); });
 $('btn-reload').addEventListener('click', function() { reload().catch(function(err) { toast(err.message, 'error'); }); });
 $('btn-lock').addEventListener('click', function() { lock(); });
@@ -885,14 +868,9 @@ $('expense-form').addEventListener('submit', async function(event) {
     await api('add', { sheet: '지출', record: {
       '날짜': $('ex-date').value,
       '분류': $('ex-category').value,
-      '항목': $('ex-item').value.trim(),
-      '거래처': $('ex-vendor').value.trim(),
       '금액': amount,
-      '결제수단': $('ex-method').value,
       '메모': $('ex-memo').value.trim()
     }});
-    $('ex-item').value = '';
-    $('ex-vendor').value = '';
     $('ex-amount').value = '';
     $('ex-memo').value = '';
     toast('지출을 저장했습니다');
@@ -901,53 +879,30 @@ $('expense-form').addEventListener('submit', async function(event) {
   finally { $('ex-submit').disabled = false; }
 });
 
-$('income-form').addEventListener('submit', async function(event) {
-  event.preventDefault();
-  var amount = parseAmount($('in-amount').value);
-  if (amount == null) { toast('금액을 확인해 주세요', 'error'); return; }
-  $('in-submit').disabled = true;
-  try {
-    await api('add', { sheet: '수입', record: {
-      '날짜': $('in-date').value,
-      '구분': '기타 수입',
-      '내용': $('in-detail').value.trim(),
-      '금액': amount,
-      '메모': $('in-memo').value.trim()
-    }});
-    $('in-detail').value = '';
-    $('in-amount').value = '';
-    $('in-memo').value = '';
-    toast('기타 수입을 저장했습니다');
-    await reload();
-  } catch (err) { toast(err.message, 'error'); }
-  finally { $('in-submit').disabled = false; }
-});
-
 $('edit-form').addEventListener('submit', async function(event) {
   event.preventDefault();
   var item = state.editing;
   if (!item) return;
   var amount = parseAmount($('ed-amount').value);
   if (amount == null) { toast('금액을 확인해 주세요', 'error'); return; }
-  var record = item.kind === 'expense' ? {
+  var incomeEdit = item.kind === 'income';
+  if (!incomeEdit && !$('ed-category').value) { toast('분류를 선택하세요', 'error'); return; }
+  var target = incomeEdit ? item.row : item;
+  var record = incomeEdit ? {
     '날짜': $('ed-date').value,
-    '분류': $('ed-category').value,
-    '항목': $('ed-item').value.trim(),
-    '거래처': $('ed-vendor').value.trim(),
     '금액': amount,
-    '결제수단': $('ed-method').value,
     '메모': $('ed-memo').value.trim()
   } : {
     '날짜': $('ed-date').value,
-    '내용': $('ed-detail').value.trim(),
+    '분류': $('ed-category').value,
     '금액': amount,
     '메모': $('ed-memo').value.trim()
   };
   try {
     await api('update', {
-      sheet: item.kind === 'expense' ? '지출' : '수입',
-      row: item.row.row,
-      match: { date: item.row.date, amount: item.row.amount },
+      sheet: incomeEdit ? '수입' : '지출',
+      row: target.row,
+      match: { date: target.date, amount: target.amount },
       record: record
     });
     closeEdit();
@@ -958,12 +913,10 @@ $('edit-form').addEventListener('submit', async function(event) {
 
 applyMeta();
 $('ex-date').value = todayISO();
-$('in-date').value = todayISO();
 showSetupHint();
 if (sessionStorage.getItem(SS_KEY) && isConfigured()) {
   api('auth').then(function() { unlock(); return reload(); }).then(function() {
     $('ex-date').value = $('ex-date').value || todayISO();
-    $('in-date').value = $('in-date').value || todayISO();
   }).catch(function(err) { lock(err.message); });
 } else if (!isConfigured()) {
   setStatus('주소 필요');
