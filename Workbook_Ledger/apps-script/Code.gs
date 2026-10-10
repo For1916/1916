@@ -651,6 +651,7 @@ function parseDateInput_(value) {
 }
 
 function formatCellDate_(value) {
+  if (typeof value === 'number' && isFinite(value) && value >= 30000 && value < 80000) return sheetsSerialToIso_(value);
   if (value instanceof Date && !isNaN(value.getTime())) return Utilities.formatDate(value, sheetTz_(), 'yyyy-MM-dd');
   var s = String(value == null ? '' : value).trim();
   if (!s) return '';
@@ -659,6 +660,15 @@ function formatCellDate_(value) {
   var dot = s.match(/^(\d{4})\s*[./]\s*(\d{1,2})\s*[./]\s*(\d{1,2})/);
   if (!dot) return '';
   return dot[1] + '-' + ('0' + dot[2]).slice(-2) + '-' + ('0' + dot[3]).slice(-2);
+}
+
+function sheetsSerialToIso_(serial) {
+  var utc = Date.UTC(1899, 11, 30) + Math.round(Number(serial)) * 86400000;
+  var d = new Date(utc);
+  var y = d.getUTCFullYear();
+  var m = d.getUTCMonth() + 1;
+  var day = d.getUTCDate();
+  return y + '-' + (m < 10 ? '0' + m : String(m)) + '-' + (day < 10 ? '0' + day : String(day));
 }
 
 function parseMonthLabel_(value) {
@@ -968,15 +978,19 @@ function migrateCategories_(ss, report) {
 
 function migrateOrders_(sh, ctx, report) {
   var problems = orderSheetHealth_(sh);
-  if (!problems.length) {
-    report.push('주문 연동은 이미 제출일시·상태·금액만 가져옵니다.');
+  if (problems.length) {
+    problems.forEach(function(problem) { report.push('주문 연동: ' + problem); });
+    rebuildOrderSheet_(sh, ctx);
+    var again = orderSheetHealth_(sh);
+    if (again.length) fail_('주문 연동을 다시 만든 뒤에도 확인이 필요합니다. ' + again.join(' '));
+    report.push('주문 연동을 제출일시·상태·금액만 가져오도록 다시 썼습니다. 교재와 주문자는 가져오지 않습니다.');
     return;
   }
-  problems.forEach(function(problem) { report.push('주문 연동: ' + problem); });
-  rebuildOrderSheet_(sh, ctx);
-  var again = orderSheetHealth_(sh);
-  if (again.length) fail_('주문 연동을 다시 만든 뒤에도 확인이 필요합니다. ' + again.join(' '));
-  report.push('주문 연동을 제출일시·상태·금액만 가져오도록 다시 썼습니다. 교재와 주문자는 가져오지 않습니다.');
+  if (refreshOrderConversions_(sh, ctx)) {
+    report.push('주문 연동 날짜·금액 변환을 고쳤습니다. 날짜 숫자와 2026. 7. 13 같은 글자, 금액 숫자와 40,000원 같은 글자를 모두 받습니다.');
+  } else {
+    report.push('주문 연동은 이미 제출일시·상태·금액만 가져옵니다.');
+  }
 }
 
 function rebuildSummary_(ss, ctx, report) {
@@ -1114,13 +1128,16 @@ function fixNotes_(ss, report) {
   var orderSh = mustSheet_(ss, '주문 연동');
   var incomeSh = mustSheet_(ss, '수입');
   var summary = ss.getSheetByName('월별 요약');
+  var ship = ss.getSheetByName('주문 출고');
   var guide = columnGuide_();
   var cleared = 0;
   cleared += clearPersonalNotes_(orderSh, 1);
   cleared += clearPersonalNotes_(incomeSh, 1);
   if (summary) cleared += clearPersonalNotes_(summary, 16);
+  if (ship) cleared += clearPersonalNotes_(ship, 1);
   orderSh.getRange(1, 8).setValue(guide);
   if (summary) summary.getRange(16, 1).setValue(guide).setWrap(true);
+  if (ship && !String(ship.getRange(1, 8).getValue() || '').trim()) ship.getRange(1, 8).setValue(shipGuide_()).setWrap(true);
   report.push(cleared ? ('이전 안내 문구 ' + cleared + '곳을 지우고 새 안내를 넣었습니다.') : '안내 문구를 현재 구조로 넣었습니다.');
 }
 
@@ -1144,7 +1161,7 @@ function clearPersonalNotes_(sh, minRow) {
     if (!isPersonalHeader_(name)) dataCols[map[name]] = true;
   });
   var lastRow = Math.min(Math.max(sh.getLastRow(), minRow), 80);
-  var lastCol = Math.max(sh.getLastColumn(), 1);
+  var lastCol = Math.min(Math.max(sh.getLastColumn(), 16), sh.getMaxColumns());
   if (lastRow < minRow) return 0;
   var range = sh.getRange(minRow, 1, lastRow - minRow + 1, lastCol);
   var values = range.getValues();
@@ -1155,9 +1172,10 @@ function clearPersonalNotes_(sh, minRow) {
     for (c = 0; c < values[r].length; c++) {
       if (formulas[r][c]) continue;
       var sheetRow = minRow + r;
-      if (sheetRow >= 2 && dataCols[c + 1] && sh.getName() !== '월별 요약') continue;
+      var outside = !dataCols[c + 1];
+      if (sheetRow >= 2 && !outside && sh.getName() !== '월별 요약') continue;
       var text = String(values[r][c] == null ? '' : values[r][c]);
-      if (!shouldScrubDoc_(text)) continue;
+      if (!shouldScrubDoc_(text) && !(outside && isLooseNote_(text))) continue;
       sh.getRange(sheetRow, c + 1).clearContent();
       changed++;
     }
@@ -1168,10 +1186,34 @@ function clearPersonalNotes_(sh, minRow) {
 function shouldScrubDoc_(text) {
   var s = String(text || '').trim();
   if (!s) return false;
-  if (s.indexOf(DOC_MARKER) === 0 && !PERSONAL_HEADER_RE.test(s)) return false;
+  if (s.indexOf(DOC_MARKER) === 0 && !legacyNote_(s) && !PERSONAL_HEADER_RE.test(s)) return false;
   if (PERSONAL_HEADER_RE.test(s)) return true;
+  if (legacyNote_(s)) return true;
   if (/IMPORTRANGE/i.test(s)) return true;
   if (/[A-Z]{1,2}\s*열/.test(s) && /주문|금액|집계|교재|상태/.test(s) && s.length > 15) return true;
+  return false;
+}
+
+function legacyNote_(text) {
+  var s = String(text || '');
+  if (/네이버\s*폼|naver\s*form/i.test(s)) return true;
+  if (/주문\s*입금/.test(s)) return true;
+  if (/기타\s*수입/.test(s)) return true;
+  if (/집계\s*포함/.test(s)) return true;
+  if (/직접\s*입력\s*금지/.test(s)) return true;
+  if (/자동\s*연동/.test(s)) return true;
+  if (/액세스\s*허용/.test(s)) return true;
+  if (/[A-Z]\d+\s*[·・]\s*[A-Z]\d+/.test(s)) return true;
+  if (/[A-Z]\d+\s*[~～]\s*[A-Z]\d+/.test(s)) return true;
+  if (/※/.test(s) && /안내/.test(s)) return true;
+  return false;
+}
+
+function isLooseNote_(text) {
+  var s = String(text || '').trim();
+  if (!s || s.indexOf(DOC_MARKER) === 0) return false;
+  if (/[\r\n]/.test(s) && s.length > 12) return true;
+  if (/^※/.test(s)) return true;
   return false;
 }
 
@@ -1209,8 +1251,70 @@ function rebuildOrderSheet_(sh, ctx) {
   sh.getRange(2, 1, height, 1).setFormulas(localizeGrid_(dates));
   sh.getRange(2, 2, height, 1).setFormulas(localizeGrid_(statuses));
   sh.getRange(2, 3, height, 1).setFormulas(localizeGrid_(amounts));
-  sh.getRange(2, 1, height, 1).setNumberFormat('yyyy-mm-dd');
-  sh.getRange(2, 3, height, 1).setNumberFormat('#,##0');
+  applyImportNumberFormats_(sh, endRow, { dateCol: 1, rawDateCol: 5, amountCol: 3, rawAmountCol: 7 });
+}
+
+function refreshOrderConversions_(sh, ctx) {
+  var map = headerMap_(sh);
+  var endRow = (ctx && ctx.endRow) || ORDER_LAST_ROW_DEFAULT;
+  var rawDateCol = findHeader_(map, ['원본 제출일시']) || 5;
+  var rawAmountCol = findHeader_(map, ['원본 금액']) || 7;
+  var dateCol = findHeader_(map, ['날짜']);
+  var amountCol = findHeader_(map, ['금액']);
+  var changed = rewriteConversionColumn_(sh, endRow, dateCol, rawDateCol, dateFormula_, dateFormulaReady_);
+  changed = rewriteConversionColumn_(sh, endRow, amountCol, rawAmountCol, amountFormula_, amountFormulaReady_) || changed;
+  applyImportNumberFormats_(sh, endRow, {
+    dateCol: dateCol,
+    rawDateCol: rawDateCol,
+    amountCol: amountCol,
+    rawAmountCol: rawAmountCol
+  });
+  return changed;
+}
+
+function refreshShipConversions_(sh, ctx) {
+  var map = headerMap_(sh);
+  var endRow = (ctx && ctx.endRow) || ORDER_LAST_ROW_DEFAULT;
+  var rawDateCol = findHeader_(map, ['원본 제출일시']) || 5;
+  var dateCol = findHeader_(map, ['날짜']);
+  var changed = rewriteConversionColumn_(sh, endRow, dateCol, rawDateCol, dateFormula_, dateFormulaReady_);
+  applyImportNumberFormats_(sh, endRow, { dateCol: dateCol, rawDateCol: rawDateCol });
+  return changed;
+}
+
+function rewriteConversionColumn_(sh, endRow, col, sourceCol, formulaFn, readyFn) {
+  if (!col || !sourceCol) return false;
+  if (readyFn(sh.getRange(2, col).getFormula())) return false;
+  var height = endRow - 1;
+  var letter = indexToCol_(sourceCol);
+  var grid = [];
+  var r;
+  for (r = 2; r <= endRow; r++) grid.push([formulaFn(letter + r)]);
+  ensureSize_(sh, endRow, Math.max(col, sourceCol));
+  sh.getRange(2, col, height, 1).setFormulas(localizeGrid_(grid));
+  return true;
+}
+
+function applyImportNumberFormats_(sh, endRow, spec) {
+  var height = Math.max(endRow - 1, 1);
+  ensureSize_(sh, endRow, 8);
+  function paint(col, pattern) {
+    if (!col) return;
+    sh.getRange(2, col, height, 1).setNumberFormat(pattern);
+  }
+  paint(spec.dateCol, 'yyyy-mm-dd');
+  paint(spec.rawDateCol, 'yyyy-mm-dd');
+  paint(spec.amountCol, '#,##0');
+  paint(spec.rawAmountCol, '#,##0');
+}
+
+function dateFormulaReady_(formula) {
+  var s = String(formula || '');
+  return s.indexOf('ISNUMBER') !== -1 && s.indexOf('REGEXEXTRACT') !== -1;
+}
+
+function amountFormulaReady_(formula) {
+  return String(formula || '').indexOf('ISNUMBER') !== -1;
 }
 
 function importFormula_(id, c1, c2, endRow) {
@@ -1218,11 +1322,14 @@ function importFormula_(id, c1, c2, endRow) {
 }
 
 function dateFormula_(cell) {
-  return '=IF(' + cell + '="","",IFERROR(DATE(' +
-    'VALUE(REGEXEXTRACT(' + cell + ',"(\\d{4})\\s*[.]\\s*\\d{1,2}\\s*[.]\\s*\\d{1,2}")),' +
-    'VALUE(REGEXEXTRACT(' + cell + ',"\\d{4}\\s*[.]\\s*(\\d{1,2})\\s*[.]\\s*\\d{1,2}")),' +
-    'VALUE(REGEXEXTRACT(' + cell + ',"\\d{4}\\s*[.]\\s*\\d{1,2}\\s*[.]\\s*(\\d{1,2})"))' +
-    '),IFERROR(DATEVALUE(SUBSTITUTE(SUBSTITUTE(' + cell + ',". ","-"),".","-")),)))';
+  var text = 'TO_TEXT(' + cell + ')';
+  var parsed = 'DATE(' +
+    'VALUE(REGEXEXTRACT(' + text + ',"(\\d{4})\\s*[.]\\s*\\d{1,2}\\s*[.]\\s*\\d{1,2}")),' +
+    'VALUE(REGEXEXTRACT(' + text + ',"\\d{4}\\s*[.]\\s*(\\d{1,2})\\s*[.]\\s*\\d{1,2}")),' +
+    'VALUE(REGEXEXTRACT(' + text + ',"\\d{4}\\s*[.]\\s*\\d{1,2}\\s*[.]\\s*(\\d{1,2})"))' +
+    ')';
+  var fromText = 'IFERROR(' + parsed + ',IFERROR(DATEVALUE(SUBSTITUTE(SUBSTITUTE(' + text + ',". ","-"),".","-")),))';
+  return '=IF(' + cell + '="","",IF(AND(ISNUMBER(' + cell + '),' + cell + '>=30000,' + cell + '<80000),' + cell + ',' + fromText + '))';
 }
 
 function echoFormula_(cell) {
@@ -1230,7 +1337,7 @@ function echoFormula_(cell) {
 }
 
 function amountFormula_(cell) {
-  return '=IF(' + cell + '="","",IFERROR(VALUE(REGEXREPLACE(TO_TEXT(' + cell + '),"[^0-9.]",""))*1,))';
+  return '=IF(' + cell + '="","",IF(ISNUMBER(' + cell + '),' + cell + ',IFERROR(VALUE(REGEXREPLACE(TO_TEXT(' + cell + '),"[^0-9.]",""))*1,)))';
 }
 
 function orderSheetHealth_(sh) {
@@ -2010,12 +2117,13 @@ function isOrderSource_(source) {
 
 function ensureShipImport_(sh, ctx, report) {
   var problems = shipSheetHealth_(sh);
-  if (!problems.length) {
-    report.push('주문 출고 가져오기는 이미 제출일시·상태·교재만 가리킵니다.');
+  if (problems.length) {
+    rebuildShipSheet_(sh, ctx);
+    report.push('주문 출고를 제출일시·상태·교재만 가져오도록 맞췄습니다.');
     return;
   }
-  rebuildShipSheet_(sh, ctx);
-  report.push('주문 출고를 제출일시·상태·교재만 가져오도록 맞췄습니다.');
+  if (refreshShipConversions_(sh, ctx)) report.push('주문 출고 날짜 변환을 날짜 숫자와 글자 모두 받게 고쳤습니다.');
+  else report.push('주문 출고 가져오기는 이미 제출일시·상태·교재만 가리킵니다.');
 }
 
 function shipSheetHealth_(sh) {
@@ -2073,7 +2181,7 @@ function rebuildShipSheet_(sh, ctx) {
   sh.getRange(2, 1, height, 1).setFormulas(localizeGrid_(dates));
   sh.getRange(2, 2, height, 1).setFormulas(localizeGrid_(statuses));
   sh.getRange(2, 3, height, 1).setFormulas(localizeGrid_(books));
-  sh.getRange(2, 1, height, 1).setNumberFormat('yyyy-mm-dd');
+  applyImportNumberFormats_(sh, endRow, { dateCol: 1, rawDateCol: 5 });
   sh.getRange(1, 8).setValue(shipGuide_()).setWrap(true);
 }
 
