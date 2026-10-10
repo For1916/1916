@@ -63,6 +63,16 @@ var HEADER_FIELDS = [
   { key: 'booksRaw', names: ['교재 원본 (숨김)', '교재 원본', '교재원본(숨김)', '교재 원본(숨김)'] }
 ];
 
+// 장부 IMPORTRANGE 가 A:B, E(교재), F(금액)를 위치로 읽습니다.
+// 이 헤더는 없을 때만 마지막 헤더 뒤에 만들고, 열을 끼워 넣지 않습니다.
+var EXTRA_FIELDS = [
+  { key: 'os', names: ['운영체제'] },
+  { key: 'device', names: ['기기'] },
+  { key: 'browser', names: ['브라우저'] },
+  { key: 'sido', names: ['시도'] },
+  { key: 'sigungu', names: ['시군구'] }
+];
+
 // ── 웹 앱 ────────────────────────────────────────────
 
 function doGet() {
@@ -175,6 +185,21 @@ function validateOrder_(data, nowMs) {
   if (!detail || detail.length > 80 || !/[가-힣0-9]/.test(detail) || /[<>]/.test(detail)) {
     return { ok: false, error: detail ? '상세주소를 확인해 주세요.' : '상세주소를 입력하세요.' };
   }
+  var region = parseRoadRegion_(road);
+  if (!region) {
+    return { ok: false, error: '주소에서 시도를 확인하지 못했습니다. 주소 검색으로 다시 선택하세요.' };
+  }
+  if (normSpace_(data.sido) !== region.sido || normSpace_(data.sigungu) !== region.sigungu) {
+    return { ok: false, error: '주소의 시도와 시군구가 맞지 않습니다. 주소 검색으로 다시 선택하세요.' };
+  }
+  var ua = normSpace_(data.userAgent);
+  var client = classifyClient_(ua);
+  if (!client) {
+    return { ok: false, error: '접속 환경을 확인하지 못했습니다. 페이지를 새로고침한 뒤 다시 주문해 주세요.' };
+  }
+  if (normSpace_(data.os) !== client.os || normSpace_(data.device) !== client.device || normSpace_(data.browser) !== client.browser) {
+    return { ok: false, error: '접속 환경 정보가 맞지 않습니다. 페이지를 새로고침한 뒤 다시 주문해 주세요.' };
+  }
 
   var platform = trimText_(data.platform);
   if (PLATFORMS.indexOf(platform) === -1) return { ok: false, error: '유입 플랫폼을 선택하세요.' };
@@ -210,6 +235,11 @@ function validateOrder_(data, nowMs) {
       road: road,
       detail: detail,
       address: road + ' ' + detail,
+      sido: region.sido,
+      sigungu: region.sigungu,
+      os: client.os,
+      device: client.device,
+      browser: client.browser,
       platform: platformValue,
       memo: '송금: ' + paid,
       paid: paid,
@@ -313,6 +343,92 @@ function toAsciiDigits_(value) {
   });
 }
 
+function normSpace_(value) {
+  return trimText_(value).replace(/\s+/g, ' ');
+}
+
+// classifyClient_ 와 parseRoadRegion_ 는 index.html 의 classifyClient, parseRoadRegion 과
+// 같은 규칙이어야 합니다. 한쪽만 고치지 마세요. IP 와 User-Agent 원문은 저장하지 않습니다.
+var SIDO_NAMES_ = [
+  '강원특별자치도', '전북특별자치도', '제주특별자치도', '세종특별자치시',
+  '서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시', '대전광역시', '울산광역시',
+  '충청북도', '충청남도', '전라북도', '전라남도', '경상북도', '경상남도',
+  '경기도', '강원도'
+];
+
+function parseRoadRegion_(road) {
+  var text = normSpace_(road);
+  var sido = '';
+  var i;
+  for (i = 0; i < SIDO_NAMES_.length; i++) {
+    var name = SIDO_NAMES_[i];
+    if (text.indexOf(name) !== 0) continue;
+    if (text.length !== name.length && text.charAt(name.length) !== ' ') continue;
+    sido = name;
+    break;
+  }
+  if (!sido) return null;
+  var sigungu = '';
+  if (sido !== '세종특별자치시') {
+    var tokens = text.slice(sido.length).trim().split(' ');
+    var parts = [];
+    for (i = 0; i < tokens.length && parts.length < 3; i++) {
+      if (!isSigunguToken_(tokens[i])) break;
+      parts.push(tokens[i]);
+    }
+    sigungu = parts.join(' ');
+  }
+  return { sido: sido, sigungu: sigungu };
+}
+
+function isSigunguToken_(token) {
+  if (!token || token.length < 2 || token.length > 10) return false;
+  if (!/^[가-힣]+$/.test(token)) return false;
+  var last = token.charAt(token.length - 1);
+  return last === '시' || last === '군' || last === '구';
+}
+
+function classifyClient_(ua) {
+  var text = normSpace_(ua);
+  if (!text || text.length > 1000 || /[<>]/.test(text)) return null;
+  return {
+    os: classifyOs_(text),
+    device: classifyDevice_(text),
+    browser: classifyBrowser_(text)
+  };
+}
+
+function classifyOs_(ua) {
+  if (/iPad/.test(ua)) return 'iPadOS';
+  if (/iPhone|iPod/.test(ua)) return 'iOS';
+  if (/Android/.test(ua)) return 'Android';
+  if (/Windows|Win64|Win32/.test(ua)) return 'Windows';
+  if (/CrOS|Chrome OS/.test(ua)) return 'ChromeOS';
+  if (/Macintosh|Mac OS X/.test(ua)) return 'macOS';
+  if (/Linux/.test(ua)) return 'Linux';
+  return '기타';
+}
+
+function classifyDevice_(ua) {
+  if (/iPad/.test(ua)) return '태블릿';
+  if (/iPhone|iPod/.test(ua)) return '모바일';
+  if (/Android/.test(ua)) return /Mobile/.test(ua) ? '모바일' : '태블릿';
+  if (/Mobile/.test(ua)) return '모바일';
+  return '데스크톱';
+}
+
+function classifyBrowser_(ua) {
+  if (/Edg(?:e|A|iOS)?\//.test(ua)) return 'Edge';
+  if (/SamsungBrowser\//.test(ua)) return 'Samsung Internet';
+  if (/OPR\/|Opera\//.test(ua)) return 'Opera';
+  if (/Firefox\/|FxiOS\//.test(ua)) return 'Firefox';
+  if (/Whale\//.test(ua)) return 'Whale';
+  if (/KAKAOTALK/i.test(ua)) return '카카오톡';
+  if (/Chrome\/|CriOS\//.test(ua)) return 'Chrome';
+  if (/Safari\//.test(ua)) return 'Safari';
+  return '기타';
+}
+
 function seoulParts_(ms) {
   var fmt = new Intl.DateTimeFormat('en-US', {
     timeZone: TIMEZONE,
@@ -363,10 +479,16 @@ function appendOrder_(order) {
     if (!col) fail_('시트 헤더 [' + field.names[0] + '] 를 찾지 못했습니다.');
     cols[field.key] = col;
   }
+  for (i = 0; i < EXTRA_FIELDS.length; i++) {
+    var extra = EXTRA_FIELDS[i];
+    cols[extra.key] = ensureHeader_(sh, map, extra.names);
+  }
   var row = nextRow_(sh, cols.submittedAt);
   ensureRow_(sh, row);
   var id = uniqueId_(sh, cols.answerId, order.submittedMs);
   var width = Math.max(sh.getLastColumn(), 1);
+  var colKeys = Object.keys(cols);
+  for (i = 0; i < colKeys.length; i++) width = Math.max(width, cols[colKeys[i]]);
   var values = [];
   for (i = 0; i < width; i++) values.push('');
   function put(key, value) {
@@ -382,6 +504,11 @@ function appendOrder_(order) {
   put('amount', order.amount);
   put('zip', order.zip);
   put('address', order.address);
+  put('os', order.os);
+  put('device', order.device);
+  put('browser', order.browser);
+  put('sido', order.sido);
+  put('sigungu', order.sigungu);
   put('platform', order.platform);
   put('memo', order.memo);
   put('answerId', id);
@@ -389,7 +516,7 @@ function appendOrder_(order) {
   put('payerRaw', order.payerRaw);
   put('booksRaw', order.booksRaw);
 
-  ['payer', 'phone', 'books', 'zip', 'address', 'platform', 'memo', 'answerId', 'resultUrl', 'payerRaw', 'booksRaw'].forEach(function(key) {
+  ['payer', 'phone', 'books', 'zip', 'address', 'platform', 'memo', 'answerId', 'resultUrl', 'payerRaw', 'booksRaw', 'os', 'device', 'browser', 'sido', 'sigungu'].forEach(function(key) {
     sh.getRange(row, cols[key]).setNumberFormat('@');
   });
   sh.getRange(row, cols.submittedAt).setNumberFormat('yyyy-mm-dd hh:mm:ss');
@@ -397,7 +524,7 @@ function appendOrder_(order) {
   sh.getRange(row, 1, 1, width).setValues([values]);
   sh.getRange(row, cols.submittedAt).setNumberFormat('yyyy-mm-dd hh:mm:ss');
   sh.getRange(row, cols.amount).setNumberFormat('#,##0');
-  ['payer', 'phone', 'books', 'zip', 'address', 'platform', 'memo', 'answerId', 'payerRaw', 'booksRaw'].forEach(function(key) {
+  ['payer', 'phone', 'books', 'zip', 'address', 'platform', 'memo', 'answerId', 'payerRaw', 'booksRaw', 'os', 'device', 'browser', 'sido', 'sigungu'].forEach(function(key) {
     sh.getRange(row, cols[key]).setNumberFormat('@');
     sh.getRange(row, cols[key]).setValue(values[cols[key] - 1]);
   });
@@ -411,6 +538,11 @@ function appendOrder_(order) {
     phone: order.phone,
     zip: order.zip,
     address: order.address,
+    os: order.os,
+    device: order.device,
+    browser: order.browser,
+    sido: order.sido,
+    sigungu: order.sigungu,
     platform: order.platform,
     memo: order.memo,
     submittedText: seoulText_(order.submittedMs)
@@ -435,6 +567,11 @@ function notifyOwner_(saved) {
       '금액: ' + amountText + '원',
       '우편번호: ' + saved.zip,
       '주소: ' + saved.address,
+      '시도: ' + saved.sido,
+      '시군구: ' + (saved.sigungu || '(없음)'),
+      '운영체제: ' + saved.os,
+      '기기: ' + saved.device,
+      '브라우저: ' + saved.browser,
       '유입 플랫폼: ' + saved.platform,
       '메모: ' + saved.memo,
       '',
@@ -470,6 +607,23 @@ function findCol_(map, names) {
     if (col) return col;
   }
   return 0;
+}
+
+function ensureHeader_(sh, map, names) {
+  var found = findCol_(map, names);
+  if (found) return found;
+  var lastHeader = 0;
+  var keys = Object.keys(map);
+  var i;
+  for (i = 0; i < keys.length; i++) {
+    if (map[keys[i]] > lastHeader) lastHeader = map[keys[i]];
+  }
+  var col = lastHeader + 1;
+  var header = names[0];
+  sh.getRange(1, col).setNumberFormat('@');
+  sh.getRange(1, col).setValue(header);
+  map[compact_(header)] = col;
+  return col;
 }
 
 function nextRow_(sh, col) {

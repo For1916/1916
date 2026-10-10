@@ -208,6 +208,7 @@
     margin-bottom: 14px;
   }
   .picked strong { font-size: 13px; color: var(--green); }
+  .picked .addr-region { font-size: 12px; color: var(--text2); margin-top: 2px; }
   .consent-box {
     background: var(--surface2);
     border: 1px solid var(--border);
@@ -365,6 +366,7 @@
       <div id="addr-picked" class="picked" hidden>
         <div>
           <strong id="addr-zip-label"></strong>
+          <div id="addr-region-label" class="addr-region"></div>
           <div id="addr-road-label"></div>
         </div>
         <button class="btn btn-ghost btn-sm" type="button" id="addr-change">다시 검색</button>
@@ -414,10 +416,10 @@
       <div class="consent-box">
         <strong>개인정보 수집·이용</strong>
         <ul>
-          <li>항목: 주문자(예금주), 연락처, 배송지(우편번호·도로명주소·상세주소), 주문 교재와 수량, 유입 플랫폼, 송금 여부</li>
-          <li>목적: 입금 확인, 교재 포장과 배송, 주문 문의</li>
-          <li>제공: 배송을 위해 택배사에 이름, 연락처, 주소가 전달됩니다.</li>
-          <li>보유: 계약·청약철회 기록 5년, 대금결제 및 재화 공급 기록 5년, 소비자 불만·분쟁 처리 기록 3년 후 파기합니다.</li>
+          <li>항목: 주문자(예금주), 연락처, 배송지(우편번호·도로명주소·상세주소·시도·시군구), 주문 교재와 수량, 유입 플랫폼, 송금 여부, 접속 기기·운영체제·브라우저 정보</li>
+          <li>목적: 입금 확인, 교재 포장과 배송, 주문 문의, 부정주문 방지·유입 분석</li>
+          <li>제공: 배송을 위해 택배사에 이름, 연락처, 주소가 전달됩니다. 접속 기기·운영체제·브라우저 정보는 제3자에게 제공하지 않습니다.</li>
+          <li>보유: 계약·청약철회 기록 5년, 대금결제 및 재화 공급 기록 5년, 소비자 불만·분쟁 처리 기록 3년 후 파기합니다. 접속 기기·운영체제·브라우저 정보는 IP 주소 없이 주문 기록과 함께 같은 기간 보관한 뒤 파기합니다.</li>
         </ul>
       </div>
       <div class="field">
@@ -507,7 +509,7 @@ var ORDER_CONFIG = {
 
 var openedAt = Date.now();
 var addrState = { page: 1, keyword: '', total: 0, per: 10 };
-var picked = { zip: '', road: '' };
+var picked = { zip: '', road: '', sido: '', sigungu: '' };
 var submitting = false;
 
 function $(id) { return document.getElementById(id); }
@@ -570,6 +572,84 @@ function exactConsent(value) {
   var s = trimText(value);
   try { s = s.normalize('NFC'); } catch (e) {}
   return s === cfg().CONSENT_PHRASE;
+}
+function normSpace(value) {
+  return trimText(value).replace(/\s+/g, ' ');
+}
+// classifyClient 와 parseRoadRegion 은 apps-script/Code.gs 의 classifyClient_, parseRoadRegion_ 와
+// 같은 규칙이어야 합니다. 한쪽만 고치지 마세요. IP 와 User-Agent 원문은 저장하지 않습니다.
+var SIDO_NAMES = [
+  '강원특별자치도', '전북특별자치도', '제주특별자치도', '세종특별자치시',
+  '서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시', '대전광역시', '울산광역시',
+  '충청북도', '충청남도', '전라북도', '전라남도', '경상북도', '경상남도',
+  '경기도', '강원도'
+];
+function parseRoadRegion(road) {
+  var text = normSpace(road);
+  var sido = '';
+  var i;
+  for (i = 0; i < SIDO_NAMES.length; i++) {
+    var name = SIDO_NAMES[i];
+    if (text.indexOf(name) !== 0) continue;
+    if (text.length !== name.length && text.charAt(name.length) !== ' ') continue;
+    sido = name;
+    break;
+  }
+  if (!sido) return null;
+  var sigungu = '';
+  if (sido !== '세종특별자치시') {
+    var tokens = text.slice(sido.length).trim().split(' ');
+    var parts = [];
+    for (i = 0; i < tokens.length && parts.length < 3; i++) {
+      if (!isSigunguToken(tokens[i])) break;
+      parts.push(tokens[i]);
+    }
+    sigungu = parts.join(' ');
+  }
+  return { sido: sido, sigungu: sigungu };
+}
+function isSigunguToken(token) {
+  if (!token || token.length < 2 || token.length > 10) return false;
+  if (!/^[가-힣]+$/.test(token)) return false;
+  var last = token.charAt(token.length - 1);
+  return last === '시' || last === '군' || last === '구';
+}
+function classifyClient(ua) {
+  var text = normSpace(ua);
+  if (!text || text.length > 1000 || /[<>]/.test(text)) return null;
+  return {
+    os: classifyOs(text),
+    device: classifyDevice(text),
+    browser: classifyBrowser(text)
+  };
+}
+function classifyOs(ua) {
+  if (/iPad/.test(ua)) return 'iPadOS';
+  if (/iPhone|iPod/.test(ua)) return 'iOS';
+  if (/Android/.test(ua)) return 'Android';
+  if (/Windows|Win64|Win32/.test(ua)) return 'Windows';
+  if (/CrOS|Chrome OS/.test(ua)) return 'ChromeOS';
+  if (/Macintosh|Mac OS X/.test(ua)) return 'macOS';
+  if (/Linux/.test(ua)) return 'Linux';
+  return '기타';
+}
+function classifyDevice(ua) {
+  if (/iPad/.test(ua)) return '태블릿';
+  if (/iPhone|iPod/.test(ua)) return '모바일';
+  if (/Android/.test(ua)) return /Mobile/.test(ua) ? '모바일' : '태블릿';
+  if (/Mobile/.test(ua)) return '모바일';
+  return '데스크톱';
+}
+function classifyBrowser(ua) {
+  if (/Edg(?:e|A|iOS)?\//.test(ua)) return 'Edge';
+  if (/SamsungBrowser\//.test(ua)) return 'Samsung Internet';
+  if (/OPR\/|Opera\//.test(ua)) return 'Opera';
+  if (/Firefox\/|FxiOS\//.test(ua)) return 'Firefox';
+  if (/Whale\//.test(ua)) return 'Whale';
+  if (/KAKAOTALK/i.test(ua)) return '카카오톡';
+  if (/Chrome\/|CriOS\//.test(ua)) return 'Chrome';
+  if (/Safari\//.test(ua)) return 'Safari';
+  return '기타';
 }
 function readQty(input) {
   var n = strictInt(input.value);
@@ -668,8 +748,12 @@ function validateClient() {
   var payer = normalizePayer($('payer').value);
   if (!payer) errors.payer = '주문자(예금주)는 이름_전화번호뒤4자리 형식이어야 합니다. 예: 도진우_1916';
   if (!normalizePhone($('phone').value)) errors.phone = '연락처는 한국 휴대폰 번호여야 합니다.';
-  if (!/^\d{5}$/.test(picked.zip) || picked.road.length < 8 || !/[가-힣]/.test(picked.road) || !/\d/.test(picked.road) || /[<>]/.test(picked.road)) {
+  var region = parseRoadRegion(picked.road);
+  if (!/^\d{5}$/.test(picked.zip) || picked.road.length < 8 || !/[가-힣]/.test(picked.road) || !/\d/.test(picked.road) || /[<>]/.test(picked.road) || !region || region.sido !== picked.sido || region.sigungu !== picked.sigungu) {
     errors.road = '주소 검색으로 도로명주소를 선택하세요.';
+  }
+  if (!classifyClient(navigator.userAgent || '')) {
+    errors.client = '접속 환경을 확인하지 못했습니다. 페이지를 새로고침한 뒤 다시 주문해 주세요.';
   }
   var detail = trimText($('detail').value).replace(/\s+/g, ' ');
   if (!detail) errors.detail = '상세주소를 입력하세요.';
@@ -731,6 +815,7 @@ function focusError(errors) {
 function buildPayload() {
   var lines = selectedLines();
   var platform = selectedPlatform();
+  var env = classifyClient(navigator.userAgent || '') || {};
   return {
     openedAt: openedAt,
     hp_leave_blank: $('hp-leave-blank').value,
@@ -739,6 +824,12 @@ function buildPayload() {
     zip: picked.zip,
     road: picked.road,
     detail: $('detail').value,
+    sido: picked.sido,
+    sigungu: picked.sigungu,
+    userAgent: navigator.userAgent || '',
+    os: env.os || '',
+    device: env.device || '',
+    browser: env.browser || '',
     platform: platform,
     platformNote: platform === '기타' ? $('platform-note').value : '',
     paid: selectedPaid(),
@@ -867,9 +958,20 @@ function chooseAddress(item) {
     road = trimText(item.roadAddrPart1 || '');
     if (item.roadAddrPart2) road = trimText(road + ' ' + item.roadAddrPart2);
   }
+  road = normSpace(road);
+  var parsed = parseRoadRegion(road);
+  var apiSido = normSpace(item.siNm);
+  var apiSigungu = normSpace(item.sggNm);
+  if (!parsed || (apiSido && apiSido !== parsed.sido) || apiSigungu !== parsed.sigungu) {
+    $('addr-error').textContent = '선택한 주소에서 시도와 시군구를 확인하지 못했습니다. 다른 주소를 골라 주세요.';
+    return;
+  }
   picked.zip = toAsciiDigits(item.zipNo || '').replace(/[^0-9]/g, '');
   picked.road = road;
+  picked.sido = parsed.sido;
+  picked.sigungu = parsed.sigungu;
   $('addr-zip-label').textContent = picked.zip;
+  $('addr-region-label').textContent = parsed.sigungu ? (parsed.sido + ' ' + parsed.sigungu) : parsed.sido;
   $('addr-road-label').textContent = picked.road;
   $('addr-picked').hidden = false;
   $('addr-open').hidden = true;
