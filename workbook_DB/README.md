@@ -6,7 +6,7 @@
 
 이 장부에는 주문자 이름, 전화번호, 주소, 모아폼 답변 번호, 유입 경로를 저장하거나 보여 주지 않습니다. 판매는 `주문 연동`의 날짜·상태·금액만 사용하고, 상태가 취소 또는 환불인 주문은 뺍니다. 지출 분류는 **제본, AI, 광고, 박스** 네 가지입니다. 재고가 읽는 교재 글자는 `주문 출고` 탭에만 있고, 이익용 `주문 연동`에는 넣지 않습니다.
 
-화면 주소(배포 후): https://for1916.github.io/1916/Workbook_Ledger/
+화면 주소(배포 후): https://for1916.github.io/1916/workbook_DB/
 
 ## 파일
 
@@ -68,13 +68,13 @@
 
 ### 5. 페이지 주소
 
-`Workbook_Ledger/index.html` 의 `SCRIPT_URL` 은 배포된 웹 앱 주소입니다.
+`workbook_DB/index.html` 의 `SCRIPT_URL` 은 배포된 웹 앱 주소입니다.
 
 ```text
 https://script.google.com/macros/s/AKfycbyShKol-v2lx0OTwMFHcZ-QQMqMbRpWXT_4yi0jvvCWjcJtG3EB1uQvJDBd3Rty0g/exec
 ```
 
-웹 앱을 새로 배포해 주소가 바뀌면 이 값만 새 `/exec` 주소로 바꿉니다. 깃허브에 반영된 뒤 1분 정도 지나 https://for1916.github.io/1916/Workbook_Ledger/ 를 열고 비밀번호를 입력합니다.
+웹 앱을 새로 배포해 주소가 바뀌면 이 값만 새 `/exec` 주소로 바꿉니다. 깃허브에 반영된 뒤 1분 정도 지나 https://for1916.github.io/1916/workbook_DB/ 를 열고 비밀번호를 입력합니다.
 
 비밀번호는 그 브라우저 탭의 `sessionStorage` 에만 있습니다. 탭을 닫으면 다시 묻습니다.
 
