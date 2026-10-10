@@ -312,6 +312,12 @@
   }
   .footer-note { margin-top: 18px; font-size: 12px; color: var(--text2); }
   .section-label { font-size: 13px; font-weight: 800; margin: 18px 0 8px; }
+  .stock-alert { background: var(--red-soft); color: var(--red); border-radius: 8px; padding: 10px 12px; font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+  .stock-alert.ok { background: var(--green-soft); color: var(--green); }
+  tr.low td { background: var(--red-soft); }
+  .badge-low { background: var(--red-soft); color: var(--red); }
+  .badge-ok { background: var(--green-soft); color: var(--green); }
+  .trade-card.low { border-color: var(--red); }
   @media (max-width: 720px) {
     .content { padding: 16px 16px calc(24px + env(safe-area-inset-bottom)); }
     .form-grid, .stats, .compare { grid-template-columns: 1fr 1fr; }
@@ -334,7 +340,7 @@
   <div class="lock-box">
     <div class="lock-icon">📒</div>
     <h2>황소 워크북 장부</h2>
-    <p>이익 구조를 보려면 비밀번호를 입력하세요.</p>
+    <p>장부를 보려면 비밀번호를 입력하세요.</p>
     <div id="setup-hint"></div>
     <input type="password" id="pw-input" placeholder="비밀번호" autocomplete="current-password" enterkeyhint="go">
     <div id="pw-error"></div>
@@ -354,6 +360,7 @@
   <button class="tab active" type="button" data-tab="summary">월별 요약</button>
   <button class="tab" type="button" data-tab="add">입력</button>
   <button class="tab" type="button" data-tab="list">내역</button>
+  <button class="tab" type="button" data-tab="stock">재고</button>
 </div>
 <div class="content">
   <section id="tab-summary" class="panel active">
@@ -441,6 +448,104 @@
     <div class="cards" id="sales-cards"></div>
     <div id="sales-empty" class="empty" style="display:none"><p>표시할 판매가 없어요</p></div>
   </section>
+
+  <section id="tab-stock" class="panel">
+    <p class="lead">교재와 포장 박스 재고입니다. 판매 이익과 따로 계산하고, 주문에서 교재와 박스를 뺍니다.</p>
+    <div id="stock-alert" class="stock-alert" style="display:none"></div>
+    <div class="filter-bar">
+      <button class="btn btn-ghost btn-sm" type="button" id="btn-stock-reload">재고 새로고침</button>
+    </div>
+    <div class="table-wrap desk-only">
+      <table>
+        <thead>
+          <tr>
+            <th>코드</th><th>이름</th><th class="num">현재</th><th class="num">최소</th><th>구매</th><th>상태</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="stock-body"></tbody>
+      </table>
+    </div>
+    <div class="cards" id="stock-cards"></div>
+    <div id="stock-empty" class="empty" style="display:none"><p>재고 품목이 없어요</p></div>
+
+    <form id="inbound-form" class="form-card">
+      <h2>입고</h2>
+      <div class="form-grid">
+        <div class="field"><label for="in-date">날짜</label><input id="in-date" type="date" required></div>
+        <div class="field"><label for="in-item">품목</label><select id="in-item" required></select></div>
+        <div class="field"><label for="in-qty">수량</label><input id="in-qty" type="text" inputmode="decimal" required placeholder="10"></div>
+        <div class="field"><label for="in-unit">단위</label><select id="in-unit"><option value="개">개</option><option value="팩">팩</option></select></div>
+        <div class="field full"><label for="in-memo">메모</label><textarea id="in-memo" maxlength="500" placeholder="인쇄소 입고"></textarea></div>
+      </div>
+      <p class="lead">단위가 팩이면 그 품목의 단위당개수만큼 개로 더합니다. 1팩이 10개면 품목의 단위당개수를 10으로 바꾸세요.</p>
+      <div class="form-actions"><button class="btn btn-primary" type="submit" id="in-submit">입고 저장</button></div>
+    </form>
+
+    <form id="adjust-form" class="form-card">
+      <h2>출고 · 조정</h2>
+      <div class="form-grid">
+        <div class="field"><label for="adj-kind">구분</label><select id="adj-kind"><option value="출고">출고</option><option value="조정">조정</option></select></div>
+        <div class="field"><label for="adj-date">날짜</label><input id="adj-date" type="date" required></div>
+        <div class="field"><label for="adj-item">품목</label><select id="adj-item" required></select></div>
+        <div class="field"><label for="adj-qty">수량</label><input id="adj-qty" type="text" inputmode="decimal" required placeholder="1"></div>
+        <div class="field"><label for="adj-unit">단위</label><select id="adj-unit"><option value="개">개</option><option value="팩">팩</option></select></div>
+        <div class="field full"><label for="adj-memo">메모</label><textarea id="adj-memo" maxlength="500" placeholder="파손, 실사 차이"></textarea></div>
+      </div>
+      <p class="lead">주문 출고는 여기서 지우지 않습니다. 조정은 마이너스 수량으로 재고를 줄입니다.</p>
+      <div class="form-actions"><button class="btn btn-primary" type="submit" id="adj-submit">출고·조정 저장</button></div>
+    </form>
+
+    <h2 class="section-label">직접 입력</h2>
+    <div class="table-wrap desk-only">
+      <table>
+        <thead><tr><th>날짜</th><th>구분</th><th>품목</th><th class="num">수량</th><th class="num">환산</th><th>메모</th><th></th></tr></thead>
+        <tbody id="move-body"></tbody>
+      </table>
+    </div>
+    <div class="cards" id="move-cards"></div>
+    <div id="move-empty" class="empty" style="display:none"><p>직접 입력한 입출고가 없어요</p></div>
+
+    <h2 class="section-label">주문에서 뺀 수량</h2>
+    <p class="lead">취소·환불이 아닌 주문의 교재 권수와, 그 권수에 맞는 박스 규칙입니다.</p>
+    <div class="table-wrap desk-only">
+      <table>
+        <thead><tr><th>날짜</th><th>품목</th><th class="num">수량</th><th>메모</th></tr></thead>
+        <tbody id="ship-body"></tbody>
+      </table>
+    </div>
+    <div class="cards" id="ship-cards"></div>
+
+    <form id="rule-form" class="form-card">
+      <h2>박스 규칙</h2>
+      <p class="lead">주문에 들어 있는 교재 권수를 보고, 최소~최대에 맞는 첫 규칙의 박스를 그 개수만큼 뺍니다.</p>
+      <div class="form-grid">
+        <div class="field"><label for="rule-min">최소 권수</label><input id="rule-min" type="number" min="1" step="1" required></div>
+        <div class="field"><label for="rule-max">최대 권수</label><input id="rule-max" type="number" min="1" step="1" required></div>
+        <div class="field"><label for="rule-box">박스</label><select id="rule-box" required></select></div>
+        <div class="field"><label for="rule-count">박스 개수</label><input id="rule-count" type="number" min="1" step="1" required value="1"></div>
+      </div>
+      <div class="form-actions"><button class="btn btn-primary" type="submit" id="rule-submit">규칙 추가</button></div>
+      <div class="table-wrap" style="margin-top:16px">
+        <table>
+          <thead><tr><th class="num">최소</th><th class="num">최대</th><th>박스</th><th class="num">개수</th><th></th></tr></thead>
+          <tbody id="rule-body"></tbody>
+        </table>
+      </div>
+    </form>
+
+    <form id="new-item-form" class="form-card">
+      <h2>품목 추가</h2>
+      <div class="form-grid">
+        <div class="field"><label for="item-code">코드</label><input id="item-code" required maxlength="40" placeholder="박스-특대"></div>
+        <div class="field"><label for="item-name">이름</label><input id="item-name" maxlength="80" placeholder="특대 박스"></div>
+        <div class="field"><label for="item-kind">종류</label><select id="item-kind"><option value="박스">박스</option><option value="교재">교재</option></select></div>
+        <div class="field"><label for="item-unit">구매단위</label><select id="item-unit"><option value="팩">팩</option><option value="개">개</option></select></div>
+        <div class="field"><label for="item-pack">단위당개수</label><input id="item-pack" type="number" min="1" step="1" value="1" required></div>
+      </div>
+      <div class="form-actions"><button class="btn btn-primary" type="submit" id="item-submit">품목 추가</button></div>
+    </form>
+    <p class="footer-note">현재 재고 = 기초 + 입고 − 출고 + 조정. 현재가 최소 재고보다 적으면 부족입니다. 최소가 0이면 마이너스만 부족으로 표시합니다.</p>
+  </section>
 </div>
 </div>
 
@@ -461,7 +566,7 @@
 var SCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
 var SS_KEY = 'hwangso-workbook-ledger-password';
 var DEFAULT_CATEGORIES = ['제본', 'AI', '광고', '박스'];
-var state = { meta: { expenseCategories: DEFAULT_CATEGORIES.slice() }, summary: null, income: [], expense: [], orders: [], selected: '합계', editing: null, showAll: false };
+var state = { meta: { expenseCategories: DEFAULT_CATEGORIES.slice() }, summary: null, income: [], expense: [], orders: [], selected: '합계', editing: null, showAll: false, stock: null, stockLoaded: false };
 
 function scriptUrl() { return String(SCRIPT_URL || '').trim(); }
 function isConfigured() { return /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec\/?$/.test(scriptUrl()); }
@@ -777,6 +882,19 @@ async function deleteEditing() {
   var item = state.editing;
   if (!item) return;
   if (!confirm('이 내역을 삭제할까요?')) return;
+  if (item.kind === 'stock-move' || item.kind === 'stock-rule') {
+    try {
+      if (item.kind === 'stock-move') {
+        await api('delete', { sheet: '입출고', row: item.item.row, match: { date: item.item.date, code: item.item.code, converted: item.item.converted } });
+      } else {
+        await api('delete', { sheet: '박스규칙', row: item.item.row, match: { min: item.item.min, max: item.item.max, code: item.item.boxCode } });
+      }
+      closeEdit();
+      toast('삭제했습니다');
+      await loadStock();
+    } catch (err) { toast(err.message, 'error'); }
+    return;
+  }
   try {
     var target = item.kind === 'income' ? item.row : item;
     var sheet = item.kind === 'income' ? '수입' : '지출';
@@ -801,9 +919,183 @@ async function reload() {
   setStatus('연결됨');
 }
 
+function fmtQty(n) {
+  if (n == null || Number.isNaN(Number(n))) return '-';
+  var v = Number(n);
+  if (Math.abs(v - Math.round(v)) < 0.001) return Math.round(v).toLocaleString('ko-KR');
+  return v.toLocaleString('ko-KR', { maximumFractionDigits: 2 });
+}
+function stockItems() { return (state.stock && state.stock.items) || []; }
+function purchaseLabel(it) {
+  if (!it) return '';
+  if (it.purchaseUnit && it.purchaseUnit !== '개') return '1' + it.purchaseUnit + '=' + fmtQty(it.perPack) + '개';
+  return '개';
+}
+function fillCodeSelect(el, items, placeholder) {
+  var prev = el.value;
+  el.innerHTML = '';
+  if (placeholder != null) {
+    var blank = document.createElement('option');
+    blank.value = '';
+    blank.textContent = placeholder;
+    el.appendChild(blank);
+  }
+  (items || []).forEach(function(it) {
+    var opt = document.createElement('option');
+    opt.value = it.code;
+    opt.textContent = it.code + (it.name ? ' · ' + it.name : '');
+    el.appendChild(opt);
+  });
+  Array.prototype.forEach.call(el.options, function(opt) { if (opt.value === prev) el.value = prev; });
+}
+function renderStock() {
+  var data = state.stock || { items: [], low: [], rules: [], manual: [], shipments: [], importReady: true };
+  var banner = $('stock-alert');
+  var lows = data.low || [];
+  if (!state.stockLoaded) banner.style.display = 'none';
+  else if (data.importReady === false) {
+    banner.style.display = 'block';
+    banner.className = 'stock-alert';
+    banner.textContent = '주문 교재를 아직 가져오지 못했습니다. 주문 출고 시트에서 액세스 허용을 누른 뒤 재고 새로고침을 다시 누르세요.';
+  } else if (lows.length) {
+    banner.style.display = 'block';
+    banner.className = 'stock-alert';
+    banner.textContent = '부족 ' + lows.length + '개: ' + lows.map(function(it) { return it.code + ' ' + fmtQty(it.onHand) + '/' + fmtQty(it.minimum); }).join(', ');
+  } else {
+    banner.style.display = 'block';
+    banner.className = 'stock-alert ok';
+    banner.textContent = '최소 재고 아래로 내려간 품목이 없습니다.';
+  }
+  fillCodeSelect($('in-item'), data.items, '선택');
+  fillCodeSelect($('adj-item'), data.items, '선택');
+  fillCodeSelect($('rule-box'), (data.items || []).filter(function(it) { return it.kind === '박스'; }), '박스 선택');
+  var rows = data.items || [];
+  $('stock-body').innerHTML = rows.map(function(it) {
+    return '<tr class="' + (it.low ? 'low' : '') + '"><td>' + escapeHtml(it.code) + '</td><td>' + escapeHtml(it.name || '') + '</td><td class="num">' + fmtQty(it.onHand) + '</td><td class="num">' + fmtQty(it.minimum) + '</td><td>' + escapeHtml(purchaseLabel(it)) + '</td><td>' + (it.low ? '<span class="badge badge-low">부족</span>' : '<span class="badge badge-ok">충분</span>') + '</td><td><button type="button" class="btn btn-ghost btn-sm" data-stock-action="item" data-key="' + escapeHtml(it.code) + '">수정</button></td></tr>';
+  }).join('');
+  $('stock-cards').innerHTML = rows.map(function(it) {
+    return '<article class="trade-card' + (it.low ? ' low' : '') + '"><div class="trade-card-header"><div class="trade-card-title">' + escapeHtml(it.code) + ' · ' + escapeHtml(it.name || '') + '</div>' + (it.low ? '<span class="badge badge-low">부족</span>' : '<span class="badge badge-ok">충분</span>') + '</div><div class="trade-card-meta">현재 ' + fmtQty(it.onHand) + ' · 최소 ' + fmtQty(it.minimum) + ' · ' + escapeHtml(purchaseLabel(it)) + '</div><div class="card-actions"><button type="button" class="btn btn-ghost btn-sm" data-stock-action="item" data-key="' + escapeHtml(it.code) + '">수정</button></div></article>';
+  }).join('');
+  $('stock-empty').style.display = rows.length ? 'none' : 'block';
+  var manual = data.manual || [];
+  $('move-body').innerHTML = manual.map(function(mv) {
+    return '<tr><td>' + escapeHtml(mv.date || '') + '</td><td>' + escapeHtml(mv.kind || '') + '</td><td>' + escapeHtml(mv.code || '') + '</td><td class="num">' + fmtQty(mv.qty) + (mv.unit ? ' ' + escapeHtml(mv.unit) : '') + '</td><td class="num">' + fmtQty(mv.converted) + '</td><td>' + escapeHtml(mv.memo || '') + '</td><td><button type="button" class="btn btn-ghost btn-sm" data-stock-action="move" data-key="' + escapeHtml(mv.row) + '">수정</button></td></tr>';
+  }).join('');
+  $('move-cards').innerHTML = manual.map(function(mv) {
+    return '<article class="trade-card"><div class="trade-card-header"><div class="trade-card-title">' + escapeHtml(mv.kind || '') + ' · ' + escapeHtml(mv.code || '') + '</div></div><div class="trade-card-meta">' + escapeHtml(mv.date || '') + (mv.memo ? ' · ' + escapeHtml(mv.memo) : '') + '</div><strong>' + fmtQty(mv.converted) + '개</strong><div class="card-actions"><button type="button" class="btn btn-ghost btn-sm" data-stock-action="move" data-key="' + escapeHtml(mv.row) + '">수정</button></div></article>';
+  }).join('');
+  $('move-empty').style.display = manual.length ? 'none' : 'block';
+  var ships = (data.shipments || []).slice().reverse();
+  $('ship-body').innerHTML = ships.map(function(mv) {
+    return '<tr><td>' + escapeHtml(mv.date || '') + '</td><td>' + escapeHtml(mv.code || '') + '</td><td class="num">' + fmtQty(mv.qty) + '</td><td>' + escapeHtml(mv.memo || '') + '</td></tr>';
+  }).join('') || '<tr><td colspan="4">주문에서 뺀 수량이 없어요</td></tr>';
+  $('ship-cards').innerHTML = ships.map(function(mv) {
+    return '<article class="trade-card"><div class="trade-card-title">' + escapeHtml(mv.code || '') + ' · ' + fmtQty(mv.qty) + '</div><div class="trade-card-meta">' + escapeHtml(mv.date || '') + (mv.memo ? ' · ' + escapeHtml(mv.memo) : '') + '</div></article>';
+  }).join('');
+  var rules = data.rules || [];
+  $('rule-body').innerHTML = rules.map(function(rule) {
+    return '<tr><td class="num">' + escapeHtml(rule.min) + '</td><td class="num">' + escapeHtml(rule.max) + '</td><td>' + escapeHtml(rule.boxCode || '') + '</td><td class="num">' + escapeHtml(rule.count) + '</td><td><button type="button" class="btn btn-ghost btn-sm" data-stock-action="rule" data-key="' + escapeHtml(rule.row) + '">수정</button></td></tr>';
+  }).join('') || '<tr><td colspan="5">규칙이 없어요</td></tr>';
+  $('in-date').value = $('in-date').value || todayISO();
+  $('adj-date').value = $('adj-date').value || todayISO();
+}
+async function loadStock() {
+  setStatus('재고 계산 중...');
+  var data = await api('stock');
+  state.stock = data;
+  state.stockLoaded = true;
+  renderStock();
+  setStatus('연결됨');
+}
+function openStockItem(code) {
+  var it = stockItems().filter(function(row) { return row.code === code; })[0];
+  if (!it) return;
+  state.editing = { kind: 'stock-item', item: it };
+  $('edit-title').textContent = '품목 수정';
+  $('edit-form').innerHTML = '<div class="form-grid">' +
+    fieldHtml('ed-pack', '단위당개수', '<input id="ed-pack" type="number" min="1" step="1" required value="' + escapeHtml(it.perPack) + '">') +
+    fieldHtml('ed-min', '최소재고', '<input id="ed-min" type="number" min="0" step="1" required value="' + escapeHtml(it.minimum) + '">') +
+    fieldHtml('ed-open', '기초수량', '<input id="ed-open" type="text" inputmode="decimal" required value="' + escapeHtml(it.opening) + '">') +
+    fieldHtml('ed-unit', '구매단위', '<select id="ed-unit"><option value="개">개</option><option value="팩">팩</option></select>') +
+    '</div><p class="lead">' + escapeHtml(it.code) + ' · ' + escapeHtml(it.name || '') + '</p><div class="form-actions"><button class="btn btn-primary" type="submit">저장</button></div>';
+  $('ed-unit').value = it.purchaseUnit === '팩' ? '팩' : '개';
+  $('detail-overlay').style.display = 'flex';
+}
+function openStockMove(rowNum) {
+  var mv = ((state.stock && state.stock.manual) || []).filter(function(row) { return String(row.row) === String(rowNum); })[0];
+  if (!mv) return;
+  state.editing = { kind: 'stock-move', item: mv };
+  $('edit-title').textContent = '입출고 수정';
+  var options = stockItems().map(function(it) { return '<option value="' + escapeHtml(it.code) + '">' + escapeHtml(it.code) + '</option>'; }).join('');
+  $('edit-form').innerHTML = '<div class="form-grid">' +
+    fieldHtml('ed-kind', '구분', '<select id="ed-kind"><option value="입고">입고</option><option value="출고">출고</option><option value="조정">조정</option></select>') +
+    fieldHtml('ed-date', '날짜', '<input id="ed-date" type="date" required value="' + escapeHtml(mv.date || '') + '">') +
+    fieldHtml('ed-code', '품목', '<select id="ed-code">' + options + '</select>') +
+    fieldHtml('ed-qty', '수량', '<input id="ed-qty" type="text" inputmode="decimal" required value="' + escapeHtml(mv.qty == null ? '' : mv.qty) + '">') +
+    fieldHtml('ed-mu', '단위', '<select id="ed-mu"><option value="개">개</option><option value="팩">팩</option></select>') +
+    '<div class="field full"><label for="ed-memo">메모</label><textarea id="ed-memo" maxlength="500">' + escapeHtml(mv.memo || '') + '</textarea></div></div>' +
+    '<div class="form-actions"><button class="btn btn-danger" type="button" id="ed-delete">삭제</button><button class="btn btn-primary" type="submit">저장</button></div>';
+  $('ed-kind').value = mv.kind || '입고';
+  $('ed-code').value = mv.code;
+  $('ed-mu').value = mv.unit === '팩' ? '팩' : '개';
+  $('detail-overlay').style.display = 'flex';
+  $('ed-delete').addEventListener('click', deleteEditing);
+}
+function openStockRule(rowNum) {
+  var rule = ((state.stock && state.stock.rules) || []).filter(function(row) { return String(row.row) === String(rowNum); })[0];
+  if (!rule) return;
+  state.editing = { kind: 'stock-rule', item: rule };
+  $('edit-title').textContent = '박스 규칙';
+  var options = stockItems().filter(function(it) { return it.kind === '박스'; }).map(function(it) {
+    return '<option value="' + escapeHtml(it.code) + '">' + escapeHtml(it.code) + '</option>';
+  }).join('');
+  $('edit-form').innerHTML = '<div class="form-grid">' +
+    fieldHtml('ed-minbooks', '최소 권수', '<input id="ed-minbooks" type="number" min="1" step="1" required value="' + escapeHtml(rule.min) + '">') +
+    fieldHtml('ed-maxbooks', '최대 권수', '<input id="ed-maxbooks" type="number" min="1" step="1" required value="' + escapeHtml(rule.max) + '">') +
+    fieldHtml('ed-box', '박스', '<select id="ed-box">' + options + '</select>') +
+    fieldHtml('ed-count', '박스 개수', '<input id="ed-count" type="number" min="1" step="1" required value="' + escapeHtml(rule.count) + '">') +
+    '</div><div class="form-actions"><button class="btn btn-danger" type="button" id="ed-delete">삭제</button><button class="btn btn-primary" type="submit">저장</button></div>';
+  $('ed-box').value = rule.boxCode;
+  $('detail-overlay').style.display = 'flex';
+  $('ed-delete').addEventListener('click', deleteEditing);
+}
+async function submitStockEdit(editing) {
+  if (editing.kind === 'stock-item') {
+    var opening = parseAmount($('ed-open').value);
+    if (opening == null) { toast('기초수량을 확인해 주세요', 'error'); return; }
+    await api('update', { sheet: '재고 품목', match: { code: editing.item.code }, record: {
+      '코드': editing.item.code,
+      '단위당개수': Number($('ed-pack').value),
+      '최소재고': Number($('ed-min').value),
+      '기초수량': opening,
+      '구매단위': $('ed-unit').value
+    }});
+    return;
+  }
+  if (editing.kind === 'stock-move') {
+    var qty = parseAmount($('ed-qty').value);
+    if (qty == null) { toast('수량을 확인해 주세요', 'error'); return; }
+    await api('update', { sheet: '입출고', row: editing.item.row, match: { date: editing.item.date, code: editing.item.code, converted: editing.item.converted }, record: {
+      '구분': $('ed-kind').value,
+      '날짜': $('ed-date').value,
+      '품목': $('ed-code').value,
+      '수량': qty,
+      '단위': $('ed-mu').value,
+      '메모': $('ed-memo').value.trim()
+    }});
+    return;
+  }
+  await api('update', { sheet: '박스규칙', row: editing.item.row, match: { min: editing.item.min, max: editing.item.max, code: editing.item.boxCode }, record: {
+    '최소권수': Number($('ed-minbooks').value),
+    '최대권수': Number($('ed-maxbooks').value),
+    '박스코드': $('ed-box').value,
+    '박스개수': Number($('ed-count').value)
+  }});
+}
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach(function(tab) { tab.classList.toggle('active', tab.getAttribute('data-tab') === name); });
   document.querySelectorAll('.panel').forEach(function(panel) { panel.classList.toggle('active', panel.id === 'tab-' + name); });
+  if (name === 'stock' && !state.stockLoaded) loadStock().catch(function(err) { toast(err.message, 'error'); setStatus('연결됨'); });
 }
 function unlock() {
   $('lock-overlay').style.display = 'none';
@@ -879,10 +1171,85 @@ $('expense-form').addEventListener('submit', async function(event) {
   finally { $('ex-submit').disabled = false; }
 });
 
+$('tab-stock').addEventListener('click', function(event) {
+  var el = event.target.closest('[data-stock-action]');
+  if (!el) return;
+  var action = el.getAttribute('data-stock-action');
+  var key = el.getAttribute('data-key');
+  if (action === 'item') openStockItem(key);
+  if (action === 'move') openStockMove(key);
+  if (action === 'rule') openStockRule(key);
+});
+$('btn-stock-reload').addEventListener('click', function() { loadStock().catch(function(err) { toast(err.message, 'error'); setStatus('연결됨'); }); });
+$('inbound-form').addEventListener('submit', async function(event) {
+  event.preventDefault();
+  var qty = parseAmount($('in-qty').value);
+  if (qty == null || qty <= 0) { toast('수량을 확인해 주세요', 'error'); return; }
+  if (!$('in-item').value) { toast('품목을 선택하세요', 'error'); return; }
+  $('in-submit').disabled = true;
+  try {
+    await api('add', { sheet: '입출고', record: { '날짜': $('in-date').value, '구분': '입고', '품목': $('in-item').value, '수량': qty, '단위': $('in-unit').value, '메모': $('in-memo').value.trim() } });
+    $('in-qty').value = '';
+    $('in-memo').value = '';
+    toast('입고를 저장했습니다');
+    await loadStock();
+  } catch (err) { toast(err.message, 'error'); }
+  finally { $('in-submit').disabled = false; }
+});
+$('adjust-form').addEventListener('submit', async function(event) {
+  event.preventDefault();
+  var qty = parseAmount($('adj-qty').value);
+  if (qty == null || ($('adj-kind').value !== '조정' && qty <= 0)) { toast('수량을 확인해 주세요', 'error'); return; }
+  if (!$('adj-item').value) { toast('품목을 선택하세요', 'error'); return; }
+  $('adj-submit').disabled = true;
+  try {
+    await api('add', { sheet: '입출고', record: { '날짜': $('adj-date').value, '구분': $('adj-kind').value, '품목': $('adj-item').value, '수량': qty, '단위': $('adj-unit').value, '메모': $('adj-memo').value.trim() } });
+    $('adj-qty').value = '';
+    $('adj-memo').value = '';
+    toast('저장했습니다');
+    await loadStock();
+  } catch (err) { toast(err.message, 'error'); }
+  finally { $('adj-submit').disabled = false; }
+});
+$('rule-form').addEventListener('submit', async function(event) {
+  event.preventDefault();
+  if (!$('rule-box').value) { toast('박스를 선택하세요', 'error'); return; }
+  $('rule-submit').disabled = true;
+  try {
+    await api('add', { sheet: '박스규칙', record: { '최소권수': Number($('rule-min').value), '최대권수': Number($('rule-max').value), '박스코드': $('rule-box').value, '박스개수': Number($('rule-count').value) } });
+    $('rule-min').value = '';
+    $('rule-max').value = '';
+    toast('규칙을 추가했습니다');
+    await loadStock();
+  } catch (err) { toast(err.message, 'error'); }
+  finally { $('rule-submit').disabled = false; }
+});
+$('new-item-form').addEventListener('submit', async function(event) {
+  event.preventDefault();
+  $('item-submit').disabled = true;
+  try {
+    await api('add', { sheet: '재고 품목', record: { '코드': $('item-code').value.trim(), '이름': $('item-name').value.trim(), '종류': $('item-kind').value, '구매단위': $('item-unit').value, '단위당개수': Number($('item-pack').value) } });
+    $('item-code').value = '';
+    $('item-name').value = '';
+    toast('품목을 추가했습니다');
+    await loadStock();
+  } catch (err) { toast(err.message, 'error'); }
+  finally { $('item-submit').disabled = false; }
+});
+
 $('edit-form').addEventListener('submit', async function(event) {
   event.preventDefault();
   var item = state.editing;
   if (!item) return;
+  if (item.kind === 'stock-item' || item.kind === 'stock-move' || item.kind === 'stock-rule') {
+    try {
+      await submitStockEdit(item);
+      closeEdit();
+      toast('수정했습니다');
+      await loadStock();
+    } catch (err) { toast(err.message, 'error'); }
+    return;
+  }
   var amount = parseAmount($('ed-amount').value);
   if (amount == null) { toast('금액을 확인해 주세요', 'error'); return; }
   var incomeEdit = item.kind === 'income';
