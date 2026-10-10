@@ -717,7 +717,7 @@ async function checkPw() {
   }
 })();
 
-// ── 웹 앱 : 비밀번호는 요청 본문에만 실어 보냅니다 ──
+// ── 웹 앱 : 읽기·쓰기는 모두 POST. 읽기 action 은 list. GET 은 행을 주지 않습니다. ──
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwv9b613EfnpLSqtV6QnIq4tpuMkaPdLKsaF1UzDzZHjj93vUgVxQEnjNH6Hm5LiJu7/exec';
 async function gsRequest(payload) {
   const r = await fetch(SCRIPT_URL, {
