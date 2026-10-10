@@ -28,6 +28,7 @@ var MANUAL_LAST_ROW = 5000;
 var PERSONAL_HEADER_RE = /주문자|고객명|수취인|받는\s*분|받는분|연락처|전화|휴대폰|핸드폰|휴대전화|주소|우편번호|이메일|유입|모아폼|moaform|답변\s*id|응답\s*id|answer\s*id|submission/i;
 var DOC_MARKER = '[장부 안내]';
 var EXPENSE_CATEGORIES = ['제본', 'AI', '광고', '박스'];
+var SUMMARY_FLOOR = '2026-06';
 var SUMMARY_HEADERS = ['월', '판매', '제본', 'AI', '광고', '박스', '총지출', '순이익', '이익률'];
 var SUMMARY_METRICS = { '월': 1, '판매': 1, '주문 수입': 1, '기타 수입': 1, '총수입': 1, '총지출': 1, '순이익': 1, '이익률': 1 };
 
@@ -117,8 +118,8 @@ function loadLedger_() {
     summary = computeSummary_(income, expense, orders);
     summary.source = 'computed';
   } else {
+    summary = alignSummary_(summary, income, expense, orders);
     summary.source = 'sheet';
-    if (!summary.total) summary.total = totalFromMonths_(summary.months);
   }
   return {
     ok: true,
@@ -342,19 +343,11 @@ function summaryHasNumbers_(summary) {
 }
 
 function computeSummary_(income, expense, orders) {
-  var keys = fiscalMonthKeys_();
-  var seen = {};
-  var i;
-  for (i = 0; i < keys.length; i++) seen[keys[i]] = true;
-  function touch(date) {
-    if (!date || String(date).length < 7) return;
-    var key = String(date).slice(0, 7);
-    if (!seen[key]) { seen[key] = true; keys.push(key); }
-  }
-  income.forEach(function(row) { if (row.counts) touch(row.date); });
-  expense.forEach(function(row) { touch(row.date); });
-  orders.forEach(function(row) { touch(row.date); });
-  keys.sort();
+  var dates = [];
+  income.forEach(function(row) { dates.push(row.date); });
+  expense.forEach(function(row) { dates.push(row.date); });
+  orders.forEach(function(row) { dates.push(row.date); });
+  var keys = summaryMonthKeys_(dates);
   var months = keys.map(function(key) { return blankMonth_(key); });
   var byKey = {};
   months.forEach(function(m) { byKey[m.month] = m; });
@@ -420,17 +413,92 @@ function totalFromMonths_(months) {
   return total;
 }
 
-function fiscalMonthKeys_() {
-  var out = [];
-  var y = 2026;
-  var m = 7;
+function alignSummary_(summary, income, expense, orders) {
+  var computed = computeSummary_(income, expense, orders);
+  var byKey = {};
+  (summary.months || []).forEach(function(row) {
+    if (row && row.month) byKey[row.month] = row;
+  });
+  var added = false;
+  var months = computed.months.map(function(row) {
+    if (byKey[row.month]) return byKey[row.month];
+    added = true;
+    return row;
+  });
+  var same = !added && (summary.months || []).length === months.length;
+  return {
+    months: months,
+    total: same && summary.total ? summary.total : totalFromMonths_(months)
+  };
+}
+
+function summaryMonthKeys_(dates, todayKey) {
+  var keys = [];
   var i;
-  for (i = 0; i < 12; i++) {
-    out.push(y + '-' + (m < 10 ? '0' + m : String(m)));
-    m++;
-    if (m === 13) { m = 1; y++; }
+  for (i = 0; i < (dates || []).length; i++) {
+    var key = monthKeyFromCell_(dates[i]);
+    if (key) keys.push(key);
+  }
+  return summaryMonthKeysFromList_(keys, todayKey);
+}
+
+function summaryMonthKeysFromList_(keys, todayKey) {
+  var today = todayKey || seoulMonthKey_();
+  if (!/^\d{4}-\d{2}$/.test(today)) today = '2026-10';
+  var start = SUMMARY_FLOOR;
+  var end = addMonthsKey_(today, 12);
+  var i;
+  for (i = 0; i < (keys || []).length; i++) {
+    var key = keys[i];
+    if (!/^\d{4}-\d{2}$/.test(key)) continue;
+    if (key < start) start = key;
+    if (key > end) end = key;
+  }
+  return enumerateMonthKeys_(start, end);
+}
+
+function enumerateMonthKeys_(start, end) {
+  var out = [];
+  var cursor = start;
+  var guard = 0;
+  while (cursor && cursor <= end && guard < 400) {
+    out.push(cursor);
+    cursor = addMonthsKey_(cursor, 1);
+    guard++;
   }
   return out;
+}
+
+function addMonthsKey_(key, delta) {
+  var y = Number(String(key).slice(0, 4));
+  var m = Number(String(key).slice(5, 7));
+  if (!y || m < 1 || m > 12) return '';
+  var index = y * 12 + (m - 1) + delta;
+  var ny = Math.floor(index / 12);
+  var nm = index % 12;
+  return ny + '-' + (nm + 1 < 10 ? '0' + (nm + 1) : String(nm + 1));
+}
+
+function seoulMonthKey_() {
+  try {
+    return Utilities.formatDate(new Date(), sheetTz_(), 'yyyy-MM');
+  } catch (e) {
+    return '2026-10';
+  }
+}
+
+function monthKeyFromCell_(value) {
+  var iso = formatCellDate_(value);
+  var key = '';
+  if (iso && iso.length >= 7) key = iso.slice(0, 7);
+  else {
+    var parsed = parseMonthLabel_(value);
+    if (parsed) key = parsed.key;
+  }
+  if (!/^\d{4}-\d{2}$/.test(key)) return '';
+  var y = Number(key.slice(0, 4));
+  if (y < 2020 || y > 2045) return '';
+  return key;
 }
 
 function orderIncluded_(status, includeLabel) {
@@ -1008,12 +1076,15 @@ function rebuildSummary_(ss, ctx, report) {
     expenseCategory: letterOf_(expenseSh, ['분류']),
     expenseAmount: letterOf_(expenseSh, ['금액'])
   };
-  var months = readExistingMonths_(sh);
+  var months = summaryMonthKeys_(collectSummaryDates_(ss));
+  if (!months.length) months = summaryMonthKeysFromList_([], seoulMonthKey_());
   var orderEnd = ctx.endRow || ORDER_LAST_ROW_DEFAULT;
   var incomeEnd = formulaLastRow_(incomeSh);
   var expenseEnd = formulaLastRow_(expenseSh);
   var width = Math.max(sh.getLastColumn(), SUMMARY_HEADERS.length);
-  var clearRows = Math.min(Math.max(sh.getMaxRows(), 23), 40);
+  var needed = months.length + 6;
+  var clearRows = Math.min(Math.max(sh.getLastRow(), needed, 30), 240);
+  ensureSize_(sh, Math.max(needed, clearRows), SUMMARY_HEADERS.length);
   sh.getRange(1, 1, clearRows, width).clearContent();
   sh.getRange(1, 1, 1, SUMMARY_HEADERS.length).setValues([SUMMARY_HEADERS]);
   sh.getRange(2, 1, months.length, 1).setNumberFormat('@');
@@ -1047,23 +1118,23 @@ function rebuildSummary_(ss, ctx, report) {
   sh.getRange(totalRow, 2, 1, 8).setFormulas(localizeGrid_([totals]));
   sh.getRange(2, 2, totalRow - 1, 7).setNumberFormat('#,##0');
   sh.getRange(2, 9, totalRow - 1, 1).setNumberFormat('0.0%');
-  report.push('월별 요약을 판매, 제본, AI, 광고, 박스, 총지출, 순이익, 이익률로 다시 썼습니다.');
+  report.push('월별 요약을 ' + months[0] + '부터 ' + months[months.length - 1] + '까지 다시 썼습니다. 수입, 지출, 주문 연동의 데이터는 바꾸지 않았습니다.');
 }
 
-function readExistingMonths_(sh) {
-  var keys = [];
-  var last = Math.min(Math.max(sh.getLastRow(), 1), 20);
-  var values = sh.getRange(1, 1, last, 1).getValues();
-  var i;
-  for (i = 1; i < values.length; i++) {
-    var parsed = parseMonthLabel_(values[i][0]);
-    if (!parsed) continue;
-    if (compact_(String(values[i][0] == null ? '' : values[i][0])) === '합계') break;
-    keys.push(parsed.key);
-    if (keys.length === 12) break;
-  }
-  if (keys.length === 12) return keys;
-  return fiscalMonthKeys_();
+function collectSummaryDates_(ss) {
+  var dates = [];
+  ['수입', '지출', '주문 연동'].forEach(function(name) {
+    var sheet = ss.getSheetByName(name);
+    if (!sheet) return;
+    var col = findHeader_(headerMap_(sheet), ['날짜']);
+    if (!col) return;
+    var last = Math.min(Math.max(sheet.getLastRow(), 1), MANUAL_LAST_ROW);
+    if (last < 2) return;
+    var values = sheet.getRange(2, col, last - 1, 1).getValues();
+    var i;
+    for (i = 0; i < values.length; i++) dates.push(values[i][0]);
+  });
+  return dates;
 }
 
 function formulaLastRow_(sh) {
@@ -1136,9 +1207,19 @@ function fixNotes_(ss, report) {
   if (summary) cleared += clearPersonalNotes_(summary, 16);
   if (ship) cleared += clearPersonalNotes_(ship, 1);
   orderSh.getRange(1, 8).setValue(guide);
-  if (summary) summary.getRange(16, 1).setValue(guide).setWrap(true);
+  if (summary) summary.getRange(summaryGuideRow_(summary), 1).setValue(guide).setWrap(true);
   if (ship && !String(ship.getRange(1, 8).getValue() || '').trim()) ship.getRange(1, 8).setValue(shipGuide_()).setWrap(true);
   report.push(cleared ? ('이전 안내 문구 ' + cleared + '곳을 지우고 새 안내를 넣었습니다.') : '안내 문구를 현재 구조로 넣었습니다.');
+}
+
+function summaryGuideRow_(sh) {
+  var last = Math.min(Math.max(sh.getLastRow(), 1), 240);
+  var values = sh.getRange(1, 1, last, 1).getValues();
+  var i;
+  for (i = values.length - 1; i >= 1; i--) {
+    if (compact_(String(values[i][0] == null ? '' : values[i][0])) === '합계') return i + 3;
+  }
+  return 16;
 }
 
 function columnGuide_() {

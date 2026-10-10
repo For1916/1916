@@ -603,6 +603,121 @@ function monthLabel(key) {
   if (!m) return key || '-';
   return m[1] + '년 ' + Number(m[2]) + '월';
 }
+function addMonthsKey(key, delta) {
+  var y = Number(String(key).slice(0, 4));
+  var m = Number(String(key).slice(5, 7));
+  if (!y || m < 1 || m > 12) return '';
+  var index = y * 12 + (m - 1) + delta;
+  var ny = Math.floor(index / 12);
+  var nm = index % 12;
+  return ny + '-' + (nm + 1 < 10 ? '0' + (nm + 1) : String(nm + 1));
+}
+function monthKeyFromDate(value) {
+  var s = String(value == null ? '' : value).trim();
+  var iso = s.match(/^(\d{4})-(\d{2})/);
+  var dot = s.match(/^(\d{4})\s*[./]\s*(\d{1,2})/);
+  var y = 0;
+  var mo = 0;
+  if (iso) { y = Number(iso[1]); mo = Number(iso[2]); }
+  else if (dot) { y = Number(dot[1]); mo = Number(dot[2]); }
+  else return '';
+  if (y < 2020 || y > 2045 || mo < 1 || mo > 12) return '';
+  return y + '-' + (mo < 10 ? '0' + mo : String(mo));
+}
+function summaryMonthKeysClient(dates) {
+  var start = '2026-06';
+  var end = addMonthsKey(currentMonthKey(), 12);
+  (dates || []).forEach(function(date) {
+    var key = monthKeyFromDate(date);
+    if (!key) return;
+    if (key < start) start = key;
+    if (key > end) end = key;
+  });
+  var keys = [];
+  var cursor = start;
+  var guard = 0;
+  while (cursor && cursor <= end && guard < 400) {
+    keys.push(cursor);
+    cursor = addMonthsKey(cursor, 1);
+    guard++;
+  }
+  return keys;
+}
+function canonicalCategoryClient(name) {
+  var raw = String(name == null ? '' : name).trim();
+  var c = raw.replace(/\s+/g, '');
+  if (!c) return '';
+  if (c.toUpperCase() === 'AI') return 'AI';
+  if (c === '제본' || c === '광고' || c === '박스') return c;
+  if (c.indexOf('제본') !== -1 || c.indexOf('제작') !== -1 || c.indexOf('구매') !== -1) return '제본';
+  if (c.indexOf('광고') !== -1) return '광고';
+  if (c.indexOf('박스') !== -1 || c.indexOf('포장') !== -1 || c.indexOf('택배') !== -1) return '박스';
+  if (c.indexOf('구독') !== -1 || /ai/i.test(raw)) return 'AI';
+  return '';
+}
+function blankClientMonth(key) {
+  var expenses = {};
+  DEFAULT_CATEGORIES.forEach(function(cat) { expenses[cat] = 0; });
+  return { month: key, label: key, sales: 0, totalExpense: 0, profit: 0, margin: null, expenses: expenses };
+}
+function finishClientMonth(row) {
+  row.profit = (row.sales || 0) - (row.totalExpense || 0);
+  row.margin = row.sales ? row.profit / row.sales : null;
+}
+function computedClientMonth(key, income, expense, orders) {
+  var row = blankClientMonth(key);
+  (orders || []).forEach(function(item) {
+    if (!item.included || item.amount == null || monthKeyFromDate(item.date) !== key) return;
+    row.sales += Number(item.amount) || 0;
+  });
+  (income || []).forEach(function(item) {
+    if (!item.counts || item.amount == null || monthKeyFromDate(item.date) !== key) return;
+    row.sales += Number(item.amount) || 0;
+  });
+  (expense || []).forEach(function(item) {
+    if (item.amount == null || monthKeyFromDate(item.date) !== key) return;
+    var cat = canonicalCategoryClient(item.category);
+    if (!cat) return;
+    row.expenses[cat] += Number(item.amount) || 0;
+    row.totalExpense += Number(item.amount) || 0;
+  });
+  finishClientMonth(row);
+  return row;
+}
+function totalFromClientMonths(months) {
+  var total = blankClientMonth('합계');
+  total.label = '합계';
+  (months || []).forEach(function(month) {
+    total.sales += month.sales || 0;
+    total.totalExpense += month.totalExpense || 0;
+    DEFAULT_CATEGORIES.forEach(function(cat) {
+      total.expenses[cat] += (month.expenses && month.expenses[cat]) || 0;
+    });
+  });
+  finishClientMonth(total);
+  total.month = '합계';
+  return total;
+}
+function extendSummary(summary, income, expense, orders) {
+  var dates = [];
+  (income || []).forEach(function(row) { dates.push(row.date); });
+  (expense || []).forEach(function(row) { dates.push(row.date); });
+  (orders || []).forEach(function(row) { dates.push(row.date); });
+  var keys = summaryMonthKeysClient(dates);
+  var existing = (summary && summary.months) || [];
+  var same = existing.length === keys.length;
+  var i;
+  for (i = 0; same && i < keys.length; i++) {
+    if (!existing[i] || existing[i].month !== keys[i]) same = false;
+  }
+  if (same && summary) return summary;
+  var byKey = {};
+  existing.forEach(function(row) { if (row && row.month) byKey[row.month] = row; });
+  var months = keys.map(function(key) {
+    return byKey[key] || computedClientMonth(key, income, expense, orders);
+  });
+  return { months: months, total: totalFromClientMonths(months), source: summary && summary.source };
+}
 function toast(msg, type) {
   var el = $('toast');
   el.textContent = msg;
@@ -910,10 +1025,10 @@ async function reload() {
   setStatus('불러오는 중...');
   var data = await api('load');
   state.meta = data.meta || state.meta;
-  state.summary = data.summary;
   state.income = (data.transactions && data.transactions.income) || [];
   state.expense = (data.transactions && data.transactions.expense) || [];
   state.orders = (data.transactions && data.transactions.orders) || [];
+  state.summary = extendSummary(data.summary, state.income, state.expense, state.orders);
   applyMeta();
   renderSummary();
   renderList();
