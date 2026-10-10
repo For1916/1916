@@ -328,6 +328,89 @@
     color: var(--text2);
   }
   .footer-note { margin-top: 18px; font-size: 12px; color: var(--text2); }
+  .label-line { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; }
+  .tip {
+    appearance: none;
+    background: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    line-height: inherit;
+    text-align: inherit;
+    cursor: help;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    max-width: 100%;
+    vertical-align: middle;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    overflow: visible;
+  }
+  .tip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  .tip-text {
+    text-decoration-line: underline;
+    text-decoration-style: dotted;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 3px;
+  }
+  .tip-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 99px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 800;
+    font-style: normal;
+    letter-spacing: 0;
+    text-transform: none;
+    line-height: 1;
+    flex: 0 0 auto;
+  }
+  .tip-icon { width: 28px; height: 28px; justify-content: center; border-radius: 99px; }
+  .tip-icon .tip-mark { width: 16px; height: 16px; }
+  thead th .tip { font-size: inherit; font-weight: inherit; white-space: nowrap; }
+  thead th.num { text-align: right; }
+  .stat-card .label .tip, .bar-name .tip { white-space: nowrap; }
+  .tip-pop {
+    position: fixed;
+    z-index: 6000;
+    width: max-content;
+    max-width: min(280px, calc(100vw - 16px));
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    box-shadow: 0 8px 24px rgba(30, 112, 240, 0.16);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.45;
+    letter-spacing: 0;
+    text-transform: none;
+    text-align: left;
+    white-space: normal;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    pointer-events: none;
+  }
+  .tip-pop[hidden] { display: none !important; }
+  .tip-pop p { margin: 0; }
+  .tip-pop .tip-title { font-weight: 800; color: var(--accent-dark); margin-bottom: 4px; }
+  .tip-pop .tip-formula { margin-top: 6px; color: var(--accent); font-weight: 700; }
+  .tip-pop .tip-note { margin-top: 6px; color: var(--text2); }
+  @media (hover: none) {
+    .tip { min-height: 28px; }
+    .tip-icon { min-width: 32px; min-height: 32px; }
+  }
   .section-label { font-size: 13px; font-weight: 800; margin: 18px 0 8px; }
   .stock-alert { background: var(--red-soft); color: var(--red); border-radius: 8px; padding: 10px 12px; font-size: 13px; font-weight: 700; margin-bottom: 12px; }
   .stock-alert.ok { background: var(--green-soft); color: var(--green); }
@@ -386,7 +469,7 @@
     <div id="summary-source" class="source-note" style="display:none"></div>
     <div class="month-row">
       <div class="field" style="min-width:200px">
-        <label for="month-select">기준</label>
+        <span class="label-line"><label for="month-select" class="tip-text">기준</label><button type="button" class="tip tip-icon" data-tip="period" aria-label="기준 설명"><span class="tip-mark" aria-hidden="true">ⓘ</span></button></span>
         <select id="month-select"></select>
       </div>
     </div>
@@ -401,26 +484,26 @@
       <table>
         <thead>
           <tr>
-            <th>월</th>
-            <th class="num">입금</th>
-            <th class="num">AI</th>
-            <th class="num">광고</th>
-            <th class="num">제본</th>
-            <th class="num">박스</th>
-            <th class="num">기타</th>
-            <th class="num">총지출</th>
-            <th class="num">순이익</th>
-            <th class="num pct">이익률(ROI)</th>
-            <th class="num">누적 수입</th>
-            <th class="num">누적 지출</th>
-            <th class="num">누적 순이익</th>
-            <th class="num pct">누적 회수율</th>
+            <th><button type="button" class="tip" data-tip="month" aria-label="월 설명"><span class="tip-text">월</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th>
+            <th class="num"><button type="button" class="tip" data-tip="sales" aria-label="입금 설명"><span class="tip-text">입금</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th>
+            <th class="num"><button type="button" class="tip" data-tip="ai" aria-label="AI 설명"><span class="tip-text">AI</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th>
+            <th class="num"><button type="button" class="tip" data-tip="ads" aria-label="광고 설명"><span class="tip-text">광고</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th>
+            <th class="num"><button type="button" class="tip" data-tip="bind" aria-label="제본 설명"><span class="tip-text">제본</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th>
+            <th class="num"><button type="button" class="tip" data-tip="box" aria-label="박스 설명"><span class="tip-text">박스</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th>
+            <th class="num"><button type="button" class="tip" data-tip="etc" aria-label="기타 설명"><span class="tip-text">기타</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th>
+            <th class="num"><button type="button" class="tip" data-tip="expense" aria-label="총지출 설명"><span class="tip-text">총지출</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th>
+            <th class="num"><button type="button" class="tip" data-tip="profit" aria-label="순이익 설명"><span class="tip-text">순이익</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th>
+            <th class="num pct"><button type="button" class="tip" data-tip="margin" aria-label="이익률(ROI) 설명"><span class="tip-text">이익률(ROI)</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th>
+            <th class="num"><button type="button" class="tip" data-tip="cumSales" aria-label="누적 수입 설명"><span class="tip-text">누적 수입</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th>
+            <th class="num"><button type="button" class="tip" data-tip="cumExpense" aria-label="누적 지출 설명"><span class="tip-text">누적 지출</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th>
+            <th class="num"><button type="button" class="tip" data-tip="cumProfit" aria-label="누적 순이익 설명"><span class="tip-text">누적 순이익</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th>
+            <th class="num pct"><button type="button" class="tip" data-tip="cumMargin" aria-label="누적 회수율 설명"><span class="tip-text">누적 회수율</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th>
           </tr>
         </thead>
         <tbody id="month-body"></tbody>
       </table>
     </div>
-    <p class="footer-note">이익률(ROI)은 순이익 ÷ 총지출입니다. 총지출이 0이면 – 입니다. 누적 수입·누적 지출·누적 순이익은 첫 달부터 그 달까지의 합입니다. 누적 회수율은 누적 입금 ÷ 누적 지출이고, 누적 지출이 0이면 – 입니다. 합계의 이익률(ROI)은 전체 순이익 ÷ 전체 총지출, 합계의 누적 회수율은 전체 입금 ÷ 전체 총지출입니다. 이번 달(서울)보다 늦은 달은 숫자 대신 – 입니다. 입금은 취소·환불이 아닌 주문 금액(주문일 기준)입니다. 주문에 없는 입금만 수입 시트에 날짜·금액·메모로 적으며, 같은 금액을 양쪽에 적으면 두 번 합산됩니다.</p>
+    <p class="footer-note"><button type="button" class="tip" data-tip="margin" aria-label="이익률(ROI) 설명"><span class="tip-text">이익률(ROI)</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button>은 순이익 ÷ 총지출입니다. 총지출이 0이면 – 입니다. 누적 수입·누적 지출·누적 순이익은 첫 달부터 그 달까지의 합입니다. <button type="button" class="tip" data-tip="cumMargin" aria-label="누적 회수율 설명"><span class="tip-text">누적 회수율</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button>은 누적 입금 ÷ 누적 지출이고, 누적 지출이 0이면 – 입니다. 합계의 이익률(ROI)은 전체 순이익 ÷ 전체 총지출, 합계의 누적 회수율은 전체 입금 ÷ 전체 총지출입니다. 이번 달(서울)보다 늦은 달은 숫자 대신 – 입니다. 입금은 취소·환불이 아닌 주문 금액(주문일 기준)입니다. 주문에 없는 입금만 수입 시트에 날짜·금액·메모로 적으며, 같은 금액을 양쪽에 적으면 두 번 합산됩니다.</p>
   </section>
 
   <section id="tab-add" class="panel">
@@ -428,7 +511,7 @@
       <h2>지출 입력</h2>
       <div class="form-grid">
         <div class="field"><label for="ex-date">날짜</label><input id="ex-date" type="date" required></div>
-        <div class="field"><label for="ex-category">분류</label><select id="ex-category" required></select></div>
+        <div class="field"><span class="label-line"><label for="ex-category" class="tip-text">분류</label><button type="button" class="tip tip-icon" data-tip="category" aria-label="분류 설명"><span class="tip-mark" aria-hidden="true">ⓘ</span></button></span><select id="ex-category" required></select></div>
         <div class="field"><label for="ex-amount">금액</label><input id="ex-amount" type="text" inputmode="decimal" required placeholder="4500"></div>
         <div class="field full"><label for="ex-memo">메모</label><textarea id="ex-memo" maxlength="2000" placeholder="필요한 메모만 적습니다"></textarea></div>
       </div>
@@ -447,7 +530,7 @@
       <table>
         <thead>
           <tr>
-            <th>날짜</th><th>분류</th><th class="num">금액</th><th>메모</th><th></th>
+            <th>날짜</th><th><button type="button" class="tip" data-tip="category" aria-label="분류 설명"><span class="tip-text">분류</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th><th class="num">금액</th><th>메모</th><th></th>
           </tr>
         </thead>
         <tbody id="list-body"></tbody>
@@ -462,7 +545,7 @@
       <table>
         <thead>
           <tr>
-            <th>날짜</th><th>상태</th><th class="num">금액</th><th></th>
+            <th>날짜</th><th><button type="button" class="tip" data-tip="orderStatus" aria-label="상태 설명"><span class="tip-text">상태</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th><th class="num">금액</th><th></th>
           </tr>
         </thead>
         <tbody id="sales-body"></tbody>
@@ -482,7 +565,7 @@
       <table>
         <thead>
           <tr>
-            <th>코드</th><th>이름</th><th class="num">현재</th><th class="num">최소</th><th>구매</th><th>상태</th><th></th>
+            <th>코드</th><th>이름</th><th class="num"><button type="button" class="tip" data-tip="onHand" aria-label="현재 설명"><span class="tip-text">현재</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th><th class="num"><button type="button" class="tip" data-tip="minimum" aria-label="최소 재고 설명"><span class="tip-text">최소</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th><th><button type="button" class="tip" data-tip="purchase" aria-label="구매 설명"><span class="tip-text">구매</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th><th><button type="button" class="tip" data-tip="stockStatus" aria-label="재고 상태 설명"><span class="tip-text">상태</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th><th></th>
           </tr>
         </thead>
         <tbody id="stock-body"></tbody>
@@ -492,12 +575,12 @@
     <div id="stock-empty" class="empty" style="display:none"><p>재고 품목이 없어요</p></div>
 
     <form id="inbound-form" class="form-card">
-      <h2>입고</h2>
+      <h2><button type="button" class="tip" data-tip="inbound" aria-label="입고 설명"><span class="tip-text">입고</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></h2>
       <div class="form-grid">
-        <div class="field"><label for="in-date">입고일</label><input id="in-date" type="date" required></div>
+        <div class="field"><span class="label-line"><label for="in-date" class="tip-text">입고일</label><button type="button" class="tip tip-icon" data-tip="inDate" aria-label="입고일 설명"><span class="tip-mark" aria-hidden="true">ⓘ</span></button></span><input id="in-date" type="date" required></div>
         <div class="field"><label for="in-item">품목</label><select id="in-item" required></select></div>
         <div class="field"><label for="in-qty">수량</label><input id="in-qty" type="text" inputmode="decimal" required placeholder="10"></div>
-        <div class="field"><label for="in-unit">단위</label><select id="in-unit"><option value="개">개</option><option value="팩">팩</option></select></div>
+        <div class="field"><span class="label-line"><label for="in-unit" class="tip-text">단위</label><button type="button" class="tip tip-icon" data-tip="unit" aria-label="단위 설명"><span class="tip-mark" aria-hidden="true">ⓘ</span></button></span><select id="in-unit"><option value="개">개</option><option value="팩">팩</option></select></div>
         <div class="field full"><label for="in-memo">메모</label><textarea id="in-memo" maxlength="500" placeholder="인쇄소 입고"></textarea></div>
       </div>
       <p class="lead">단위가 팩이면 그 품목의 단위당개수만큼 개로 더합니다. 1팩이 10개면 품목의 단위당개수를 10으로 바꾸세요.</p>
@@ -505,13 +588,13 @@
     </form>
 
     <form id="adjust-form" class="form-card">
-      <h2>출고 · 조정</h2>
+      <h2><button type="button" class="tip" data-tip="outbound" aria-label="출고 설명"><span class="tip-text">출고</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button> · <button type="button" class="tip" data-tip="adjustment" aria-label="조정 설명"><span class="tip-text">조정</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></h2>
       <div class="form-grid">
-        <div class="field"><label for="adj-kind">구분</label><select id="adj-kind"><option value="출고">출고</option><option value="조정">조정</option></select></div>
-        <div class="field"><label for="adj-date" id="adj-date-label">출고일</label><input id="adj-date" type="date" required></div>
+        <div class="field"><span class="label-line"><label for="adj-kind" class="tip-text">구분</label><button type="button" class="tip tip-icon" data-tip="kind" aria-label="구분 설명"><span class="tip-mark" aria-hidden="true">ⓘ</span></button></span><select id="adj-kind"><option value="출고">출고</option><option value="조정">조정</option></select></div>
+        <div class="field"><span class="label-line"><label for="adj-date" id="adj-date-label" class="tip-text">출고일</label><button type="button" class="tip tip-icon" id="adj-date-tip" data-tip="outDate" aria-label="출고일 설명"><span class="tip-mark" aria-hidden="true">ⓘ</span></button></span><input id="adj-date" type="date" required></div>
         <div class="field"><label for="adj-item">품목</label><select id="adj-item" required></select></div>
         <div class="field"><label for="adj-qty">수량</label><input id="adj-qty" type="text" inputmode="decimal" required placeholder="1"></div>
-        <div class="field"><label for="adj-unit">단위</label><select id="adj-unit"><option value="개">개</option><option value="팩">팩</option></select></div>
+        <div class="field"><span class="label-line"><label for="adj-unit" class="tip-text">단위</label><button type="button" class="tip tip-icon" data-tip="unit" aria-label="단위 설명"><span class="tip-mark" aria-hidden="true">ⓘ</span></button></span><select id="adj-unit"><option value="개">개</option><option value="팩">팩</option></select></div>
         <div class="field full"><label for="adj-memo">메모</label><textarea id="adj-memo" maxlength="500" placeholder="파손, 실사 차이"></textarea></div>
       </div>
       <p class="lead">주문 출고는 여기서 지우지 않습니다. 조정은 마이너스 수량으로 재고를 줄입니다.</p>
@@ -521,7 +604,7 @@
     <h2 class="section-label">직접 입력</h2>
     <div class="table-wrap desk-only">
       <table>
-        <thead><tr><th>날짜</th><th>구분</th><th>품목</th><th class="num">수량</th><th class="num">환산</th><th>메모</th><th></th></tr></thead>
+        <thead><tr><th>날짜</th><th><button type="button" class="tip" data-tip="kind" aria-label="구분 설명"><span class="tip-text">구분</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th><th>품목</th><th class="num">수량</th><th class="num"><button type="button" class="tip" data-tip="converted" aria-label="환산수량 설명"><span class="tip-text">환산</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th><th>메모</th><th></th></tr></thead>
         <tbody id="move-body"></tbody>
       </table>
     </div>
@@ -533,7 +616,7 @@
     <p class="footer-note" id="order-date-more"></p>
     <div class="table-wrap desk-only">
       <table>
-        <thead><tr><th>주문일</th><th>교재</th><th>입고일</th><th>출고일</th><th></th></tr></thead>
+        <thead><tr><th><button type="button" class="tip" data-tip="orderDate" aria-label="주문일 설명"><span class="tip-text">주문일</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th><th>교재</th><th><button type="button" class="tip" data-tip="inDate" aria-label="입고일 설명"><span class="tip-text">입고일</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th><th><button type="button" class="tip" data-tip="outDate" aria-label="출고일 설명"><span class="tip-text">출고일</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th><th></th></tr></thead>
         <tbody id="order-date-body"></tbody>
       </table>
     </div>
@@ -543,25 +626,25 @@
     <p class="lead">출고일이 적힌 주문만 재고에서 뺍니다. 취소·환불은 넣지 않습니다.</p>
     <div class="table-wrap desk-only">
       <table>
-        <thead><tr><th>주문일</th><th>이동</th><th>품목</th><th class="num">수량</th><th>메모</th></tr></thead>
+        <thead><tr><th><button type="button" class="tip" data-tip="orderDate" aria-label="주문일 설명"><span class="tip-text">주문일</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th><th><button type="button" class="tip" data-tip="shipMove" aria-label="이동 설명"><span class="tip-text">이동</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th><th>품목</th><th class="num">수량</th><th>메모</th></tr></thead>
         <tbody id="ship-body"></tbody>
       </table>
     </div>
     <div class="cards" id="ship-cards"></div>
 
     <form id="rule-form" class="form-card">
-      <h2>박스 규칙</h2>
+      <h2><button type="button" class="tip" data-tip="rule" aria-label="박스 규칙 설명"><span class="tip-text">박스 규칙</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></h2>
       <p class="lead">주문에 들어 있는 교재 권수를 보고, 최소~최대에 맞는 첫 규칙의 박스를 그 개수만큼 뺍니다.</p>
       <div class="form-grid">
-        <div class="field"><label for="rule-min">최소 권수</label><input id="rule-min" type="number" min="1" step="1" required></div>
-        <div class="field"><label for="rule-max">최대 권수</label><input id="rule-max" type="number" min="1" step="1" required></div>
-        <div class="field"><label for="rule-box">박스</label><select id="rule-box" required></select></div>
-        <div class="field"><label for="rule-count">박스 개수</label><input id="rule-count" type="number" min="1" step="1" required value="1"></div>
+        <div class="field"><span class="label-line"><label for="rule-min" class="tip-text">최소 권수</label><button type="button" class="tip tip-icon" data-tip="ruleMin" aria-label="최소 권수 설명"><span class="tip-mark" aria-hidden="true">ⓘ</span></button></span><input id="rule-min" type="number" min="1" step="1" required></div>
+        <div class="field"><span class="label-line"><label for="rule-max" class="tip-text">최대 권수</label><button type="button" class="tip tip-icon" data-tip="ruleMax" aria-label="최대 권수 설명"><span class="tip-mark" aria-hidden="true">ⓘ</span></button></span><input id="rule-max" type="number" min="1" step="1" required></div>
+        <div class="field"><span class="label-line"><label for="rule-box" class="tip-text">박스</label><button type="button" class="tip tip-icon" data-tip="rule" aria-label="박스 규칙 설명"><span class="tip-mark" aria-hidden="true">ⓘ</span></button></span><select id="rule-box" required></select></div>
+        <div class="field"><span class="label-line"><label for="rule-count" class="tip-text">박스 개수</label><button type="button" class="tip tip-icon" data-tip="ruleCount" aria-label="박스 개수 설명"><span class="tip-mark" aria-hidden="true">ⓘ</span></button></span><input id="rule-count" type="number" min="1" step="1" required value="1"></div>
       </div>
       <div class="form-actions"><button class="btn btn-primary" type="submit" id="rule-submit">규칙 추가</button></div>
       <div class="table-wrap" style="margin-top:16px">
         <table>
-          <thead><tr><th class="num">최소</th><th class="num">최대</th><th>박스</th><th class="num">개수</th><th></th></tr></thead>
+          <thead><tr><th class="num"><button type="button" class="tip" data-tip="ruleMin" aria-label="최소 권수 설명"><span class="tip-text">최소</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th><th class="num"><button type="button" class="tip" data-tip="ruleMax" aria-label="최대 권수 설명"><span class="tip-text">최대</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th><th><button type="button" class="tip" data-tip="rule" aria-label="박스 규칙 설명"><span class="tip-text">박스</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th><th class="num"><button type="button" class="tip" data-tip="ruleCount" aria-label="박스 개수 설명"><span class="tip-text">개수</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th><th></th></tr></thead>
           <tbody id="rule-body"></tbody>
         </table>
       </div>
@@ -573,16 +656,17 @@
         <div class="field"><label for="item-code">코드</label><input id="item-code" required maxlength="40" placeholder="박스-특대"></div>
         <div class="field"><label for="item-name">이름</label><input id="item-name" maxlength="80" placeholder="특대 박스"></div>
         <div class="field"><label for="item-kind">종류</label><select id="item-kind"><option value="박스">박스</option><option value="교재">교재</option></select></div>
-        <div class="field"><label for="item-unit">구매단위</label><select id="item-unit"><option value="팩">팩</option><option value="개">개</option></select></div>
-        <div class="field"><label for="item-pack">단위당개수</label><input id="item-pack" type="number" min="1" step="1" value="1" required></div>
+        <div class="field"><span class="label-line"><label for="item-unit" class="tip-text">구매단위</label><button type="button" class="tip tip-icon" data-tip="purchase" aria-label="구매단위 설명"><span class="tip-mark" aria-hidden="true">ⓘ</span></button></span><select id="item-unit"><option value="팩">팩</option><option value="개">개</option></select></div>
+        <div class="field"><span class="label-line"><label for="item-pack" class="tip-text">단위당개수</label><button type="button" class="tip tip-icon" data-tip="perPack" aria-label="단위당개수 설명"><span class="tip-mark" aria-hidden="true">ⓘ</span></button></span><input id="item-pack" type="number" min="1" step="1" value="1" required></div>
       </div>
       <div class="form-actions"><button class="btn btn-primary" type="submit" id="item-submit">품목 추가</button></div>
     </form>
-    <p class="footer-note">현재 재고 = 기초 + 입고 − 출고 + 조정. 현재가 최소 재고보다 적으면 부족입니다. 최소가 0이면 마이너스만 부족으로 표시합니다.</p>
+    <p class="footer-note"><button type="button" class="tip" data-tip="onHand" aria-label="현재 재고 설명"><span class="tip-text">현재 재고</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button> = <button type="button" class="tip" data-tip="opening" aria-label="기초 설명"><span class="tip-text">기초</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button> + <button type="button" class="tip" data-tip="inbound" aria-label="입고 설명"><span class="tip-text">입고</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button> − <button type="button" class="tip" data-tip="outbound" aria-label="출고 설명"><span class="tip-text">출고</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button> + <button type="button" class="tip" data-tip="adjustment" aria-label="조정 설명"><span class="tip-text">조정</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button>. 현재가 <button type="button" class="tip" data-tip="minimum" aria-label="최소 재고 설명"><span class="tip-text">최소 재고</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button>보다 적으면 <button type="button" class="tip" data-tip="low" aria-label="부족 설명"><span class="tip-text">부족</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button>입니다. 최소가 0이면 마이너스만 부족으로 표시합니다.</p>
   </section>
 </div>
 </div>
 
+<div id="tip-pop" class="tip-pop" role="tooltip" hidden></div>
 <div class="toast" id="toast"></div>
 <div id="detail-overlay">
   <div class="detail-box">
@@ -607,6 +691,346 @@ function isConfigured() { return /^https:\/\/script\.google\.com\/macros\/s\/[A-
 function $(id) { return document.getElementById(id); }
 function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+var TIPS = {
+  month: {
+    title: '월',
+    body: '입금은 주문일, 지출은 지출을 적은 날로 달을 나눠요. 칸은 26-07처럼 연도 두 자리로 보여요.',
+    note: '2026년 6월부터 시작해요. 기록이 더 이르거나 늦으면 그 달까지 늘리고, 적어도 이번 달 뒤 12개월을 포함해요. 아직 오지 않은 달은 숫자 대신 –예요.'
+  },
+  period: {
+    title: '기준',
+    body: '위 카드와 막대에 보여줄 달이에요. 전체 기간을 고르면 합계 줄과 같은 숫자를 보여요. 아직 오지 않은 달은 –예요.'
+  },
+  sales: {
+    title: '입금',
+    body: '그달 주문 금액과, 수입 시트에 직접 적은 금액을 더해요. 상태는 취소·환불만 빼요. 주문 금액은 주문일(제출일시)의 달이고, 수입 시트 금액은 그 시트에 적은 날짜의 달이에요.',
+    formula: '입금 = 주문 연동(취소·환불 제외) + 수입 시트',
+    note: '같은 금액을 주문과 수입 시트에 둘 다 적으면 두 번 합산돼요. 아직 오지 않은 달은 –예요.'
+  },
+  ai: {
+    title: 'AI',
+    body: '그달 분류가 AI인 지출이에요. 구독이 이름에 있거나 AI가 들어간 분류도 여기로 모아 둬요.',
+    formula: 'AI = 그달 지출 중 분류가 AI인 금액',
+    note: '아직 오지 않은 달은 –예요.'
+  },
+  ads: {
+    title: '광고',
+    body: '그달 분류가 광고인 지출이에요. 광고가 이름에 있는 분류도 여기로 들어와요.',
+    formula: '광고 = 그달 지출 중 분류가 광고인 금액',
+    note: '아직 오지 않은 달은 –예요.'
+  },
+  bind: {
+    title: '제본',
+    body: '그달 분류가 제본인 지출이에요. 제본, 제작, 구매가 이름에 있는 분류도 여기로 모아 둬요.',
+    formula: '제본 = 그달 지출 중 분류가 제본인 금액',
+    note: '아직 오지 않은 달은 –예요.'
+  },
+  box: {
+    title: '박스',
+    body: '그달 분류가 박스인 지출이에요. 박스, 포장, 택배가 이름에 있는 분류도 여기로 모아 둬요.',
+    formula: '박스 = 그달 지출 중 분류가 박스인 금액',
+    note: '아직 오지 않은 달은 –예요.'
+  },
+  etc: {
+    title: '기타',
+    body: '분류가 기타인 그달 지출이에요. 다른 이름으로 적힌 지출이 자동으로 여기 들어오지는 않아요.',
+    formula: '기타 = 그달 지출 중 분류가 기타인 금액',
+    note: '아직 오지 않은 달은 –예요.'
+  },
+  expense: {
+    title: '총지출',
+    body: '그달 AI, 광고, 제본, 박스, 기타를 더한 값이에요. 이 다섯 분류에 없는 지출은 넣지 않아요.',
+    formula: '총지출 = AI + 광고 + 제본 + 박스 + 기타',
+    note: '아직 오지 않은 달은 –예요.'
+  },
+  profit: {
+    title: '순이익',
+    body: '그달 입금에서 총지출을 뺀 값이에요. 0보다 크면 흑자, 0보다 작으면 적자예요.',
+    formula: '순이익 = 입금 − 총지출',
+    note: '아직 오지 않은 달은 –예요.'
+  },
+  margin: {
+    title: '월별 이익률 (ROI, 투자수익률)',
+    body: '그달 쓴 돈 대비 얼마를 벌거나 잃었는지 보여줘요. 0%보다 크면 쓴 돈보다 더 벌었고, 최저는 −100%예요.',
+    formula: 'ROI = 순이익 ÷ 총지출 × 100 (순이익 = 입금 − 총지출)',
+    note: '총지출이 0이거나 아직 오지 않은 달은 –로 표시해요. 합계는 전체 순이익 ÷ 전체 총지출입니다.'
+  },
+  cumSales: {
+    title: '누적 수입',
+    body: '표의 첫 달부터 그 달까지 입금을 더한 값이에요. 아직 오지 않은 달은 합을 이어 적지 않고 –로 보여요.',
+    formula: '누적 수입 = 첫 달 입금 + … + 그달 입금',
+    note: '합계 줄은 이번 달까지의 전체 입금과 같아요.'
+  },
+  cumExpense: {
+    title: '누적 지출',
+    body: '첫 달부터 그 달까지 총지출을 더한 값이에요. 아직 오지 않은 달은 합을 이어 적지 않고 –로 보여요.',
+    formula: '누적 지출 = 첫 달 총지출 + … + 그달 총지출',
+    note: '합계 줄은 이번 달까지의 전체 총지출과 같아요.'
+  },
+  cumProfit: {
+    title: '누적 순이익',
+    body: '첫 달부터 그 달까지 남긴 이익이에요. 아직 오지 않은 달은 –예요.',
+    formula: '누적 순이익 = 누적 수입 − 누적 지출',
+    note: '합계 줄은 이번 달까지의 전체 순이익과 같아요.'
+  },
+  cumMargin: {
+    title: '누적 회수율',
+    body: '지금까지 쓴 돈 가운데 몇 %를 다시 벌어들였는지 보여줘요. 100%가 되면 본전이고, 그 위는 이익이에요.',
+    formula: '회수율 = 누적 입금 ÷ 누적 지출 × 100',
+    note: '누적 지출이 0이거나 아직 오지 않은 달은 –로 표시해요. 합계는 전체 입금 ÷ 전체 총지출입니다.'
+  },
+  total: {
+    title: '합계',
+    body: '이번 달(서울)까지의 입금·지출·순이익을 더한 줄이에요. 아직 오지 않은 달은 –이고 합계에 넣지 않아요. 이익률과 회수율은 달마다의 평균이 아니에요.',
+    formula: '합계 ROI = 전체 순이익 ÷ 전체 총지출, 합계 회수율 = 전체 입금 ÷ 전체 총지출',
+    note: '총지출이 0이면 두 비율은 –입니다.'
+  },
+  category: {
+    title: '분류',
+    body: 'AI, 광고, 제본, 박스, 기타 중 하나예요. 고른 분류의 월별 칸에 금액이 더해져요. 이 다섯으로 옮기지 못한 지출은 총지출에 들어가지 않아요.'
+  },
+  orderStatus: {
+    title: '상태',
+    body: '주문 연동의 상태예요. 취소·환불은 월별 입금에 넣지 않아요. 수입 시트에 직접 적은 입금만 여기서 고칠 수 있어요.'
+  },
+  onHand: {
+    title: '현재',
+    body: '지금 남아 있는 개수예요.',
+    formula: '현재 = 기초 + 입고 − 출고 + 조정'
+  },
+  opening: {
+    title: '기초',
+    body: '입출고를 더하기 전의 시작 수량이에요. 입고·출고·조정이 이 숫자를 바꾸지는 않아요.'
+  },
+  inbound: {
+    title: '입고',
+    body: '재고에 더하는 수량이에요. 입고일이 적힌 입고만 더해요. 주문으로 들어오는 것은 교재뿐이고, 박스는 주문 입고에 넣지 않아요.',
+    formula: '입고 = 입고일이 있는 입고의 환산수량 합'
+  },
+  outbound: {
+    title: '출고',
+    body: '재고에서 빼는 수량이에요. 출고일이 비어 있으면 빼지 않아요. 주문은 출고일이 있을 때 교재와, 권수에 맞는 박스를 빼요.',
+    formula: '출고 = 출고일이 있는 출고 수량'
+  },
+  adjustment: {
+    title: '조정',
+    body: '실사 차이처럼 재고를 직접 맞추는 수량이에요. 마이너스로 적으면 줄고, 플러스로 적으면 늘어요.'
+  },
+  minimum: {
+    title: '최소 재고',
+    body: '현재가 이 개수보다 적으면 부족이에요. 최소가 0이면 마이너스일 때만 부족으로 나와요.',
+    formula: '부족 = 현재 < 최소 재고'
+  },
+  low: {
+    title: '부족',
+    body: '현재 재고가 최소 재고보다 적을 때예요. 최소가 0이면 재고가 마이너스인 품목만 부족이에요.'
+  },
+  stockStatus: {
+    title: '상태',
+    body: '현재가 최소 재고보다 적으면 부족, 아니면 충분이에요. 최소가 0이면 마이너스만 부족이에요.'
+  },
+  purchase: {
+    title: '구매',
+    body: '개로 사면 개로 보여요. 팩이면 1팩이 몇 개인지 보여요. 1팩이 10개면 단위당개수를 10으로 적어요.',
+    formula: '팩으로 적은 수량 × 단위당개수 = 개'
+  },
+  perPack: {
+    title: '단위당개수',
+    body: '1팩이 몇 개인지예요. 개로만 다루면 1이면 돼요. 1팩이 10개면 10으로 적어요.'
+  },
+  unit: {
+    title: '단위',
+    body: '개로 적으면 그 수량 그대로 재고에 반영돼요. 팩으로 적으면 단위당개수를 곱해 개로 바꿔요.'
+  },
+  converted: {
+    title: '환산수량',
+    body: '재고에 실제로 더하거나 빼는 개수예요. 단위가 팩이면 수량에 단위당개수를 곱해요. 입고는 플러스, 출고는 마이너스예요.',
+    formula: '팩이면 개수 = 수량 × 단위당개수'
+  },
+  orderDate: {
+    title: '주문일',
+    body: '주문이 들어온 제출일시예요. 월별 입금의 기준일이고, 이 날짜만으로는 재고가 움직이지 않아요.'
+  },
+  inDate: {
+    title: '입고일',
+    body: '이 날짜에 그 주문의 교재를 입고로 더해요. 비우면 그 주문으로는 입고하지 않아요. 박스는 주문 입고에 넣지 않아요.'
+  },
+  outDate: {
+    title: '출고일',
+    body: '이 날짜에 교재와 박스를 출고로 빼요. 비우면 아직 보내지 않은 주문이라 재고에서 빼지 않아요.'
+  },
+  rule: {
+    title: '박스 규칙',
+    body: '주문에 들어 있는 교재 권수를 보고, 최소 권수와 최대 권수 사이에 맞는 위에서부터 첫 규칙의 박스를 박스 개수만큼 빼요. 출고일이 있을 때만 빼고, 취소·환불은 빼지 않아요. 맞는 규칙이 없으면 박스는 빼지 않아요.',
+    formula: '최소 권수 ≤ 주문 권수 ≤ 최대 권수'
+  },
+  ruleMin: {
+    title: '최소 권수',
+    body: '이 규칙이 적용되는 주문 권수의 시작이에요. 권수가 이 값 이상일 때만 봐요.'
+  },
+  ruleMax: {
+    title: '최대 권수',
+    body: '이 규칙이 적용되는 주문 권수의 끝이에요. 권수가 이 값을 넘으면 이 규칙은 쓰지 않아요.'
+  },
+  ruleCount: {
+    title: '박스 개수',
+    body: '규칙에 맞을 때 그 박스를 몇 개 뺄지예요. 주문 한 건당 한 번만 빼요.'
+  },
+  kind: {
+    title: '구분',
+    body: '입고는 재고를 더하고, 출고는 빼요. 조정은 수량을 직접 맞추고, 마이너스면 줄어요. 주문에서 온 출고는 이 화면에서 지우지 않아요.'
+  },
+  shipMove: {
+    title: '이동',
+    body: '주문에서 만든 입고 또는 출고와 그 날짜예요. 입고일·출고일이 적힌 주문만 여기 나와요. 취소·환불은 없어요.'
+  }
+};
+var openTipBtn = null;
+function canHover() {
+  return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+}
+function tipLabel(text, key, title) {
+  var extra = title ? ' data-tip-title="' + escapeHtml(title) + '"' : '';
+  return '<button type="button" class="tip" data-tip="' + escapeHtml(key) + '"' + extra + ' aria-label="' + escapeHtml(text) + ' 설명"><span class="tip-text">' + escapeHtml(text) + '</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button>';
+}
+function tipIcon(key, text) {
+  return '<button type="button" class="tip tip-icon" data-tip="' + escapeHtml(key) + '" aria-label="' + escapeHtml(text) + ' 설명"><span class="tip-mark" aria-hidden="true">ⓘ</span></button>';
+}
+function categoryTip(name) {
+  if (name === 'AI') return tipLabel(name, 'ai');
+  if (name === '광고') return tipLabel(name, 'ads');
+  if (name === '제본') return tipLabel(name, 'bind');
+  if (name === '박스') return tipLabel(name, 'box');
+  if (name === '기타') return tipLabel(name, 'etc');
+  return tipLabel(name, 'etc', name);
+}
+function anchorBox(el) {
+  var rect = el.getBoundingClientRect();
+  var left = rect.left;
+  var right = rect.right;
+  var top = rect.top;
+  var bottom = rect.bottom;
+  var node = el.parentElement;
+  while (node && node !== document.documentElement) {
+    var style = window.getComputedStyle(node);
+    var ox = style.overflowX;
+    var oy = style.overflowY;
+    if (ox === 'auto' || ox === 'scroll' || ox === 'hidden' || oy === 'auto' || oy === 'scroll' || oy === 'hidden') {
+      var box = node.getBoundingClientRect();
+      left = Math.max(left, box.left);
+      right = Math.min(right, box.right);
+      top = Math.max(top, box.top);
+      bottom = Math.min(bottom, box.bottom);
+    }
+    node = node.parentElement;
+  }
+  return { left: left, top: top, right: right, bottom: bottom, width: right - left, height: bottom - top };
+}
+function hideTip() {
+  var pop = $('tip-pop');
+  if (pop) pop.hidden = true;
+  if (openTipBtn) {
+    openTipBtn.removeAttribute('aria-expanded');
+    openTipBtn.removeAttribute('aria-describedby');
+    openTipBtn = null;
+  }
+}
+function placeTip(anchor) {
+  if (!anchor || !anchor.isConnected) { hideTip(); return; }
+  var box = anchorBox(anchor);
+  if (box.width < 2 || box.height < 2) { hideTip(); return; }
+  var pop = $('tip-pop');
+  var gap = 8;
+  var margin = 8;
+  var w = pop.offsetWidth;
+  var h = pop.offsetHeight;
+  var left = box.left + box.width / 2 - w / 2;
+  left = Math.max(margin, Math.min(left, window.innerWidth - w - margin));
+  var top = box.bottom + gap;
+  if (top + h > window.innerHeight - margin) top = box.top - h - gap;
+  if (top < margin) top = margin;
+  pop.style.left = Math.round(left) + 'px';
+  pop.style.top = Math.round(top) + 'px';
+}
+function releaseStaleTip() {
+  if (openTipBtn && !openTipBtn.isConnected) hideTip();
+}
+function showTip(anchor) {
+  if (!anchor) return;
+  if (openTipBtn === anchor && !$('tip-pop').hidden) { placeTip(anchor); return; }
+  var key = anchor.getAttribute('data-tip');
+  var tip = TIPS[key];
+  if (!tip) return;
+  if (openTipBtn && openTipBtn !== anchor) {
+    openTipBtn.removeAttribute('aria-expanded');
+    openTipBtn.removeAttribute('aria-describedby');
+  }
+  openTipBtn = anchor;
+  anchor.setAttribute('aria-expanded', 'true');
+  anchor.setAttribute('aria-describedby', 'tip-pop');
+  var pop = $('tip-pop');
+  var title = anchor.getAttribute('data-tip-title') || tip.title;
+  var html = '<p class="tip-title">' + escapeHtml(title) + '</p><p>' + escapeHtml(tip.body) + '</p>';
+  if (tip.formula) html += '<p class="tip-formula">' + escapeHtml(tip.formula) + '</p>';
+  if (tip.note) html += '<p class="tip-note">' + escapeHtml(tip.note) + '</p>';
+  pop.innerHTML = html;
+  pop.hidden = false;
+  placeTip(anchor);
+}
+function bindTips() {
+  document.addEventListener('mouseover', function(event) {
+    if (!canHover()) return;
+    var btn = event.target.closest('.tip');
+    if (btn) showTip(btn);
+  });
+  document.addEventListener('mouseout', function(event) {
+    if (!canHover()) return;
+    var btn = event.target.closest('.tip');
+    if (!btn || openTipBtn !== btn) return;
+    var next = event.relatedTarget;
+    if (next && btn.contains(next)) return;
+    hideTip();
+  });
+  document.addEventListener('focusin', function(event) {
+    if (!canHover()) return;
+    var btn = event.target.closest('.tip');
+    if (btn) showTip(btn);
+  });
+  document.addEventListener('focusout', function(event) {
+    if (!canHover()) return;
+    var btn = event.target.closest('.tip');
+    if (!btn || openTipBtn !== btn) return;
+    hideTip();
+  });
+  document.addEventListener('pointerup', function(event) {
+    var btn = event.target.closest('.tip');
+    if (btn) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!canHover()) {
+        if (openTipBtn === btn && !$('tip-pop').hidden) hideTip();
+        else showTip(btn);
+      }
+      return;
+    }
+    if (!canHover()) hideTip();
+  });
+  document.addEventListener('click', function(event) {
+    if (event.target.closest('.tip')) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }, true);
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') hideTip();
+  });
+  document.addEventListener('scroll', function() {
+    if (openTipBtn && !$('tip-pop').hidden) placeTip(openTipBtn);
+  }, true);
+  window.addEventListener('resize', function() {
+    if (openTipBtn && !$('tip-pop').hidden) placeTip(openTipBtn);
+  });
 }
 function todayISO() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
@@ -940,7 +1364,7 @@ function renderSummary() {
       monthCells(r.month, r) + '</tr>';
   }).join('');
   if (total) {
-    html += '<tr class="clickable' + (state.selected === '합계' ? ' selected' : '') + '" data-month="합계"><td><strong>합계</strong></td>' + amountCells(total) + '</tr>';
+    html += '<tr class="clickable' + (state.selected === '합계' ? ' selected' : '') + '" data-month="합계"><td><strong>' + tipLabel('합계', 'total') + '</strong></td>' + amountCells(total) + '</tr>';
   }
   body.innerHTML = html || '<tr><td colspan="14">요약이 없습니다</td></tr>';
   var note = $('summary-source');
@@ -955,6 +1379,7 @@ function renderSummary() {
     if (opt.value && /^\d{4}-\d{2}$/.test(opt.value)) opt.textContent = monthLabel(opt.value);
   });
   if (keep) listMonth.value = keep;
+  releaseStaleTip();
 }
 
 function monthCells(label, row) {
@@ -997,21 +1422,22 @@ function renderSelected() {
     ['순이익', future ? SUMMARY_DASH : fmt(row.profit), future ? '' : profitClass(row.profit)],
     ['이익률(ROI)', future ? SUMMARY_DASH : fmtRate(row.margin, row.totalExpense), future ? '' : profitClass(row.profit)]
   ];
+  var cardTips = { '입금': 'sales', '총지출': 'expense', '순이익': 'profit', '이익률(ROI)': 'margin' };
   stats.innerHTML = cards.map(function(c) {
-    return '<div class="stat-card"><div class="label">' + c[0] + '</div><div class="value ' + c[2] + '">' + c[1] + '</div><div class="sub">' + escapeHtml(monthLabel(state.selected)) + '</div></div>';
+    return '<div class="stat-card"><div class="label">' + tipLabel(c[0], cardTips[c[0]]) + '</div><div class="value ' + c[2] + '">' + c[1] + '</div><div class="sub">' + escapeHtml(monthLabel(state.selected)) + '</div></div>';
   }).join('');
   var sales = future ? 0 : Math.abs(row.sales || 0);
   var expense = future ? 0 : Math.abs(row.totalExpense || 0);
   var max = Math.max(sales, expense, 1);
   $('compare').innerHTML =
-    '<div><div class="label">입금</div><strong class="money-in">' + (future ? SUMMARY_DASH : fmt(row.sales)) + '</strong><div class="track"><div class="fill-in" style="width:' + (sales / max * 100) + '%"></div></div></div>' +
-    '<div><div class="label">총지출</div><strong>' + (future ? SUMMARY_DASH : fmt(row.totalExpense)) + '</strong><div class="track"><div class="fill-out" style="width:' + (expense / max * 100) + '%"></div></div></div>';
+    '<div><div class="label">' + tipLabel('입금', 'sales') + '</div><strong class="money-in">' + (future ? SUMMARY_DASH : fmt(row.sales)) + '</strong><div class="track"><div class="fill-in" style="width:' + (sales / max * 100) + '%"></div></div></div>' +
+    '<div><div class="label">' + tipLabel('총지출', 'expense') + '</div><strong>' + (future ? SUMMARY_DASH : fmt(row.totalExpense)) + '</strong><div class="track"><div class="fill-out" style="width:' + (expense / max * 100) + '%"></div></div></div>';
   var expenses = {};
   categories().forEach(function(name) { expenses[name] = future ? null : expenseOf(row, name); });
   var names = Object.keys(expenses);
   if (future) {
     $('bars').innerHTML = names.map(function(name) {
-      return '<div class="bar-row"><div class="bar-name">' + escapeHtml(name) + '</div><div class="bar-track"><div class="bar-fill" style="width:0"></div></div><div class="bar-val">' + SUMMARY_DASH + '</div></div>';
+      return '<div class="bar-row"><div class="bar-name">' + categoryTip(name) + '</div><div class="bar-track"><div class="bar-fill" style="width:0"></div></div><div class="bar-val">' + SUMMARY_DASH + '</div></div>';
     }).join('');
     return;
   }
@@ -1024,7 +1450,7 @@ function renderSelected() {
     var value = expenses[name] || 0;
     var width = top ? Math.max(2, Math.abs(value) / top * 100) : 0;
     if (!value) width = 0;
-    return '<div class="bar-row"><div class="bar-name">' + escapeHtml(name) + '</div><div class="bar-track"><div class="bar-fill" style="width:' + width + '%"></div></div><div class="bar-val">' + fmt(value) + '</div></div>';
+    return '<div class="bar-row"><div class="bar-name">' + categoryTip(name) + '</div><div class="bar-track"><div class="bar-fill" style="width:' + width + '%"></div></div><div class="bar-val">' + fmt(value) + '</div></div>';
   }).join('');
 }
 
@@ -1093,8 +1519,11 @@ function renderList() {
   });
 }
 
-function fieldHtml(id, label, control) {
-  return '<div class="field"><label for="' + id + '">' + label + '</label>' + control + '</div>';
+function fieldHtml(id, label, control, tipKey) {
+  var name = tipKey
+    ? '<span class="label-line"><label for="' + id + '" class="tip-text">' + escapeHtml(label) + '</label>' + tipIcon(tipKey, label) + '</span>'
+    : '<label for="' + id + '">' + label + '</label>';
+  return '<div class="field">' + name + control + '</div>';
 }
 function openEdit(row) {
   if (!row) return;
@@ -1103,7 +1532,7 @@ function openEdit(row) {
   var form = $('edit-form');
   form.innerHTML = '<div class="form-grid">' +
     fieldHtml('ed-date', '날짜', '<input id="ed-date" type="date" required value="' + escapeHtml(row.date) + '">') +
-    fieldHtml('ed-category', '분류', '<select id="ed-category" required></select>') +
+    fieldHtml('ed-category', '분류', '<select id="ed-category" required></select>', 'category') +
     fieldHtml('ed-amount', '금액', '<input id="ed-amount" type="text" inputmode="decimal" required value="' + escapeHtml(row.amount == null ? '' : row.amount) + '">') +
     '<div class="field full"><label for="ed-memo">메모</label><textarea id="ed-memo" maxlength="2000">' + escapeHtml(row.memo || '') + '</textarea></div></div>' +
     '<div class="form-actions"><button class="btn btn-danger" type="button" id="ed-delete">삭제</button><button class="btn btn-primary" type="submit">저장</button></div>';
@@ -1228,7 +1657,7 @@ function renderStock() {
     return '<tr class="' + (it.low ? 'low' : '') + '"><td>' + escapeHtml(it.code) + '</td><td>' + escapeHtml(it.name || '') + '</td><td class="num">' + fmtQty(it.onHand) + '</td><td class="num">' + fmtQty(it.minimum) + '</td><td>' + escapeHtml(purchaseLabel(it)) + '</td><td>' + (it.low ? '<span class="badge badge-low">부족</span>' : '<span class="badge badge-ok">충분</span>') + '</td><td><button type="button" class="btn btn-ghost btn-sm" data-stock-action="item" data-key="' + escapeHtml(it.code) + '">수정</button></td></tr>';
   }).join('');
   $('stock-cards').innerHTML = rows.map(function(it) {
-    return '<article class="trade-card' + (it.low ? ' low' : '') + '"><div class="trade-card-header"><div class="trade-card-title">' + escapeHtml(it.code) + ' · ' + escapeHtml(it.name || '') + '</div>' + (it.low ? '<span class="badge badge-low">부족</span>' : '<span class="badge badge-ok">충분</span>') + '</div><div class="trade-card-meta">현재 ' + fmtQty(it.onHand) + ' · 최소 ' + fmtQty(it.minimum) + ' · ' + escapeHtml(purchaseLabel(it)) + '</div><div class="card-actions"><button type="button" class="btn btn-ghost btn-sm" data-stock-action="item" data-key="' + escapeHtml(it.code) + '">수정</button></div></article>';
+    return '<article class="trade-card' + (it.low ? ' low' : '') + '"><div class="trade-card-header"><div class="trade-card-title">' + escapeHtml(it.code) + ' · ' + escapeHtml(it.name || '') + '</div>' + (it.low ? '<span class="badge badge-low">' + tipLabel('부족', 'low') + '</span>' : '<span class="badge badge-ok">충분</span>') + '</div><div class="trade-card-meta">' + tipLabel('현재', 'onHand') + ' ' + fmtQty(it.onHand) + ' · ' + tipLabel('최소', 'minimum') + ' ' + fmtQty(it.minimum) + ' · ' + tipLabel(purchaseLabel(it), 'purchase') + '</div><div class="card-actions"><button type="button" class="btn btn-ghost btn-sm" data-stock-action="item" data-key="' + escapeHtml(it.code) + '">수정</button></div></article>';
   }).join('');
   $('stock-empty').style.display = rows.length ? 'none' : 'block';
   var manual = data.manual || [];
@@ -1236,7 +1665,8 @@ function renderStock() {
     return '<tr><td>' + escapeHtml(mv.date || '') + '</td><td>' + escapeHtml(mv.kind || '') + '</td><td>' + escapeHtml(mv.code || '') + '</td><td class="num">' + fmtQty(mv.qty) + (mv.unit ? ' ' + escapeHtml(mv.unit) : '') + '</td><td class="num">' + fmtQty(mv.converted) + '</td><td>' + escapeHtml(mv.memo || '') + '</td><td><button type="button" class="btn btn-ghost btn-sm" data-stock-action="move" data-key="' + escapeHtml(mv.row) + '">수정</button></td></tr>';
   }).join('');
   $('move-cards').innerHTML = manual.map(function(mv) {
-    return '<article class="trade-card"><div class="trade-card-header"><div class="trade-card-title">' + escapeHtml(mv.kind || '') + ' · ' + escapeHtml(mv.code || '') + '</div></div><div class="trade-card-meta">' + escapeHtml(mv.date || '') + (mv.memo ? ' · ' + escapeHtml(mv.memo) : '') + '</div><strong>' + fmtQty(mv.converted) + '개</strong><div class="card-actions"><button type="button" class="btn btn-ghost btn-sm" data-stock-action="move" data-key="' + escapeHtml(mv.row) + '">수정</button></div></article>';
+    var kindTip = mv.kind === '입고' ? 'inbound' : (mv.kind === '출고' ? 'outbound' : (mv.kind === '조정' ? 'adjustment' : 'kind'));
+    return '<article class="trade-card"><div class="trade-card-header"><div class="trade-card-title">' + tipLabel(mv.kind || '구분', kindTip) + ' · ' + escapeHtml(mv.code || '') + '</div></div><div class="trade-card-meta">' + escapeHtml(mv.date || '') + (mv.memo ? ' · ' + escapeHtml(mv.memo) : '') + '</div><strong>' + tipLabel('환산', 'converted') + ' ' + fmtQty(mv.converted) + '개</strong><div class="card-actions"><button type="button" class="btn btn-ghost btn-sm" data-stock-action="move" data-key="' + escapeHtml(mv.row) + '">수정</button></div></article>';
   }).join('');
   $('move-empty').style.display = manual.length ? 'none' : 'block';
   var ships = (data.shipments || []).slice().reverse();
@@ -1246,7 +1676,8 @@ function renderStock() {
   }).join('') || '<tr><td colspan="5">출고일 또는 입고일이 적힌 주문이 없어요</td></tr>';
   $('ship-cards').innerHTML = ships.map(function(mv) {
     var when = mv.kind === '입고' ? (mv.inDate || mv.date || '') : (mv.outDate || mv.date || '');
-    return '<article class="trade-card"><div class="trade-card-title">' + escapeHtml(mv.kind || '') + ' · ' + escapeHtml(mv.code || '') + ' · ' + fmtQty(mv.qty) + '</div><div class="trade-card-meta">주문일 ' + escapeHtml(mv.orderDate || '-') + ' · ' + escapeHtml(when) + (mv.memo ? ' · ' + escapeHtml(mv.memo) : '') + '</div></article>';
+    var moveTip = mv.kind === '입고' ? 'inbound' : 'outbound';
+    return '<article class="trade-card"><div class="trade-card-title">' + tipLabel(mv.kind || '이동', moveTip) + ' · ' + escapeHtml(mv.code || '') + ' · ' + fmtQty(mv.qty) + '</div><div class="trade-card-meta">' + tipLabel('주문일', 'orderDate') + ' ' + escapeHtml(mv.orderDate || '-') + ' · ' + escapeHtml(when) + (mv.memo ? ' · ' + escapeHtml(mv.memo) : '') + '</div></article>';
   }).join('');
   renderOrderDates(data);
   var rules = data.rules || [];
@@ -1255,6 +1686,7 @@ function renderStock() {
   }).join('') || '<tr><td colspan="5">규칙이 없어요</td></tr>';
   $('in-date').value = $('in-date').value || todayISO();
   $('adj-date').value = $('adj-date').value || todayISO();
+  releaseStaleTip();
 }
 async function loadStock() {
   setStatus('재고 계산 중...');
@@ -1284,9 +1716,9 @@ function renderOrderDates(data) {
   var cards = $('order-date-cards');
   if (cards) {
     cards.innerHTML = rows.map(function(row) {
-      return '<article class="trade-card"><div class="trade-card-title">' + escapeHtml(row.orderDate || '-') + (row.shipped ? '' : ' · 미발송') + '</div><div class="trade-card-meta">' + escapeHtml(row.text || '') + '</div><div class="form-grid">' +
-        '<div class="field"><label>입고일</label><input type="date" data-order-in="' + escapeHtml(row.row) + '" value="' + escapeHtml(row.inDate || '') + '"></div>' +
-        '<div class="field"><label>출고일</label><input type="date" data-order-out="' + escapeHtml(row.row) + '" value="' + escapeHtml(row.outDate || '') + '"></div></div>' +
+      return '<article class="trade-card"><div class="trade-card-title">' + tipLabel('주문일', 'orderDate') + ' ' + escapeHtml(row.orderDate || '-') + (row.shipped ? '' : ' · 미발송') + '</div><div class="trade-card-meta">' + escapeHtml(row.text || '') + '</div><div class="form-grid">' +
+        '<div class="field"><span class="label-line"><span class="tip-text">입고일</span>' + tipIcon('inDate', '입고일') + '</span><input type="date" data-order-in="' + escapeHtml(row.row) + '" value="' + escapeHtml(row.inDate || '') + '"></div>' +
+        '<div class="field"><span class="label-line"><span class="tip-text">출고일</span>' + tipIcon('outDate', '출고일') + '</span><input type="date" data-order-out="' + escapeHtml(row.row) + '" value="' + escapeHtml(row.outDate || '') + '"></div></div>' +
         '<div class="card-actions"><button type="button" class="btn btn-ghost btn-sm" data-order-save="' + escapeHtml(row.row) + '">저장</button></div></article>';
     }).join('');
   }
@@ -1310,10 +1742,10 @@ function openStockItem(code) {
   state.editing = { kind: 'stock-item', item: it };
   $('edit-title').textContent = '품목 수정';
   $('edit-form').innerHTML = '<div class="form-grid">' +
-    fieldHtml('ed-pack', '단위당개수', '<input id="ed-pack" type="number" min="1" step="1" required value="' + escapeHtml(it.perPack) + '">') +
-    fieldHtml('ed-min', '최소재고', '<input id="ed-min" type="number" min="0" step="1" required value="' + escapeHtml(it.minimum) + '">') +
-    fieldHtml('ed-open', '기초수량', '<input id="ed-open" type="text" inputmode="decimal" required value="' + escapeHtml(it.opening) + '">') +
-    fieldHtml('ed-unit', '구매단위', '<select id="ed-unit"><option value="개">개</option><option value="팩">팩</option></select>') +
+    fieldHtml('ed-pack', '단위당개수', '<input id="ed-pack" type="number" min="1" step="1" required value="' + escapeHtml(it.perPack) + '">', 'perPack') +
+    fieldHtml('ed-min', '최소재고', '<input id="ed-min" type="number" min="0" step="1" required value="' + escapeHtml(it.minimum) + '">', 'minimum') +
+    fieldHtml('ed-open', '기초수량', '<input id="ed-open" type="text" inputmode="decimal" required value="' + escapeHtml(it.opening) + '">', 'opening') +
+    fieldHtml('ed-unit', '구매단위', '<select id="ed-unit"><option value="개">개</option><option value="팩">팩</option></select>', 'purchase') +
     '</div><p class="lead">' + escapeHtml(it.code) + ' · ' + escapeHtml(it.name || '') + '</p><div class="form-actions"><button class="btn btn-primary" type="submit">저장</button></div>';
   $('ed-unit').value = it.purchaseUnit === '팩' ? '팩' : '개';
   $('detail-overlay').style.display = 'flex';
@@ -1324,12 +1756,14 @@ function openStockMove(rowNum) {
   state.editing = { kind: 'stock-move', item: mv };
   $('edit-title').textContent = '입출고 수정';
   var options = stockItems().map(function(it) { return '<option value="' + escapeHtml(it.code) + '">' + escapeHtml(it.code) + '</option>'; }).join('');
+  var dateLabel = mv.kind === '입고' ? '입고일' : (mv.kind === '출고' ? '출고일' : '날짜');
+  var dateTip = mv.kind === '입고' ? 'inDate' : (mv.kind === '출고' ? 'outDate' : '');
   $('edit-form').innerHTML = '<div class="form-grid">' +
-    fieldHtml('ed-kind', '구분', '<select id="ed-kind"><option value="입고">입고</option><option value="출고">출고</option><option value="조정">조정</option></select>') +
-    fieldHtml('ed-date', mv.kind === '입고' ? '입고일' : (mv.kind === '출고' ? '출고일' : '날짜'), '<input id="ed-date" type="date" required value="' + escapeHtml(mv.date || '') + '">') +
+    fieldHtml('ed-kind', '구분', '<select id="ed-kind"><option value="입고">입고</option><option value="출고">출고</option><option value="조정">조정</option></select>', 'kind') +
+    fieldHtml('ed-date', dateLabel, '<input id="ed-date" type="date" required value="' + escapeHtml(mv.date || '') + '">', dateTip) +
     fieldHtml('ed-code', '품목', '<select id="ed-code">' + options + '</select>') +
     fieldHtml('ed-qty', '수량', '<input id="ed-qty" type="text" inputmode="decimal" required value="' + escapeHtml(mv.qty == null ? '' : mv.qty) + '">') +
-    fieldHtml('ed-mu', '단위', '<select id="ed-mu"><option value="개">개</option><option value="팩">팩</option></select>') +
+    fieldHtml('ed-mu', '단위', '<select id="ed-mu"><option value="개">개</option><option value="팩">팩</option></select>', 'unit') +
     '<div class="field full"><label for="ed-memo">메모</label><textarea id="ed-memo" maxlength="500">' + escapeHtml(mv.memo || '') + '</textarea></div></div>' +
     '<div class="form-actions"><button class="btn btn-danger" type="button" id="ed-delete">삭제</button><button class="btn btn-primary" type="submit">저장</button></div>';
   $('ed-kind').value = mv.kind || '입고';
@@ -1347,10 +1781,10 @@ function openStockRule(rowNum) {
     return '<option value="' + escapeHtml(it.code) + '">' + escapeHtml(it.code) + '</option>';
   }).join('');
   $('edit-form').innerHTML = '<div class="form-grid">' +
-    fieldHtml('ed-minbooks', '최소 권수', '<input id="ed-minbooks" type="number" min="1" step="1" required value="' + escapeHtml(rule.min) + '">') +
-    fieldHtml('ed-maxbooks', '최대 권수', '<input id="ed-maxbooks" type="number" min="1" step="1" required value="' + escapeHtml(rule.max) + '">') +
-    fieldHtml('ed-box', '박스', '<select id="ed-box">' + options + '</select>') +
-    fieldHtml('ed-count', '박스 개수', '<input id="ed-count" type="number" min="1" step="1" required value="' + escapeHtml(rule.count) + '">') +
+    fieldHtml('ed-minbooks', '최소 권수', '<input id="ed-minbooks" type="number" min="1" step="1" required value="' + escapeHtml(rule.min) + '">', 'ruleMin') +
+    fieldHtml('ed-maxbooks', '최대 권수', '<input id="ed-maxbooks" type="number" min="1" step="1" required value="' + escapeHtml(rule.max) + '">', 'ruleMax') +
+    fieldHtml('ed-box', '박스', '<select id="ed-box">' + options + '</select>', 'rule') +
+    fieldHtml('ed-count', '박스 개수', '<input id="ed-count" type="number" min="1" step="1" required value="' + escapeHtml(rule.count) + '">', 'ruleCount') +
     '</div><div class="form-actions"><button class="btn btn-danger" type="button" id="ed-delete">삭제</button><button class="btn btn-primary" type="submit">저장</button></div>';
   $('ed-box').value = rule.boxCode;
   $('detail-overlay').style.display = 'flex';
@@ -1491,7 +1925,10 @@ $('tab-stock').addEventListener('click', function(event) {
   }).catch(function(err) { toast(err.message, 'error'); }).finally(function() { btn.disabled = false; });
 });
 $('adj-kind').addEventListener('change', function() {
-  $('adj-date-label').textContent = $('adj-kind').value === '출고' ? '출고일' : '날짜';
+  var outbound = $('adj-kind').value === '출고';
+  $('adj-date-label').textContent = outbound ? '출고일' : '날짜';
+  $('adj-date-label').classList.toggle('tip-text', outbound);
+  $('adj-date-tip').hidden = !outbound;
 });
 $('inbound-form').addEventListener('submit', async function(event) {
   event.preventDefault();
@@ -1592,6 +2029,7 @@ $('edit-form').addEventListener('submit', async function(event) {
   } catch (err) { toast(err.message, 'error'); }
 });
 
+bindTips();
 applyMeta();
 $('ex-date').value = todayISO();
 showSetupHint();
