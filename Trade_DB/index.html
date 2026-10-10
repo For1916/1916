@@ -268,6 +268,8 @@
     text-align: center; letter-spacing: 4px; outline: none; margin-bottom: 14px;
   }
   #pw-input:focus { border-color: var(--accent); }
+  #pw-hint:empty { display: none; }
+  #pw-hint { font-size: 12px; font-weight: 500; color: var(--text2); opacity: 0.72; margin: -6px 0 8px; }
   #pw-error { font-size: 13px; color: var(--red); min-height: 18px; margin-bottom: 10px; }
   #lock-banner {
     display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 9998;
@@ -292,6 +294,7 @@
     <h2>중고거래 장부</h2>
     <p>비밀번호를 입력하세요</p>
     <input type="password" id="pw-input" placeholder="••••" maxlength="20" onkeydown="if(event.key==='Enter') checkPw()">
+    <div id="pw-hint"></div>
     <div id="pw-error"></div>
     <button class="btn btn-primary" style="width:100%; display:flex; justify-content:center; text-align:center;" onclick="checkPw()">확인</button>
   </div>
@@ -635,18 +638,29 @@
 
 <script>
 // ── 비밀번호 & 세션 관리 ────────────────────────────────
-const PASSWORD   = '1916';       // ← 비밀번호 변경 시 여기만 수정
+// 비밀번호는 이 파일에 없습니다. Apps Script 스크립트 속성 TRADE_DB_PASSWORD 에만 있습니다.
+const PW_KEY     = 'jonggo_password';
 const LS_KEY     = 'jonggo_unlock_at';
 const SESSION_MS = 60 * 60 * 1000;
 let lockCheckInterval = null;
 
 function lockNow() {
   clearInterval(lockCheckInterval);
+  sessionStorage.removeItem(PW_KEY);
   localStorage.removeItem(LS_KEY);
   document.getElementById('lock-overlay').style.display = 'flex';
   document.getElementById('lock-banner').style.display = 'block';
   document.getElementById('pw-input').value = '';
   document.getElementById('pw-error').textContent = '';
+}
+function showLock(message) {
+  clearInterval(lockCheckInterval);
+  sessionStorage.removeItem(PW_KEY);
+  localStorage.removeItem(LS_KEY);
+  document.getElementById('lock-overlay').style.display = 'flex';
+  document.getElementById('lock-banner').style.display = 'none';
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-error').textContent = message || '';
 }
 function startAutoLockTimer() {
   clearInterval(lockCheckInterval);
@@ -662,40 +676,80 @@ function unlock() {
   document.getElementById('lock-banner').style.display = 'none';
   startAutoLockTimer();
 }
-function checkPw() {
-  const val = document.getElementById('pw-input').value;
-  if (val === PASSWORD) {
-    document.getElementById('pw-error').textContent = '';
+function sessionStillOpen() {
+  const savedAt = localStorage.getItem(LS_KEY);
+  const pw = sessionStorage.getItem(PW_KEY);
+  return !!(pw && savedAt && Date.now() - parseInt(savedAt, 10) < SESSION_MS);
+}
+async function checkPw() {
+  const input = document.getElementById('pw-input');
+  const errEl = document.getElementById('pw-error');
+  const val = input.value;
+  if (!val) {
+    errEl.textContent = '비밀번호를 입력하세요';
+    return;
+  }
+  sessionStorage.setItem(PW_KEY, val);
+  try {
+    await gsRequest({ action: 'auth' });
+    errEl.textContent = '';
     unlock();
-  } else {
-    document.getElementById('pw-error').textContent = '비밀번호가 틀렸어요';
-    document.getElementById('pw-input').value = '';
-    document.getElementById('pw-input').focus();
+    await loadTrades();
+  } catch (e) {
+    sessionStorage.removeItem(PW_KEY);
+    errEl.textContent = e.wrongPassword ? '비밀번호가 틀렸어요' : (e.message || '비밀번호가 틀렸어요');
+    input.value = '';
+    input.focus();
   }
 }
 (function initLock() {
   const savedAt = localStorage.getItem(LS_KEY);
-  if (savedAt && Date.now() - parseInt(savedAt) < SESSION_MS) {
+  const fresh = savedAt && Date.now() - parseInt(savedAt, 10) < SESSION_MS;
+  if (!fresh) {
+    sessionStorage.removeItem(PW_KEY);
+    localStorage.removeItem(LS_KEY);
+  }
+  if (sessionStillOpen()) {
     document.getElementById('lock-overlay').style.display = 'none';
     startAutoLockTimer();
   } else {
-    localStorage.removeItem(LS_KEY);
     document.getElementById('lock-overlay').style.display = 'flex';
   }
 })();
 
-// ── Supabase 설정 : 새 프로젝트(서울 리전) 정보로 교체 ──
+// ── 웹 앱 : 읽기·쓰기는 모두 POST. 읽기 action 은 list. GET 은 행을 주지 않습니다. ──
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwv9b613EfnpLSqtV6QnIq4tpuMkaPdLKsaF1UzDzZHjj93vUgVxQEnjNH6Hm5LiJu7/exec';
+async function gsRequest(payload) {
+  const r = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({ password: sessionStorage.getItem(PW_KEY) || '' }, payload || {}))
+  });
+  let j;
+  try { j = await r.json(); }
+  catch (e) { throw new Error('서버 응답을 읽지 못했습니다.'); }
+  if (j.error) {
+    const err = new Error(j.error);
+    err.wrongPassword = j.error === '비밀번호가 올바르지 않습니다.';
+    err.authFailed = err.wrongPassword || String(j.error).indexOf('비밀번호가 아직') !== -1;
+    if (err.authFailed && document.getElementById('lock-overlay').style.display === 'none') {
+      showLock(err.wrongPassword ? '비밀번호가 틀렸어요' : j.error);
+    }
+    throw err;
+  }
+  return j.data;
+}
 async function gsGetAll() {
-  const r = await fetch(SCRIPT_URL); const j = await r.json();
-  if (j.error) throw new Error(j.error);
-  return (j.data || []).map(t => {
+  const data = await gsRequest({ action: 'list' });
+  return (data || []).map(t => {
     const text = v => (v == null || v === '' || v === 'null' || v === 'NaN') ? null : String(v);
     const num = v => (v == null || v === '' || v === 'null' || v === 'NaN' || Number.isNaN(Number(v))) ? null : Number(v);
     return { ...t, buy_date: text(t.buy_date)?.slice(0, 10) || null, sell_date: text(t.sell_date)?.slice(0, 10) || null, buy_price: num(t.buy_price), sell_price: num(t.sell_price), memo: text(t.memo) };
   });
 }
-async function gsWrite(action, id, record) { const r = await fetch(SCRIPT_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify({action,id,record})}); const j = await r.json(); if (j.error) throw new Error(j.error); return j.data; }
+async function gsWrite(action, id, record) {
+  return gsRequest({ action, id, record });
+}
 const TABLE = 'jonggo_trades';
 
 let allTrades = [];
@@ -769,7 +823,7 @@ function switchTab(name, evt) {
   document.querySelector(`#tab-${name}`).classList.add('active');
   if (evt && evt.target) evt.target.classList.add('active');
   else document.querySelector(`.tab[onclick*="switchTab('${name}'"]`)?.classList.add('active');
-  if (name === 'list' || name === 'summary' || name === 'depreciation' || name === 'monthly') loadTrades();
+  if (sessionStillOpen() && (name === 'list' || name === 'summary' || name === 'depreciation' || name === 'monthly')) loadTrades();
 }
 
 // 창을 열 때는 목록을 기본 화면으로 표시
@@ -1018,7 +1072,7 @@ async function loadTrades() {
     renderMonthly(allTrades);
     document.getElementById('conn-status').textContent = '● 연결됨';
   } catch(e) {
-    toast('불러오기 실패: ' + e.message, 'error');
+    if (!e.authFailed) toast('불러오기 실패: ' + e.message, 'error');
     document.getElementById('conn-status').textContent = '❌ 연결 실패';
   }
 }
@@ -1340,8 +1394,6 @@ function exportExcel() {
   const stamp = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
   XLSX.writeFile(wb, `중고_거래_DB_${stamp}.xlsx`);
 }
-
-loadTrades();
 </script>
 </body>
 </html>
