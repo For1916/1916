@@ -5,9 +5,11 @@
  * 시트에 묶인 스크립트이므로 SpreadsheetApp.getActiveSpreadsheet() 를 사용합니다.
  *
  * 입금은 주문 연동의 금액(취소·환불 제외)과, 수입 시트에 직접 적은 금액입니다. 월별 요약 헤더는 입금입니다.
- * 월별 요약의 달은 시트에 YY-MM(26-07)으로 보이고, 누적 수입·누적 지출·누적 순이익·누적 수익률을 더합니다.
+ * 월별 요약의 달은 시트에 YY-MM(26-07)으로 보이고, 누적 수입·누적 지출·누적 순이익을 더합니다.
+ * 이익률(ROI)은 순이익 ÷ 총지출, 누적 회수율은 누적 입금 ÷ 누적 지출입니다.
  * 수입 시트는 날짜·금액·메모만 둡니다. 주문에 이미 있는 입금을 여기에 다시 적으면 두 번 합산됩니다.
- * 지출 분류는 제본, AI, 광고, 박스 네 가지입니다.
+ * 지출 분류는 AI, 광고, 제본, 박스, 기타 다섯 가지입니다.
+ * 이번 달(서울)보다 늦은 월별 요약 칸은 숫자 대신 – 입니다. 비율이 커도 – 로 바꾸지 않습니다.
  * 재고는 같은 스프레드시트의 재고 품목·입출고·현재 재고·주문 출고 탭에서 따로 계산합니다.
  * 이익용 주문 연동에는 교재를 넣지 않고, 재고용 주문 출고만 교재 글자를 가져옵니다.
  * 주문 출고는 주문일·입고일·출고일을 따로 둡니다. 재고 입고는 입고일, 재고 출고는 출고일로만 움직입니다.
@@ -20,7 +22,7 @@
  * 또는 편집기에서 setup 함수를 실행합니다. 다시 실행해도 됩니다.
  */
 
-var APP_VERSION = '4';
+var APP_VERSION = '5';
 var PASSWORD_KEY = 'LEDGER_PASSWORD';
 var STOCK_RULES_KEY = 'STOCK_RULES_INITIALIZED';
 var SOURCE_SPREADSHEET_ID = '1s_QC5gRuU7E07WGZrBtbMS_S80YHexlPPD_qYVDqTpM';
@@ -30,12 +32,16 @@ var MANUAL_LAST_ROW = 5000;
 
 var PERSONAL_HEADER_RE = /주문자|고객명|수취인|받는\s*분|받는분|연락처|전화|휴대폰|핸드폰|휴대전화|주소|우편번호|이메일|유입|모아폼|moaform|답변\s*id|응답\s*id|answer\s*id|submission/i;
 var DOC_MARKER = '[장부 안내]';
-var EXPENSE_CATEGORIES = ['제본', 'AI', '광고', '박스'];
+var EXPENSE_CATEGORIES = ['AI', '광고', '제본', '박스', '기타'];
 var SUMMARY_FLOOR = '2026-06';
-var SUMMARY_HEADERS = ['월', '입금', '제본', 'AI', '광고', '박스', '총지출', '순이익', '이익률', '누적 수입', '누적 지출', '누적 순이익', '누적 수익률'];
+var SUMMARY_DASH = '–';
+var SUMMARY_HEADERS = ['월', '입금', 'AI', '광고', '제본', '박스', '기타', '총지출', '순이익', '이익률(ROI)', '누적 수입', '누적 지출', '누적 순이익', '누적 회수율'];
+var PERCENT_MIN_WIDTH = 140;
 var SUMMARY_METRICS = {
-  '월': 1, '판매': 1, '입금': 1, '주문 수입': 1, '기타 수입': 1, '총수입': 1, '총지출': 1, '순이익': 1, '이익률': 1,
-  '누적 수입': 1, '누적 판매': 1, '누적 입금': 1, '누적 지출': 1, '누적 순이익': 1, '누적 수익률': 1, '누적 이익률': 1
+  '월': 1, '판매': 1, '입금': 1, '주문 수입': 1, '기타 수입': 1, '총수입': 1, '총지출': 1, '순이익': 1,
+  '이익률': 1, '이익률(ROI)': 1, 'ROI': 1,
+  '누적 수입': 1, '누적 판매': 1, '누적 입금': 1, '누적 지출': 1, '누적 순이익': 1,
+  '누적 수익률': 1, '누적 이익률': 1, '누적 회수율': 1, '회수율': 1
 };
 
 var formulaSep_ = ',';
@@ -316,15 +322,15 @@ function summaryRowFromValues_(headers, row, key, isTotal) {
   var profit = numHeader_(headers, row, '순이익');
   if (totalExpense == null) totalExpense = sumObj_(expenses);
   if (profit == null && sales != null && totalExpense != null) profit = sales - totalExpense;
-  var margin = numHeader_(headers, row, '이익률');
-  if (margin != null && Math.abs(margin) > 1.5) margin = margin / 100;
+  var margin = numHeader_(headers, row, '이익률(ROI)');
+  if (margin == null) margin = numHeader_(headers, row, '이익률');
   return {
     month: key,
     label: isTotal ? '합계' : key,
     sales: sales,
     totalExpense: totalExpense,
     profit: profit,
-    margin: margin == null ? marginOf_(profit, sales) : margin,
+    margin: margin,
     expenses: expenses
   };
 }
@@ -397,13 +403,14 @@ function blankMonth_(key) {
 function finishMonth_(row) {
   if (row.totalExpense == null) row.totalExpense = sumObj_(row.expenses);
   row.profit = (row.sales || 0) - row.totalExpense;
-  row.margin = marginOf_(row.profit, row.sales);
+  row.margin = marginOf_(row.profit, row.totalExpense);
 }
 
 function totalFromMonths_(months) {
   var total = blankMonth_('합계');
   total.label = '합계';
-  months.forEach(function(m) {
+  (months || []).forEach(function(m) {
+    if (!m || isFutureMonth_(m.month)) return;
     total.sales += m.sales || 0;
     total.totalExpense += m.totalExpense || 0;
     EXPENSE_CATEGORIES.forEach(function(cat) {
@@ -420,7 +427,7 @@ function totalFromMonths_(months) {
   total.cumSales = total.sales;
   total.cumExpense = total.totalExpense;
   total.cumProfit = total.profit;
-  total.cumMargin = total.margin;
+  total.cumMargin = marginOf_(total.sales, total.totalExpense);
   return total;
 }
 
@@ -428,12 +435,17 @@ function applyCumulative_(months) {
   var sales = 0;
   var expense = 0;
   (months || []).forEach(function(row) {
+    if (isFutureMonth_(row.month)) {
+      blankFutureMonth_(row);
+      return;
+    }
     sales += Number(row.sales) || 0;
     expense += Number(row.totalExpense) || 0;
+    row.margin = marginOf_(row.profit, row.totalExpense);
     row.cumSales = sales;
     row.cumExpense = expense;
     row.cumProfit = sales - expense;
-    row.cumMargin = marginOf_(row.cumProfit, sales);
+    row.cumMargin = marginOf_(sales, expense);
   });
   return months;
 }
@@ -441,13 +453,30 @@ function applyCumulative_(months) {
 function withCumulative_(summary) {
   if (!summary) return summary;
   applyCumulative_(summary.months || []);
-  if (summary.total) {
-    summary.total.cumSales = summary.total.sales;
-    summary.total.cumExpense = summary.total.totalExpense;
-    summary.total.cumProfit = summary.total.profit;
-    summary.total.cumMargin = marginOf_(summary.total.profit, summary.total.sales);
-  }
+  summary.total = totalFromMonths_(summary.months || []);
   return summary;
+}
+
+function isFutureMonth_(key, todayKey) {
+  var today = todayKey || seoulMonthKey_();
+  if (!/^\d{4}-\d{2}$/.test(today)) return false;
+  return /^\d{4}-\d{2}$/.test(String(key || '')) && String(key) > today;
+}
+
+function blankFutureMonth_(row) {
+  if (!row) return row;
+  row.sales = null;
+  row.totalExpense = null;
+  row.profit = null;
+  row.margin = null;
+  row.cumSales = null;
+  row.cumExpense = null;
+  row.cumProfit = null;
+  row.cumMargin = null;
+  var expenses = {};
+  EXPENSE_CATEGORIES.forEach(function(cat) { expenses[cat] = null; });
+  row.expenses = expenses;
+  return row;
 }
 
 function alignSummary_(summary, income, expense, orders) {
@@ -555,12 +584,19 @@ function includeState_(value) {
   return false;
 }
 
+function categoryError_() {
+  return '분류는 ' + EXPENSE_CATEGORIES.join(', ') + ' 중 하나여야 합니다.';
+}
+
 function canonicalCategory_(name) {
   var raw = String(name == null ? '' : name).trim();
   var c = compact_(raw);
   if (!c) return '';
   if (c.toUpperCase() === 'AI') return 'AI';
-  if (c === '제본' || c === '광고' || c === '박스') return c;
+  var i;
+  for (i = 0; i < EXPENSE_CATEGORIES.length; i++) {
+    if (c === EXPENSE_CATEGORIES[i]) return EXPENSE_CATEGORIES[i];
+  }
   if (c.indexOf('제본') !== -1 || c.indexOf('제작') !== -1 || c.indexOf('구매') !== -1) return '제본';
   if (c.indexOf('광고') !== -1) return '광고';
   if (c.indexOf('박스') !== -1 || c.indexOf('포장') !== -1 || c.indexOf('택배') !== -1) return '박스';
@@ -598,7 +634,7 @@ function writeExpense_(sh, map, row, record) {
   var amount = parseAmount_(firstField_(record, ['금액', 'amount']));
   if (amount == null) fail_('금액을 입력하세요.');
   var category = canonicalCategory_(firstField_(record, ['분류', 'category']));
-  if (!category) fail_('분류는 제본, AI, 광고, 박스 중 하나여야 합니다.');
+  if (!category) fail_(categoryError_());
   var pairs = [
     { names: ['날짜'], kind: 'date', value: date, required: true },
     { names: ['분류'], kind: 'text', value: category, required: true },
@@ -623,6 +659,7 @@ function writeIncome_(sh, map, row, record) {
 }
 
 function writeMapped_(sh, row, map, pairs) {
+  var pending = [];
   var i;
   for (i = 0; i < pairs.length; i++) {
     var col = findHeader_(map, pairs[i].names);
@@ -632,18 +669,31 @@ function writeMapped_(sh, row, map, pairs) {
     }
     var header = headerAt_(sh, col);
     if (isPersonalHeader_(header)) continue;
-    var cell = sh.getRange(row, col);
-    if (pairs[i].kind === 'date') {
-      cell.setValue(pairs[i].value);
-      cell.setNumberFormat('yyyy-mm-dd');
-    } else if (pairs[i].kind === 'number') {
-      cell.setValue(pairs[i].value);
-      cell.setNumberFormat('#,##0');
-    } else {
-      if (pairs[i].plain) cell.setNumberFormat('@');
-      cell.setValue(pairs[i].value);
-    }
+    pending.push({ col: col, kind: pairs[i].kind, value: pairs[i].value, plain: pairs[i].plain });
   }
+  if (!pending.length) return;
+  var min = pending[0].col;
+  var max = pending[0].col;
+  pending.forEach(function(item) {
+    if (item.col < min) min = item.col;
+    if (item.col > max) max = item.col;
+  });
+  var width = max - min + 1;
+  var values = sh.getRange(row, min, 1, width).getValues()[0];
+  pending.forEach(function(item) {
+    values[item.col - min] = item.value;
+  });
+  try {
+    sh.getRange(row, min, 1, width).setValues([values]);
+  } catch (err) {
+    fail_('행을 저장하지 못했습니다. 분류 목록과 지출 유효성 검사가 다르면 초기 설정을 다시 실행하세요.');
+  }
+  pending.forEach(function(item) {
+    var cell = sh.getRange(row, item.col);
+    if (item.kind === 'date') cell.setNumberFormat('yyyy-mm-dd');
+    else if (item.kind === 'number') cell.setNumberFormat('#,##0');
+    else if (item.plain) cell.setNumberFormat('@');
+  });
 }
 
 function assertRowMatch_(sh, map, row, match) {
@@ -835,7 +885,7 @@ function sumObj_(obj) {
 // ── 초기 설정 ────────────────────────────────────────
 
 /**
- * 시트를 입금 / 제본 / AI / 광고 / 박스 구조로 맞추고, 비밀번호가 있으면 저장합니다.
+ * 시트를 입금 / AI / 광고 / 제본 / 박스 / 기타 구조로 맞추고, 비밀번호가 있으면 저장합니다.
  * 편집기에서 그냥 실행하면 비밀번호 창은 뜨지 않을 수 있습니다.
  * @param {string=} initialPassword
  * @param {boolean=} alreadyPrompted 메뉴에서 이미 물어봤으면 true
@@ -856,7 +906,7 @@ function setup(initialPassword, alreadyPrompted) {
     fixNotes_(ss, report);
     migrateInventory_(ss, ctx, report);
     fitLedgerColumns_(ss);
-    report.push('장부 구조를 입금과 지출 네 분류로 맞췄습니다. 월별 요약 열 너비를 내용에 맞췄습니다.');
+    report.push('장부 구조를 입금과 지출 다섯 분류(AI, 광고, 제본, 박스, 기타)로 맞췄습니다. 월별 요약 열 너비를 내용에 맞췄습니다.');
   } catch (err) {
     error = err;
     report.push('오류: ' + ((err && err.message) ? err.message : err));
@@ -1088,20 +1138,41 @@ function remapExpenseCategories_(sh, report) {
   }
   if (changed) sh.getRange(2, catCol, height, 1).setValues(cats);
   if (memos && unmapped.length) sh.getRange(2, memoCol, height, 1).setValues(memos);
-  if (changed) report.push('지출 분류 ' + changed + '행을 제본·AI·광고·박스로 옮겼습니다.');
+  if (changed) report.push('지출 분류 ' + changed + '행을 AI·광고·제본·박스·기타로 옮겼습니다.');
   if (unmapped.length) {
-    report.push('네 분류로 옮기지 못한 지출 ' + unmapped.length + '행이 있습니다. 분류를 제본, AI, 광고, 박스 중 하나로 바꿔 주세요. 예: ' + uniqueTexts_(unmapped).join(', '));
+    report.push('다섯 분류로 옮기지 못한 지출 ' + unmapped.length + '행이 있습니다. 분류를 AI, 광고, 제본, 박스, 기타 중 하나로 바꿔 주세요. 예: ' + uniqueTexts_(unmapped).join(', '));
   }
 }
 
 function migrateCategories_(ss, report) {
   var sh = ss.getSheetByName('분류');
   if (!sh) sh = ss.insertSheet('분류');
-  var rows = Math.min(Math.max(sh.getMaxRows(), 4), 30);
+  var rows = Math.min(Math.max(sh.getMaxRows(), EXPENSE_CATEGORIES.length), 30);
   sh.getRange(1, 1, rows, 3).clearContent();
   var values = EXPENSE_CATEGORIES.map(function(name) { return [name]; });
   sh.getRange(1, 1, values.length, 1).setValues(values);
-  report.push('분류 시트를 제본, AI, 광고, 박스로 맞췄습니다.');
+  var listRange = sh.getRange(1, 1, values.length, 1);
+  if (listRange.getRow() !== 1 || listRange.getNumRows() !== EXPENSE_CATEGORIES.length) {
+    fail_('분류 목록 범위가 목록 행과 다릅니다.');
+  }
+  applyExpenseCategoryValidation_(ss, listRange, report);
+  report.push('분류 시트를 ' + EXPENSE_CATEGORIES.join(', ') + ' 순서로 맞췄습니다.');
+}
+
+function applyExpenseCategoryValidation_(ss, listRange, report) {
+  var expense = mustSheet_(ss, '지출');
+  var catCol = findHeader_(headerMap_(expense), ['분류']);
+  if (!catCol) fail_('지출 시트에서 분류 열을 찾지 못했습니다.');
+  var height = Math.max(expense.getMaxRows() - 1, 1);
+  var target = expense.getRange(2, catCol, height, 1);
+  target.clearDataValidations();
+  var rule = SpreadsheetApp.newDataValidation()
+    .requireValueInRange(listRange, true)
+    .setAllowInvalid(false)
+    .build();
+  target.setDataValidation(rule);
+  var notation = "'분류'!$" + indexToCol_(listRange.getColumn()) + '$' + listRange.getRow() + ':$' + indexToCol_(listRange.getColumn()) + '$' + listRange.getLastRow();
+  report.push('지출!' + indexToCol_(catCol) + ' 분류 유효성 검사를 ' + notation + ' 로 맞췄습니다. 목록에 있는 분류만, 그리고 그 전부를 받습니다.');
 }
 
 function migrateOrders_(sh, ctx, report) {
@@ -1152,45 +1223,64 @@ function rebuildSummary_(ss, ctx, report) {
   var formulas = [];
   var i;
   for (i = 0; i < months.length; i++) {
-    var month = parseMonthLabel_(months[i]);
-    var row = i + 2;
-    formulas.push([
-      salesFormula_(letters, month, orderEnd, incomeEnd),
-      categoryFormula_(letters, month, expenseEnd, '제본'),
-      categoryFormula_(letters, month, expenseEnd, 'AI'),
-      categoryFormula_(letters, month, expenseEnd, '광고'),
-      categoryFormula_(letters, month, expenseEnd, '박스'),
-      '=C' + row + '+D' + row + '+E' + row + '+F' + row,
-      '=B' + row + '-G' + row,
-      '=IF(B' + row + '=0,"–",H' + row + '/B' + row + ')',
-      '=SUM($B$2:B' + row + ')',
-      '=SUM($G$2:G' + row + ')',
-      '=J' + row + '-K' + row,
-      '=IF(J' + row + '=0,"–",L' + row + '/J' + row + ')'
-    ]);
+    formulas.push(buildMonthSummaryFormulas_(i + 2, parseMonthLabel_(months[i]), letters, orderEnd, incomeEnd, expenseEnd));
   }
-  sh.getRange(2, 2, formulas.length, 12).setFormulas(localizeGrid_(formulas));
+  sh.getRange(2, 2, formulas.length, formulas[0].length).setFormulas(localizeGrid_(formulas));
   var totalRow = months.length + 2;
   sh.getRange(totalRow, 1).setNumberFormat('@');
   sh.getRange(totalRow, 1).setValue('합계');
+  var totals = buildTotalSummaryFormulas_(totalRow);
+  sh.getRange(totalRow, 2, 1, totals.length).setFormulas(localizeGrid_([totals]));
+  var bodyRows = totalRow - 1;
+  sh.getRange(2, 2, bodyRows, 8).setNumberFormat('#,##0');
+  sh.getRange(2, 10, bodyRows, 1).setNumberFormat('0.0%').setWrap(false);
+  sh.getRange(2, 11, bodyRows, 3).setNumberFormat('#,##0');
+  sh.getRange(2, 14, bodyRows, 1).setNumberFormat('0.0%').setWrap(false);
+  sh.getRange(1, 10).setWrap(false);
+  sh.getRange(1, 14).setWrap(false);
+  try { SpreadsheetApp.flush(); } catch (e) {}
+  fitColumns_(sh);
+  report.push('월별 요약을 ' + formatYyMm_(months[0]) + '부터 ' + formatYyMm_(months[months.length - 1]) + '까지 다시 썼습니다. 이번 달 이후는 – 이고, 이익률(ROI)과 누적 회수율을 넣었습니다. 수입·지출·주문 연동의 데이터는 바꾸지 않았습니다.');
+}
+
+function futureCellFormula_(row, inner) {
+  var body = inner.charAt(0) === '=' ? inner.slice(1) : inner;
+  return '=IF(A' + row + '>DATE(YEAR(TODAY()),MONTH(TODAY()),1),"' + SUMMARY_DASH + '",' + body + ')';
+}
+
+function buildMonthSummaryFormulas_(row, month, letters, orderEnd, incomeEnd, expenseEnd) {
+  var expenseFormulas = EXPENSE_CATEGORIES.map(function(cat) {
+    return futureCellFormula_(row, categoryFormula_(letters, month, expenseEnd, cat));
+  });
+  var parts = [];
+  var c;
+  for (c = 0; c < EXPENSE_CATEGORIES.length; c++) parts.push(indexToCol_(3 + c) + row);
+  return [
+    futureCellFormula_(row, salesFormula_(letters, month, orderEnd, incomeEnd))
+  ].concat(expenseFormulas).concat([
+    futureCellFormula_(row, '=' + parts.join('+')),
+    futureCellFormula_(row, '=B' + row + '-H' + row),
+    futureCellFormula_(row, '=IF(H' + row + '=0,"' + SUMMARY_DASH + '",I' + row + '/H' + row + ')'),
+    futureCellFormula_(row, '=SUM($B$2:B' + row + ')'),
+    futureCellFormula_(row, '=SUM($H$2:H' + row + ')'),
+    futureCellFormula_(row, '=K' + row + '-L' + row),
+    futureCellFormula_(row, '=IF(L' + row + '=0,"' + SUMMARY_DASH + '",K' + row + '/L' + row + ')')
+  ]);
+}
+
+function buildTotalSummaryFormulas_(totalRow) {
   var totals = [];
   var c;
-  for (c = 2; c <= 8; c++) {
+  for (c = 2; c <= 9; c++) {
     var letter = indexToCol_(c);
     totals.push('=SUM(' + letter + '2:' + letter + (totalRow - 1) + ')');
   }
-  totals.push('=IF(B' + totalRow + '=0,"–",H' + totalRow + '/B' + totalRow + ')');
+  totals.push('=IF(H' + totalRow + '=0,"' + SUMMARY_DASH + '",I' + totalRow + '/H' + totalRow + ')');
   totals.push('=B' + totalRow);
-  totals.push('=G' + totalRow);
   totals.push('=H' + totalRow);
-  totals.push('=IF(B' + totalRow + '=0,"–",H' + totalRow + '/B' + totalRow + ')');
-  sh.getRange(totalRow, 2, 1, 12).setFormulas(localizeGrid_([totals]));
-  sh.getRange(2, 2, totalRow - 1, 7).setNumberFormat('#,##0');
-  sh.getRange(2, 9, totalRow - 1, 1).setNumberFormat('0.0%');
-  sh.getRange(2, 10, totalRow - 1, 3).setNumberFormat('#,##0');
-  sh.getRange(2, 13, totalRow - 1, 1).setNumberFormat('0.0%');
-  fitColumns_(sh);
-  report.push('월별 요약을 ' + formatYyMm_(months[0]) + '부터 ' + formatYyMm_(months[months.length - 1]) + '까지 다시 썼습니다. 입금, 누적 열, YY-MM 표시를 넣었고 수입·지출·주문 연동의 데이터는 바꾸지 않았습니다.');
+  totals.push('=I' + totalRow);
+  totals.push('=IF(H' + totalRow + '=0,"' + SUMMARY_DASH + '",B' + totalRow + '/H' + totalRow + ')');
+  return totals;
 }
 
 function collectSummaryDates_(ss) {
@@ -1301,9 +1391,12 @@ function columnGuide_() {
     '가져오는 값은 제출일시, 상태, 금액뿐입니다.',
     '수입 시트는 날짜, 금액, 메모입니다. 주문 연동에 없는 입금만 적습니다.',
     '같은 입금을 주문 연동과 수입 시트에 모두 적으면 두 번 합산됩니다.',
-    '지출 분류는 제본, AI, 광고, 박스입니다.',
-    '이익률은 순이익을 입금으로 나눈 값입니다. 입금이 0이면 – 입니다.',
-    '누적 수입·누적 지출·누적 순이익·누적 수익률은 첫 달부터 그 달까지의 합입니다.',
+    '지출 분류는 AI, 광고, 제본, 박스, 기타입니다.',
+    '이번 달보다 늦은 달은 숫자 대신 – 입니다.',
+    '이익률(ROI)은 순이익을 총지출로 나눈 값입니다. 총지출이 0이거나 아직 오지 않은 달이면 – 입니다.',
+    '누적 수입·누적 지출·누적 순이익은 첫 달부터 그 달까지의 합입니다.',
+    '누적 회수율은 누적 입금을 누적 지출로 나눈 값입니다. 누적 지출이 0이거나 아직 오지 않은 달이면 – 입니다.',
+    '합계의 이익률(ROI)은 전체 순이익 ÷ 전체 총지출이고, 합계의 누적 회수율은 전체 입금 ÷ 전체 총지출입니다.',
     '재고는 재고 품목, 입출고, 현재 재고 시트에서 이익과 따로 계산합니다.',
     '재고 입고는 입고일, 재고 출고는 출고일로만 움직입니다. 주문일을 출고일로 쓰지 않습니다.'
   ].join('\n');
@@ -1649,6 +1742,24 @@ function fitColumns_(sh) {
   if (!sh) return;
   var cols = Math.max(1, Math.min(sh.getLastColumn(), 30));
   try { sh.autoResizeColumns(1, cols); } catch (err) {}
+  if (sh.getName && sh.getName() === '월별 요약') ensurePercentColumnWidths_(sh);
+}
+
+function ensurePercentColumnWidths_(sh) {
+  var map = headerMap_(sh);
+  var names = ['이익률(ROI)', '누적 회수율'];
+  var seen = {};
+  var i;
+  for (i = 0; i < names.length; i++) {
+    var col = findHeader_(map, [names[i]]);
+    if (!col || seen[col]) continue;
+    seen[col] = true;
+    var width = 0;
+    try { width = sh.getColumnWidth(col); } catch (e) {}
+    if (width < PERCENT_MIN_WIDTH) sh.setColumnWidth(col, PERCENT_MIN_WIDTH);
+    var rows = Math.min(Math.max(sh.getLastRow(), 2), sh.getMaxRows());
+    sh.getRange(1, col, rows, 1).setWrap(false);
+  }
 }
 
 function fitLedgerColumns_(ss) {

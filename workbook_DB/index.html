@@ -187,7 +187,7 @@
     min-height: 44px;
   }
   .filter-bar input { flex: 1; min-width: 160px; }
-  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+  .table-wrap { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
   table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 13px; table-layout: auto; }
   table input[type="date"] {
     font: inherit;
@@ -215,6 +215,7 @@
   tbody td { padding: 10px 12px; vertical-align: middle; white-space: nowrap; }
   tbody tr.clickable { cursor: pointer; }
   .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  th.pct, td.pct { white-space: nowrap; min-width: 8.5em; }
   .pos { color: var(--green); font-weight: 700; }
   .neg { color: var(--red); font-weight: 700; }
   .money-in { color: var(--red); font-weight: 700; }
@@ -235,7 +236,7 @@
     border-top: 3px solid var(--accent);
   }
   .stat-card .label { font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: 0.4px; margin-bottom: 6px; }
-  .stat-card .value { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .stat-card .value { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; white-space: nowrap; }
   .stat-card .sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
   .month-row { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
   .month-row select { min-width: 180px; }
@@ -402,23 +403,24 @@
           <tr>
             <th>월</th>
             <th class="num">입금</th>
-            <th class="num">제본</th>
             <th class="num">AI</th>
             <th class="num">광고</th>
+            <th class="num">제본</th>
             <th class="num">박스</th>
+            <th class="num">기타</th>
             <th class="num">총지출</th>
             <th class="num">순이익</th>
-            <th class="num">이익률</th>
+            <th class="num pct">이익률(ROI)</th>
             <th class="num">누적 수입</th>
             <th class="num">누적 지출</th>
             <th class="num">누적 순이익</th>
-            <th class="num">누적 수익률</th>
+            <th class="num pct">누적 회수율</th>
           </tr>
         </thead>
         <tbody id="month-body"></tbody>
       </table>
     </div>
-    <p class="footer-note">이익률은 순이익 ÷ 입금입니다. 입금이 0이면 – 로 표시합니다. 누적 열은 첫 달부터 그 달까지의 합이고, 누적 수익률은 누적 순이익 ÷ 누적 수입입니다. 입금은 취소·환불이 아닌 주문 금액(주문일 기준)입니다. 주문에 없는 입금만 수입 시트에 날짜·금액·메모로 적으며, 같은 금액을 양쪽에 적으면 두 번 합산됩니다.</p>
+    <p class="footer-note">이익률(ROI)은 순이익 ÷ 총지출입니다. 총지출이 0이면 – 입니다. 누적 수입·누적 지출·누적 순이익은 첫 달부터 그 달까지의 합입니다. 누적 회수율은 누적 입금 ÷ 누적 지출이고, 누적 지출이 0이면 – 입니다. 합계의 이익률(ROI)은 전체 순이익 ÷ 전체 총지출, 합계의 누적 회수율은 전체 입금 ÷ 전체 총지출입니다. 이번 달(서울)보다 늦은 달은 숫자 대신 – 입니다. 입금은 취소·환불이 아닌 주문 금액(주문일 기준)입니다. 주문에 없는 입금만 수입 시트에 날짜·금액·메모로 적으며, 같은 금액을 양쪽에 적으면 두 번 합산됩니다.</p>
   </section>
 
   <section id="tab-add" class="panel">
@@ -596,7 +598,8 @@
 // 웹 앱 URL입니다. 비밀번호는 이 파일에 적지 않습니다. 스크립트 속성에만 있습니다.
 var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyShKol-v2lx0OTwMFHcZ-QQMqMbRpWXT_4yi0jvvCWjcJtG3EB1uQvJDBd3Rty0g/exec';
 var SS_KEY = 'hwangso-workbook-ledger-password';
-var DEFAULT_CATEGORIES = ['제본', 'AI', '광고', '박스'];
+var DEFAULT_CATEGORIES = ['AI', '광고', '제본', '박스', '기타'];
+var SUMMARY_DASH = '–';
 var state = { meta: { expenseCategories: DEFAULT_CATEGORIES.slice() }, summary: null, income: [], expense: [], orders: [], selected: '합계', editing: null, showAll: false, stock: null, stockLoaded: false };
 
 function scriptUrl() { return String(SCRIPT_URL || '').trim(); }
@@ -623,9 +626,9 @@ function fmt(n) {
   return Math.round(Number(n)).toLocaleString('ko-KR') + '원';
 }
 function fmtRate(ratio, base) {
-  var sales = Number(base);
-  if (base == null || !isFinite(sales) || sales === 0) return '–';
-  if (ratio == null || !isFinite(Number(ratio))) return '–';
+  var denom = Number(base);
+  if (base == null || !isFinite(denom) || denom === 0) return SUMMARY_DASH;
+  if (ratio == null || !isFinite(Number(ratio))) return SUMMARY_DASH;
   return (Number(ratio) * 100).toFixed(1) + '%';
 }
 function profitClass(n) {
@@ -644,24 +647,75 @@ function yyMmLabel(key) {
   if (!m) return key || '-';
   return m[1].slice(2) + '-' + m[2];
 }
+function isFutureMonth(key) {
+  return /^\d{4}-\d{2}$/.test(String(key || '')) && String(key) > currentMonthKey();
+}
+function clearFutureSummaryRow(row) {
+  row.sales = null;
+  row.totalExpense = null;
+  row.profit = null;
+  row.margin = null;
+  row.cumSales = null;
+  row.cumExpense = null;
+  row.cumProfit = null;
+  row.cumMargin = null;
+  var expenses = {};
+  DEFAULT_CATEGORIES.forEach(function(cat) { expenses[cat] = null; });
+  row.expenses = expenses;
+}
+function rateOf(numer, denom) {
+  var top = Number(numer);
+  var bottom = Number(denom);
+  if (denom == null || !isFinite(bottom) || bottom === 0) return null;
+  if (numer == null || !isFinite(top)) return null;
+  return top / bottom;
+}
 function decorateSummary(summary) {
   if (!summary) return summary;
   var sales = 0;
   var expense = 0;
+  var past = [];
   (summary.months || []).forEach(function(row) {
-    sales += Number(row.sales) || 0;
-    expense += Number(row.totalExpense) || 0;
+    if (isFutureMonth(row.month)) {
+      clearFutureSummaryRow(row);
+      return;
+    }
+    past.push(row);
+    var monthExpense = Number(row.totalExpense) || 0;
+    var monthSales = Number(row.sales) || 0;
+    var monthProfit = row.profit == null ? monthSales - monthExpense : Number(row.profit);
+    row.profit = monthProfit;
+    row.margin = rateOf(monthProfit, row.totalExpense);
+    sales += monthSales;
+    expense += monthExpense;
     row.cumSales = sales;
     row.cumExpense = expense;
     row.cumProfit = sales - expense;
-    row.cumMargin = sales ? (sales - expense) / sales : null;
+    row.cumMargin = rateOf(sales, expense);
   });
   if (summary.total) {
     var total = summary.total;
-    total.cumSales = total.sales;
-    total.cumExpense = total.totalExpense;
+    var salesT = 0;
+    var expT = 0;
+    var expenses = {};
+    DEFAULT_CATEGORIES.forEach(function(cat) { expenses[cat] = 0; });
+    past.forEach(function(row) {
+      salesT += Number(row.sales) || 0;
+      expT += Number(row.totalExpense) || 0;
+      DEFAULT_CATEGORIES.forEach(function(cat) {
+        expenses[cat] += Number(row.expenses && row.expenses[cat]) || 0;
+      });
+    });
+    total.sales = salesT;
+    total.totalExpense = expT;
+    total.profit = salesT - expT;
+    total.margin = rateOf(total.profit, expT);
+    total.expenses = expenses;
+    total.cumSales = salesT;
+    total.cumExpense = expT;
     total.cumProfit = total.profit;
-    total.cumMargin = total.sales ? total.profit / total.sales : null;
+    total.cumMargin = rateOf(salesT, expT);
+    total.month = '합계';
   }
   return summary;
 }
@@ -710,7 +764,10 @@ function canonicalCategoryClient(name) {
   var c = raw.replace(/\s+/g, '');
   if (!c) return '';
   if (c.toUpperCase() === 'AI') return 'AI';
-  if (c === '제본' || c === '광고' || c === '박스') return c;
+  var i;
+  for (i = 0; i < DEFAULT_CATEGORIES.length; i++) {
+    if (c === DEFAULT_CATEGORIES[i]) return DEFAULT_CATEGORIES[i];
+  }
   if (c.indexOf('제본') !== -1 || c.indexOf('제작') !== -1 || c.indexOf('구매') !== -1) return '제본';
   if (c.indexOf('광고') !== -1) return '광고';
   if (c.indexOf('박스') !== -1 || c.indexOf('포장') !== -1 || c.indexOf('택배') !== -1) return '박스';
@@ -724,7 +781,7 @@ function blankClientMonth(key) {
 }
 function finishClientMonth(row) {
   row.profit = (row.sales || 0) - (row.totalExpense || 0);
-  row.margin = row.sales ? row.profit / row.sales : null;
+  row.margin = row.totalExpense ? row.profit / row.totalExpense : null;
 }
 function computedClientMonth(key, income, expense, orders) {
   var row = blankClientMonth(key);
@@ -885,7 +942,7 @@ function renderSummary() {
   if (total) {
     html += '<tr class="clickable' + (state.selected === '합계' ? ' selected' : '') + '" data-month="합계"><td><strong>합계</strong></td>' + amountCells(total) + '</tr>';
   }
-  body.innerHTML = html || '<tr><td colspan="13">요약이 없습니다</td></tr>';
+  body.innerHTML = html || '<tr><td colspan="14">요약이 없습니다</td></tr>';
   var note = $('summary-source');
   if (state.summary && state.summary.source === 'computed') {
     note.style.display = 'block';
@@ -904,46 +961,60 @@ function monthCells(label, row) {
   return '<td>' + escapeHtml(yyMmLabel(label)) + '</td>' + amountCells(row);
 }
 function expenseOf(row, name) {
+  if (row && isFutureMonth(row.month)) return null;
   var expenses = (row && row.expenses) || {};
-  return expenses[name] || 0;
+  var value = expenses[name];
+  return value == null ? 0 : value;
+}
+function summaryDashCells() {
+  var count = 1 + DEFAULT_CATEGORIES.length + 7;
+  var html = '';
+  var i;
+  for (i = 0; i < count; i++) html += '<td class="num">' + SUMMARY_DASH + '</td>';
+  return html;
 }
 function amountCells(row) {
+  if (row && isFutureMonth(row.month)) return summaryDashCells();
   return '<td class="num money-in">' + fmt(row.sales) + '</td>' +
     DEFAULT_CATEGORIES.map(function(name) { return '<td class="num">' + fmt(expenseOf(row, name)) + '</td>'; }).join('') +
     '<td class="num">' + fmt(row.totalExpense) + '</td>' +
     '<td class="num ' + profitClass(row.profit) + '">' + fmt(row.profit) + '</td>' +
-    '<td class="num ' + profitClass(row.profit) + '">' + fmtRate(row.margin, row.sales) + '</td>' +
+    '<td class="num pct ' + profitClass(row.profit) + '">' + fmtRate(row.margin, row.totalExpense) + '</td>' +
     '<td class="num money-in">' + fmt(row.cumSales) + '</td>' +
     '<td class="num">' + fmt(row.cumExpense) + '</td>' +
     '<td class="num ' + profitClass(row.cumProfit) + '">' + fmt(row.cumProfit) + '</td>' +
-    '<td class="num ' + profitClass(row.cumProfit) + '">' + fmtRate(row.cumMargin, row.cumSales) + '</td>';
+    '<td class="num pct ' + profitClass(row.cumProfit) + '">' + fmtRate(row.cumMargin, row.cumExpense) + '</td>';
 }
 
 function renderSelected() {
   var row = selectedRow();
   var stats = $('stats');
   if (!row) { stats.innerHTML = ''; $('bars').innerHTML = ''; $('compare').innerHTML = ''; return; }
+  var future = isFutureMonth(row.month);
   var cards = [
-    ['입금', fmt(row.sales), 'money-in'],
-    ['총지출', fmt(row.totalExpense), ''],
-    ['순이익', fmt(row.profit), profitClass(row.profit)],
-    ['이익률', fmtRate(row.margin, row.sales), profitClass(row.profit)]
+    ['입금', future ? SUMMARY_DASH : fmt(row.sales), future ? '' : 'money-in'],
+    ['총지출', future ? SUMMARY_DASH : fmt(row.totalExpense), ''],
+    ['순이익', future ? SUMMARY_DASH : fmt(row.profit), future ? '' : profitClass(row.profit)],
+    ['이익률(ROI)', future ? SUMMARY_DASH : fmtRate(row.margin, row.totalExpense), future ? '' : profitClass(row.profit)]
   ];
   stats.innerHTML = cards.map(function(c) {
     return '<div class="stat-card"><div class="label">' + c[0] + '</div><div class="value ' + c[2] + '">' + c[1] + '</div><div class="sub">' + escapeHtml(monthLabel(state.selected)) + '</div></div>';
   }).join('');
-  var sales = Math.abs(row.sales || 0);
-  var expense = Math.abs(row.totalExpense || 0);
+  var sales = future ? 0 : Math.abs(row.sales || 0);
+  var expense = future ? 0 : Math.abs(row.totalExpense || 0);
   var max = Math.max(sales, expense, 1);
   $('compare').innerHTML =
-    '<div><div class="label">입금</div><strong class="money-in">' + fmt(row.sales) + '</strong><div class="track"><div class="fill-in" style="width:' + (sales / max * 100) + '%"></div></div></div>' +
-    '<div><div class="label">총지출</div><strong>' + fmt(row.totalExpense) + '</strong><div class="track"><div class="fill-out" style="width:' + (expense / max * 100) + '%"></div></div></div>';
+    '<div><div class="label">입금</div><strong class="money-in">' + (future ? SUMMARY_DASH : fmt(row.sales)) + '</strong><div class="track"><div class="fill-in" style="width:' + (sales / max * 100) + '%"></div></div></div>' +
+    '<div><div class="label">총지출</div><strong>' + (future ? SUMMARY_DASH : fmt(row.totalExpense)) + '</strong><div class="track"><div class="fill-out" style="width:' + (expense / max * 100) + '%"></div></div></div>';
   var expenses = {};
-  categories().forEach(function(name) { expenses[name] = expenseOf(row, name); });
-  Object.keys(row.expenses || {}).forEach(function(name) {
-    if (DEFAULT_CATEGORIES.indexOf(name) === -1) expenses[name] = row.expenses[name] || 0;
-  });
+  categories().forEach(function(name) { expenses[name] = future ? null : expenseOf(row, name); });
   var names = Object.keys(expenses);
+  if (future) {
+    $('bars').innerHTML = names.map(function(name) {
+      return '<div class="bar-row"><div class="bar-name">' + escapeHtml(name) + '</div><div class="bar-track"><div class="bar-fill" style="width:0"></div></div><div class="bar-val">' + SUMMARY_DASH + '</div></div>';
+    }).join('');
+    return;
+  }
   var top = names.reduce(function(m, name) { return Math.max(m, Math.abs(expenses[name] || 0)); }, 0);
   if (!names.length || top === 0) {
     $('bars').innerHTML = '<div class="empty" style="padding:12px 0">이 기간의 지출이 없습니다</div>';
