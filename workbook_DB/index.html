@@ -20,6 +20,8 @@
     --green-soft: #E1F7EA;
     --red: #E14747;
     --red-soft: #FCE6E6;
+    --blue: #1D4ED8;
+    --blue-soft: #E4ECFB;
     --amber: #DB9A17;
     --amber-soft: #FCF1DA;
     --text: #12213D;
@@ -87,7 +89,7 @@
     background: var(--surface);
     margin-bottom: -1px;
   }
-  .content { padding: 24px 32px calc(32px + env(safe-area-inset-bottom)); flex: 1; max-width: 1100px; margin: 0 auto; width: 100%; }
+  .content { padding: 24px 32px calc(32px + env(safe-area-inset-bottom)); flex: 1; max-width: 1440px; margin: 0 auto; width: 100%; }
   .panel { display: none; }
   .panel.active { display: block; }
   .lead { font-size: 13px; color: var(--text2); margin-bottom: 16px; }
@@ -186,7 +188,17 @@
   }
   .filter-bar input { flex: 1; min-width: 160px; }
   .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 13px; table-layout: auto; }
+  table input[type="date"] {
+    font: inherit;
+    font-size: 13px;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface2);
+    color: var(--text);
+    min-height: 36px;
+  }
   thead th {
     text-align: left;
     padding: 10px 12px;
@@ -200,11 +212,14 @@
   }
   tbody tr { border-bottom: 1px solid var(--border); }
   tbody tr:hover, tbody tr.selected { background: var(--surface2); }
-  tbody td { padding: 10px 12px; vertical-align: middle; }
+  tbody td { padding: 10px 12px; vertical-align: middle; white-space: nowrap; }
   tbody tr.clickable { cursor: pointer; }
   .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .pos { color: var(--green); font-weight: 700; }
   .neg { color: var(--red); font-weight: 700; }
+  .money-in { color: var(--red); font-weight: 700; }
+  .profit-pos { color: var(--red); font-weight: 700; }
+  .profit-neg { color: var(--blue); font-weight: 700; }
   .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap; }
   .badge-income { background: var(--green-soft); color: var(--green); }
   .badge-expense { background: var(--red-soft); color: var(--red); }
@@ -232,8 +247,8 @@
   .bar-val { font-size: 12px; font-weight: 700; color: var(--text2); white-space: nowrap; }
   .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
   .compare .track { height: 14px; background: var(--surface2); border-radius: 99px; overflow: hidden; margin-top: 6px; }
-  .compare .fill-in { height: 100%; background: var(--green); }
-  .compare .fill-out { height: 100%; background: var(--red); }
+  .compare .fill-in { height: 100%; background: var(--red); }
+  .compare .fill-out { height: 100%; background: var(--blue); }
   .cards { display: none; flex-direction: column; gap: 10px; }
   .trade-card {
     background: var(--surface);
@@ -366,7 +381,7 @@
 </div>
 <div class="content">
   <section id="tab-summary" class="panel active">
-    <p class="lead">판매와 지출만으로 그 달의 이익을 봅니다. 주문자 정보는 이 장부에 없습니다.</p>
+    <p class="lead">입금과 지출만으로 그 달의 이익을 봅니다. 달은 주문일 기준이고, 주문자 정보는 이 장부에 없습니다.</p>
     <div id="summary-source" class="source-note" style="display:none"></div>
     <div class="month-row">
       <div class="field" style="min-width:200px">
@@ -376,7 +391,7 @@
     </div>
     <div class="stats" id="stats"></div>
     <div class="form-card">
-      <h2>판매와 지출</h2>
+      <h2>입금과 지출</h2>
       <div class="compare" id="compare"></div>
       <h2>지출 분류</h2>
       <div class="bars" id="bars"></div>
@@ -386,7 +401,7 @@
         <thead>
           <tr>
             <th>월</th>
-            <th class="num">판매</th>
+            <th class="num">입금</th>
             <th class="num">제본</th>
             <th class="num">AI</th>
             <th class="num">광고</th>
@@ -394,12 +409,16 @@
             <th class="num">총지출</th>
             <th class="num">순이익</th>
             <th class="num">이익률</th>
+            <th class="num">누적 수입</th>
+            <th class="num">누적 지출</th>
+            <th class="num">누적 순이익</th>
+            <th class="num">누적 수익률</th>
           </tr>
         </thead>
         <tbody id="month-body"></tbody>
       </table>
     </div>
-    <p class="footer-note">이익률은 순이익 ÷ 판매입니다. 판매는 취소·환불이 아닌 주문 금액입니다. 주문에 없는 판매만 수입 시트에 날짜·금액·메모로 적으며, 같은 금액을 양쪽에 적으면 두 번 합산됩니다.</p>
+    <p class="footer-note">이익률은 순이익 ÷ 입금입니다. 입금이 0이면 – 로 표시합니다. 누적 열은 첫 달부터 그 달까지의 합이고, 누적 수익률은 누적 순이익 ÷ 누적 수입입니다. 입금은 취소·환불이 아닌 주문 금액(주문일 기준)입니다. 주문에 없는 입금만 수입 시트에 날짜·금액·메모로 적으며, 같은 금액을 양쪽에 적으면 두 번 합산됩니다.</p>
   </section>
 
   <section id="tab-add" class="panel">
@@ -435,8 +454,8 @@
     <div class="cards" id="list-cards"></div>
     <div id="list-empty" class="empty" style="display:none"><p>표시할 지출이 없어요</p></div>
     <p class="footer-note" id="list-more"></p>
-    <h2 class="section-label">판매</h2>
-    <p class="lead">주문 금액입니다. 취소·환불은 이익에 넣지 않고, 주문 행은 수정하지 않습니다. 수입 시트에 직접 적은 판매만 여기서 고치거나 지울 수 있습니다.</p>
+    <h2 class="section-label">입금</h2>
+    <p class="lead">주문 금액입니다. 취소·환불은 이익에 넣지 않고, 주문 행은 수정하지 않습니다. 수입 시트에 직접 적은 입금만 여기서 고치거나 지울 수 있습니다.</p>
     <div class="table-wrap desk-only">
       <table>
         <thead>
@@ -448,11 +467,11 @@
       </table>
     </div>
     <div class="cards" id="sales-cards"></div>
-    <div id="sales-empty" class="empty" style="display:none"><p>표시할 판매가 없어요</p></div>
+    <div id="sales-empty" class="empty" style="display:none"><p>표시할 입금이 없어요</p></div>
   </section>
 
   <section id="tab-stock" class="panel">
-    <p class="lead">교재와 포장 박스 재고입니다. 판매 이익과 따로 계산하고, 주문에서 교재와 박스를 뺍니다.</p>
+    <p class="lead">교재와 포장 박스 재고입니다. 월별 입금은 주문일을 쓰고, 재고는 입고일과 출고일로만 움직입니다. 출고일이 비어 있으면 아직 보내지 않은 주문이라 재고를 빼지 않습니다.</p>
     <div id="stock-alert" class="stock-alert" style="display:none"></div>
     <div class="filter-bar">
       <button class="btn btn-ghost btn-sm" type="button" id="btn-stock-reload">재고 새로고침</button>
@@ -473,7 +492,7 @@
     <form id="inbound-form" class="form-card">
       <h2>입고</h2>
       <div class="form-grid">
-        <div class="field"><label for="in-date">날짜</label><input id="in-date" type="date" required></div>
+        <div class="field"><label for="in-date">입고일</label><input id="in-date" type="date" required></div>
         <div class="field"><label for="in-item">품목</label><select id="in-item" required></select></div>
         <div class="field"><label for="in-qty">수량</label><input id="in-qty" type="text" inputmode="decimal" required placeholder="10"></div>
         <div class="field"><label for="in-unit">단위</label><select id="in-unit"><option value="개">개</option><option value="팩">팩</option></select></div>
@@ -487,7 +506,7 @@
       <h2>출고 · 조정</h2>
       <div class="form-grid">
         <div class="field"><label for="adj-kind">구분</label><select id="adj-kind"><option value="출고">출고</option><option value="조정">조정</option></select></div>
-        <div class="field"><label for="adj-date">날짜</label><input id="adj-date" type="date" required></div>
+        <div class="field"><label for="adj-date" id="adj-date-label">출고일</label><input id="adj-date" type="date" required></div>
         <div class="field"><label for="adj-item">품목</label><select id="adj-item" required></select></div>
         <div class="field"><label for="adj-qty">수량</label><input id="adj-qty" type="text" inputmode="decimal" required placeholder="1"></div>
         <div class="field"><label for="adj-unit">단위</label><select id="adj-unit"><option value="개">개</option><option value="팩">팩</option></select></div>
@@ -507,11 +526,22 @@
     <div class="cards" id="move-cards"></div>
     <div id="move-empty" class="empty" style="display:none"><p>직접 입력한 입출고가 없어요</p></div>
 
-    <h2 class="section-label">주문에서 뺀 수량</h2>
-    <p class="lead">취소·환불이 아닌 주문의 교재 권수와, 그 권수에 맞는 박스 규칙입니다.</p>
+    <h2 class="section-label">주문 날짜</h2>
+    <p class="lead">주문일·입고일·출고일을 따로 적습니다. 입고일이 있으면 그 날짜에 교재를 더하고, 출고일이 있으면 그 날짜에 교재와 박스를 뺍니다. 출고일을 비우면 미발송입니다. 최근 60건만 보이고, 더 이전 주문은 시트 <strong>주문 출고</strong>에서 적습니다.</p>
+    <p class="footer-note" id="order-date-more"></p>
     <div class="table-wrap desk-only">
       <table>
-        <thead><tr><th>날짜</th><th>품목</th><th class="num">수량</th><th>메모</th></tr></thead>
+        <thead><tr><th>주문일</th><th>교재</th><th>입고일</th><th>출고일</th><th></th></tr></thead>
+        <tbody id="order-date-body"></tbody>
+      </table>
+    </div>
+    <div class="cards" id="order-date-cards"></div>
+
+    <h2 class="section-label">주문에서 뺀 수량</h2>
+    <p class="lead">출고일이 적힌 주문만 재고에서 뺍니다. 취소·환불은 넣지 않습니다.</p>
+    <div class="table-wrap desk-only">
+      <table>
+        <thead><tr><th>주문일</th><th>이동</th><th>품목</th><th class="num">수량</th><th>메모</th></tr></thead>
         <tbody id="ship-body"></tbody>
       </table>
     </div>
@@ -592,16 +622,48 @@ function fmt(n) {
   if (n == null || Number.isNaN(Number(n))) return '-';
   return Math.round(Number(n)).toLocaleString('ko-KR') + '원';
 }
-function fmtPct(ratio) {
-  if (ratio == null || Number.isNaN(Number(ratio))) return '—';
-  return (ratio * 100).toFixed(1) + '%';
+function fmtRate(ratio, base) {
+  var sales = Number(base);
+  if (base == null || !isFinite(sales) || sales === 0) return '–';
+  if (ratio == null || !isFinite(Number(ratio))) return '–';
+  return (Number(ratio) * 100).toFixed(1) + '%';
 }
-function moneyClass(n) { return n == null ? '' : (n > 0 ? 'pos' : (n < 0 ? 'neg' : '')); }
+function profitClass(n) {
+  if (n == null || !isFinite(Number(n)) || Number(n) === 0) return '';
+  return Number(n) > 0 ? 'profit-pos' : 'profit-neg';
+}
 function monthLabel(key) {
   if (key === '합계') return '전체 기간';
   var m = String(key || '').match(/^(\d{4})-(\d{2})$/);
   if (!m) return key || '-';
   return m[1] + '년 ' + Number(m[2]) + '월';
+}
+function yyMmLabel(key) {
+  if (key === '합계') return '합계';
+  var m = String(key || '').match(/^(\d{4})-(\d{2})$/);
+  if (!m) return key || '-';
+  return m[1].slice(2) + '-' + m[2];
+}
+function decorateSummary(summary) {
+  if (!summary) return summary;
+  var sales = 0;
+  var expense = 0;
+  (summary.months || []).forEach(function(row) {
+    sales += Number(row.sales) || 0;
+    expense += Number(row.totalExpense) || 0;
+    row.cumSales = sales;
+    row.cumExpense = expense;
+    row.cumProfit = sales - expense;
+    row.cumMargin = sales ? (sales - expense) / sales : null;
+  });
+  if (summary.total) {
+    var total = summary.total;
+    total.cumSales = total.sales;
+    total.cumExpense = total.totalExpense;
+    total.cumProfit = total.profit;
+    total.cumMargin = total.sales ? total.profit / total.sales : null;
+  }
+  return summary;
 }
 function addMonthsKey(key, delta) {
   var y = Number(String(key).slice(0, 4));
@@ -792,6 +854,7 @@ function selectedRow() {
 function currentMonthKey() { return todayISO().slice(0, 7); }
 
 function renderSummary() {
+  decorateSummary(state.summary);
   var rows = summaryRows();
   var total = state.summary && state.summary.total;
   var select = $('month-select');
@@ -817,12 +880,12 @@ function renderSummary() {
   var body = $('month-body');
   var html = rows.map(function(r) {
     return '<tr class="clickable' + (r.month === state.selected ? ' selected' : '') + '" data-month="' + escapeHtml(r.month) + '">' +
-      monthCells(monthLabel(r.month), r) + '</tr>';
+      monthCells(r.month, r) + '</tr>';
   }).join('');
   if (total) {
     html += '<tr class="clickable' + (state.selected === '합계' ? ' selected' : '') + '" data-month="합계"><td><strong>합계</strong></td>' + amountCells(total) + '</tr>';
   }
-  body.innerHTML = html || '<tr><td colspan="9">요약이 없습니다</td></tr>';
+  body.innerHTML = html || '<tr><td colspan="13">요약이 없습니다</td></tr>';
   var note = $('summary-source');
   if (state.summary && state.summary.source === 'computed') {
     note.style.display = 'block';
@@ -838,18 +901,22 @@ function renderSummary() {
 }
 
 function monthCells(label, row) {
-  return '<td>' + escapeHtml(label) + '</td>' + amountCells(row);
+  return '<td>' + escapeHtml(yyMmLabel(label)) + '</td>' + amountCells(row);
 }
 function expenseOf(row, name) {
   var expenses = (row && row.expenses) || {};
   return expenses[name] || 0;
 }
 function amountCells(row) {
-  return '<td class="num">' + fmt(row.sales) + '</td>' +
+  return '<td class="num money-in">' + fmt(row.sales) + '</td>' +
     DEFAULT_CATEGORIES.map(function(name) { return '<td class="num">' + fmt(expenseOf(row, name)) + '</td>'; }).join('') +
     '<td class="num">' + fmt(row.totalExpense) + '</td>' +
-    '<td class="num ' + moneyClass(row.profit) + '">' + fmt(row.profit) + '</td>' +
-    '<td class="num ' + moneyClass(row.profit) + '">' + fmtPct(row.margin) + '</td>';
+    '<td class="num ' + profitClass(row.profit) + '">' + fmt(row.profit) + '</td>' +
+    '<td class="num ' + profitClass(row.profit) + '">' + fmtRate(row.margin, row.sales) + '</td>' +
+    '<td class="num money-in">' + fmt(row.cumSales) + '</td>' +
+    '<td class="num">' + fmt(row.cumExpense) + '</td>' +
+    '<td class="num ' + profitClass(row.cumProfit) + '">' + fmt(row.cumProfit) + '</td>' +
+    '<td class="num ' + profitClass(row.cumProfit) + '">' + fmtRate(row.cumMargin, row.cumSales) + '</td>';
 }
 
 function renderSelected() {
@@ -857,10 +924,10 @@ function renderSelected() {
   var stats = $('stats');
   if (!row) { stats.innerHTML = ''; $('bars').innerHTML = ''; $('compare').innerHTML = ''; return; }
   var cards = [
-    ['판매', fmt(row.sales), ''],
+    ['입금', fmt(row.sales), 'money-in'],
     ['총지출', fmt(row.totalExpense), ''],
-    ['순이익', fmt(row.profit), moneyClass(row.profit)],
-    ['이익률', fmtPct(row.margin), moneyClass(row.profit)]
+    ['순이익', fmt(row.profit), profitClass(row.profit)],
+    ['이익률', fmtRate(row.margin, row.sales), profitClass(row.profit)]
   ];
   stats.innerHTML = cards.map(function(c) {
     return '<div class="stat-card"><div class="label">' + c[0] + '</div><div class="value ' + c[2] + '">' + c[1] + '</div><div class="sub">' + escapeHtml(monthLabel(state.selected)) + '</div></div>';
@@ -869,7 +936,7 @@ function renderSelected() {
   var expense = Math.abs(row.totalExpense || 0);
   var max = Math.max(sales, expense, 1);
   $('compare').innerHTML =
-    '<div><div class="label">판매</div><strong>' + fmt(row.sales) + '</strong><div class="track"><div class="fill-in" style="width:' + (sales / max * 100) + '%"></div></div></div>' +
+    '<div><div class="label">입금</div><strong class="money-in">' + fmt(row.sales) + '</strong><div class="track"><div class="fill-in" style="width:' + (sales / max * 100) + '%"></div></div></div>' +
     '<div><div class="label">총지출</div><strong>' + fmt(row.totalExpense) + '</strong><div class="track"><div class="fill-out" style="width:' + (expense / max * 100) + '%"></div></div></div>';
   var expenses = {};
   categories().forEach(function(name) { expenses[name] = expenseOf(row, name); });
@@ -935,18 +1002,18 @@ function renderList() {
   var manuals = state.income.filter(function(row) { return row.counts && matchesFilter(row, ['memo']); });
   var salesHtml = sales.map(function(row) {
     var badge = row.included ? '<span class="badge badge-order">주문</span>' : '<span class="badge badge-muted">제외</span>';
-    return '<tr><td>' + escapeHtml(row.date || '-') + '</td><td>' + escapeHtml(row.status || '-') + '</td><td class="num ' + (row.included ? 'pos' : '') + '">' + fmt(row.amount) + '</td><td>' + badge + '</td></tr>';
+    return '<tr><td>' + escapeHtml(row.date || '-') + '</td><td>' + escapeHtml(row.status || '-') + '</td><td class="num ' + (row.included ? 'money-in' : '') + '">' + fmt(row.amount) + '</td><td>' + badge + '</td></tr>';
   }).join('');
   salesHtml += manuals.map(function(row, index) {
-    return '<tr><td>' + escapeHtml(row.date || '-') + '</td><td>직접 입력' + (row.memo ? '<div style="color:var(--text2);font-size:12px">' + escapeHtml(row.memo) + '</div>' : '') + '</td><td class="num pos">' + fmt(row.amount) + '</td><td><button type="button" class="btn btn-ghost btn-sm" data-income="' + index + '">수정</button></td></tr>';
+    return '<tr><td>' + escapeHtml(row.date || '-') + '</td><td>직접 입력' + (row.memo ? '<div style="color:var(--text2);font-size:12px">' + escapeHtml(row.memo) + '</div>' : '') + '</td><td class="num money-in">' + fmt(row.amount) + '</td><td><button type="button" class="btn btn-ghost btn-sm" data-income="' + index + '">수정</button></td></tr>';
   }).join('');
   $('sales-body').innerHTML = salesHtml;
   var salesCards = sales.map(function(row) {
     var badge = row.included ? '<span class="badge badge-order">주문</span>' : '<span class="badge badge-muted">제외</span>';
-    return '<article class="trade-card"><div class="trade-card-header"><div class="trade-card-title">' + escapeHtml(row.date || '-') + '</div>' + badge + '</div><div class="trade-card-meta">' + escapeHtml(row.status || '상태 없음') + '</div><strong class="' + (row.included ? 'pos' : '') + '">' + fmt(row.amount) + '</strong></article>';
+    return '<article class="trade-card"><div class="trade-card-header"><div class="trade-card-title">' + escapeHtml(row.date || '-') + '</div>' + badge + '</div><div class="trade-card-meta">' + escapeHtml(row.status || '상태 없음') + '</div><strong class="' + (row.included ? 'money-in' : '') + '">' + fmt(row.amount) + '</strong></article>';
   }).join('');
   salesCards += manuals.map(function(row, index) {
-    return '<article class="trade-card"><div class="trade-card-header"><div class="trade-card-title">직접 입력</div><span class="badge badge-income">판매</span></div><div class="trade-card-meta">' + escapeHtml(row.date || '-') + (row.memo ? ' · ' + escapeHtml(row.memo) : '') + '</div><strong class="pos">' + fmt(row.amount) + '</strong><div class="card-actions"><button type="button" class="btn btn-ghost btn-sm" data-income="' + index + '">수정</button></div></article>';
+    return '<article class="trade-card"><div class="trade-card-header"><div class="trade-card-title">직접 입력</div><span class="badge badge-income">입금</span></div><div class="trade-card-meta">' + escapeHtml(row.date || '-') + (row.memo ? ' · ' + escapeHtml(row.memo) : '') + '</div><strong class="money-in">' + fmt(row.amount) + '</strong><div class="card-actions"><button type="button" class="btn btn-ghost btn-sm" data-income="' + index + '">수정</button></div></article>';
   }).join('');
   $('sales-cards').innerHTML = salesCards;
   $('sales-empty').style.display = (sales.length || manuals.length) ? 'none' : 'block';
@@ -979,12 +1046,12 @@ function openEdit(row) {
 function openIncomeEdit(row) {
   if (!row) return;
   state.editing = { kind: 'income', row: row };
-  $('edit-title').textContent = '직접 입력한 판매';
+  $('edit-title').textContent = '직접 입력한 입금';
   $('edit-form').innerHTML = '<div class="form-grid">' +
     fieldHtml('ed-date', '날짜', '<input id="ed-date" type="date" required value="' + escapeHtml(row.date) + '">') +
     fieldHtml('ed-amount', '금액', '<input id="ed-amount" type="text" inputmode="decimal" required value="' + escapeHtml(row.amount == null ? '' : row.amount) + '">') +
     '<div class="field full"><label for="ed-memo">메모</label><textarea id="ed-memo" maxlength="2000">' + escapeHtml(row.memo || '') + '</textarea></div></div>' +
-    '<p class="lead">주문 연동에 있는 판매라면 여기서 지우세요. 양쪽에 있으면 두 번 합산됩니다.</p>' +
+    '<p class="lead">주문 연동에 있는 입금이라면 여기서 지우세요. 양쪽에 있으면 두 번 합산됩니다.</p>' +
     '<div class="form-actions"><button class="btn btn-danger" type="button" id="ed-delete">삭제</button><button class="btn btn-primary" type="submit">저장</button></div>';
   $('detail-overlay').style.display = 'flex';
   $('ed-delete').addEventListener('click', deleteEditing);
@@ -1103,11 +1170,14 @@ function renderStock() {
   $('move-empty').style.display = manual.length ? 'none' : 'block';
   var ships = (data.shipments || []).slice().reverse();
   $('ship-body').innerHTML = ships.map(function(mv) {
-    return '<tr><td>' + escapeHtml(mv.date || '') + '</td><td>' + escapeHtml(mv.code || '') + '</td><td class="num">' + fmtQty(mv.qty) + '</td><td>' + escapeHtml(mv.memo || '') + '</td></tr>';
-  }).join('') || '<tr><td colspan="4">주문에서 뺀 수량이 없어요</td></tr>';
+    var when = mv.kind === '입고' ? (mv.inDate || mv.date || '') : (mv.outDate || mv.date || '');
+    return '<tr><td>' + escapeHtml(mv.orderDate || '') + '</td><td>' + escapeHtml(mv.kind || '') + ' ' + escapeHtml(when) + '</td><td>' + escapeHtml(mv.code || '') + '</td><td class="num">' + fmtQty(mv.qty) + '</td><td>' + escapeHtml(mv.memo || '') + '</td></tr>';
+  }).join('') || '<tr><td colspan="5">출고일 또는 입고일이 적힌 주문이 없어요</td></tr>';
   $('ship-cards').innerHTML = ships.map(function(mv) {
-    return '<article class="trade-card"><div class="trade-card-title">' + escapeHtml(mv.code || '') + ' · ' + fmtQty(mv.qty) + '</div><div class="trade-card-meta">' + escapeHtml(mv.date || '') + (mv.memo ? ' · ' + escapeHtml(mv.memo) : '') + '</div></article>';
+    var when = mv.kind === '입고' ? (mv.inDate || mv.date || '') : (mv.outDate || mv.date || '');
+    return '<article class="trade-card"><div class="trade-card-title">' + escapeHtml(mv.kind || '') + ' · ' + escapeHtml(mv.code || '') + ' · ' + fmtQty(mv.qty) + '</div><div class="trade-card-meta">주문일 ' + escapeHtml(mv.orderDate || '-') + ' · ' + escapeHtml(when) + (mv.memo ? ' · ' + escapeHtml(mv.memo) : '') + '</div></article>';
   }).join('');
+  renderOrderDates(data);
   var rules = data.rules || [];
   $('rule-body').innerHTML = rules.map(function(rule) {
     return '<tr><td class="num">' + escapeHtml(rule.min) + '</td><td class="num">' + escapeHtml(rule.max) + '</td><td>' + escapeHtml(rule.boxCode || '') + '</td><td class="num">' + escapeHtml(rule.count) + '</td><td><button type="button" class="btn btn-ghost btn-sm" data-stock-action="rule" data-key="' + escapeHtml(rule.row) + '">수정</button></td></tr>';
@@ -1122,6 +1192,46 @@ async function loadStock() {
   state.stockLoaded = true;
   renderStock();
   setStatus('연결됨');
+}
+function renderOrderDates(data) {
+  var rows = (data && data.orderDates) || [];
+  var more = $('order-date-more');
+  if (more) {
+    var count = data && data.orderDateCount;
+    more.textContent = count > rows.length ? ('주문 ' + count + '건 중 최근 ' + rows.length + '건입니다. 나머지는 시트 주문 출고에서 출고일을 적으세요.') : '';
+  }
+  var body = $('order-date-body');
+  if (!body) return;
+  body.innerHTML = rows.map(function(row) {
+    return '<tr>' +
+      '<td>' + escapeHtml(row.orderDate || '-') + '</td>' +
+      '<td>' + escapeHtml(row.text || '') + (row.shipped ? '' : ' · 미발송') + '</td>' +
+      '<td><input type="date" data-order-in="' + escapeHtml(row.row) + '" value="' + escapeHtml(row.inDate || '') + '"></td>' +
+      '<td><input type="date" data-order-out="' + escapeHtml(row.row) + '" value="' + escapeHtml(row.outDate || '') + '"></td>' +
+      '<td><button type="button" class="btn btn-ghost btn-sm" data-order-save="' + escapeHtml(row.row) + '">저장</button></td></tr>';
+  }).join('') || '<tr><td colspan="5">가져올 주문이 없어요</td></tr>';
+  var cards = $('order-date-cards');
+  if (cards) {
+    cards.innerHTML = rows.map(function(row) {
+      return '<article class="trade-card"><div class="trade-card-title">' + escapeHtml(row.orderDate || '-') + (row.shipped ? '' : ' · 미발송') + '</div><div class="trade-card-meta">' + escapeHtml(row.text || '') + '</div><div class="form-grid">' +
+        '<div class="field"><label>입고일</label><input type="date" data-order-in="' + escapeHtml(row.row) + '" value="' + escapeHtml(row.inDate || '') + '"></div>' +
+        '<div class="field"><label>출고일</label><input type="date" data-order-out="' + escapeHtml(row.row) + '" value="' + escapeHtml(row.outDate || '') + '"></div></div>' +
+        '<div class="card-actions"><button type="button" class="btn btn-ghost btn-sm" data-order-save="' + escapeHtml(row.row) + '">저장</button></div></article>';
+    }).join('');
+  }
+}
+async function saveOrderDates(btn) {
+  var rowNum = btn.getAttribute('data-order-save');
+  var scope = btn.closest('tr, article') || document;
+  var current = ((state.stock && state.stock.orderDates) || []).filter(function(row) { return String(row.row) === String(rowNum); })[0];
+  var inEl = scope.querySelector('[data-order-in]');
+  var outEl = scope.querySelector('[data-order-out]');
+  await api('update', {
+    sheet: '주문 출고',
+    row: Number(rowNum),
+    match: { orderDate: current ? current.orderDate : '' },
+    record: { '입고일': inEl ? inEl.value : '', '출고일': outEl ? outEl.value : '' }
+  });
 }
 function openStockItem(code) {
   var it = stockItems().filter(function(row) { return row.code === code; })[0];
@@ -1145,7 +1255,7 @@ function openStockMove(rowNum) {
   var options = stockItems().map(function(it) { return '<option value="' + escapeHtml(it.code) + '">' + escapeHtml(it.code) + '</option>'; }).join('');
   $('edit-form').innerHTML = '<div class="form-grid">' +
     fieldHtml('ed-kind', '구분', '<select id="ed-kind"><option value="입고">입고</option><option value="출고">출고</option><option value="조정">조정</option></select>') +
-    fieldHtml('ed-date', '날짜', '<input id="ed-date" type="date" required value="' + escapeHtml(mv.date || '') + '">') +
+    fieldHtml('ed-date', mv.kind === '입고' ? '입고일' : (mv.kind === '출고' ? '출고일' : '날짜'), '<input id="ed-date" type="date" required value="' + escapeHtml(mv.date || '') + '">') +
     fieldHtml('ed-code', '품목', '<select id="ed-code">' + options + '</select>') +
     fieldHtml('ed-qty', '수량', '<input id="ed-qty" type="text" inputmode="decimal" required value="' + escapeHtml(mv.qty == null ? '' : mv.qty) + '">') +
     fieldHtml('ed-mu', '단위', '<select id="ed-mu"><option value="개">개</option><option value="팩">팩</option></select>') +
@@ -1191,14 +1301,17 @@ async function submitStockEdit(editing) {
   if (editing.kind === 'stock-move') {
     var qty = parseAmount($('ed-qty').value);
     if (qty == null) { toast('수량을 확인해 주세요', 'error'); return; }
-    await api('update', { sheet: '입출고', row: editing.item.row, match: { date: editing.item.date, code: editing.item.code, converted: editing.item.converted }, record: {
+    var moveRecord = {
       '구분': $('ed-kind').value,
       '날짜': $('ed-date').value,
       '품목': $('ed-code').value,
       '수량': qty,
       '단위': $('ed-mu').value,
       '메모': $('ed-memo').value.trim()
-    }});
+    };
+    if ($('ed-kind').value === '입고') moveRecord['입고일'] = $('ed-date').value;
+    if ($('ed-kind').value === '출고') moveRecord['출고일'] = $('ed-date').value;
+    await api('update', { sheet: '입출고', row: editing.item.row, match: { date: editing.item.date, code: editing.item.code, converted: editing.item.converted }, record: moveRecord });
     return;
   }
   await api('update', { sheet: '박스규칙', row: editing.item.row, match: { min: editing.item.min, max: editing.item.max, code: editing.item.boxCode }, record: {
@@ -1297,6 +1410,18 @@ $('tab-stock').addEventListener('click', function(event) {
   if (action === 'rule') openStockRule(key);
 });
 $('btn-stock-reload').addEventListener('click', function() { loadStock().catch(function(err) { toast(err.message, 'error'); setStatus('연결됨'); }); });
+$('tab-stock').addEventListener('click', function(event) {
+  var btn = event.target.closest('[data-order-save]');
+  if (!btn) return;
+  btn.disabled = true;
+  saveOrderDates(btn).then(function() {
+    toast('주문 날짜를 저장했습니다');
+    return loadStock();
+  }).catch(function(err) { toast(err.message, 'error'); }).finally(function() { btn.disabled = false; });
+});
+$('adj-kind').addEventListener('change', function() {
+  $('adj-date-label').textContent = $('adj-kind').value === '출고' ? '출고일' : '날짜';
+});
 $('inbound-form').addEventListener('submit', async function(event) {
   event.preventDefault();
   var qty = parseAmount($('in-qty').value);
@@ -1304,7 +1429,7 @@ $('inbound-form').addEventListener('submit', async function(event) {
   if (!$('in-item').value) { toast('품목을 선택하세요', 'error'); return; }
   $('in-submit').disabled = true;
   try {
-    await api('add', { sheet: '입출고', record: { '날짜': $('in-date').value, '구분': '입고', '품목': $('in-item').value, '수량': qty, '단위': $('in-unit').value, '메모': $('in-memo').value.trim() } });
+    await api('add', { sheet: '입출고', record: { '날짜': $('in-date').value, '입고일': $('in-date').value, '구분': '입고', '품목': $('in-item').value, '수량': qty, '단위': $('in-unit').value, '메모': $('in-memo').value.trim() } });
     $('in-qty').value = '';
     $('in-memo').value = '';
     toast('입고를 저장했습니다');
@@ -1319,7 +1444,9 @@ $('adjust-form').addEventListener('submit', async function(event) {
   if (!$('adj-item').value) { toast('품목을 선택하세요', 'error'); return; }
   $('adj-submit').disabled = true;
   try {
-    await api('add', { sheet: '입출고', record: { '날짜': $('adj-date').value, '구분': $('adj-kind').value, '품목': $('adj-item').value, '수량': qty, '단위': $('adj-unit').value, '메모': $('adj-memo').value.trim() } });
+    var adjRecord = { '날짜': $('adj-date').value, '구분': $('adj-kind').value, '품목': $('adj-item').value, '수량': qty, '단위': $('adj-unit').value, '메모': $('adj-memo').value.trim() };
+    if ($('adj-kind').value === '출고') adjRecord['출고일'] = $('adj-date').value;
+    await api('add', { sheet: '입출고', record: adjRecord });
     $('adj-qty').value = '';
     $('adj-memo').value = '';
     toast('저장했습니다');

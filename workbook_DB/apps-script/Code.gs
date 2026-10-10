@@ -4,11 +4,14 @@
  * 시트 [황소 워크북 장부] 의 확장 프로그램 > Apps Script 에 이 파일 전체를 붙여 넣습니다.
  * 시트에 묶인 스크립트이므로 SpreadsheetApp.getActiveSpreadsheet() 를 사용합니다.
  *
- * 판매는 주문 연동의 금액(취소·환불 제외)과, 수입 시트에 직접 적은 금액입니다.
- * 수입 시트는 날짜·금액·메모만 둡니다. 주문에 이미 있는 판매를 여기에 다시 적으면 두 번 합산됩니다.
+ * 입금은 주문 연동의 금액(취소·환불 제외)과, 수입 시트에 직접 적은 금액입니다. 월별 요약 헤더는 입금입니다.
+ * 월별 요약의 달은 시트에 YY-MM(26-07)으로 보이고, 누적 수입·누적 지출·누적 순이익·누적 수익률을 더합니다.
+ * 수입 시트는 날짜·금액·메모만 둡니다. 주문에 이미 있는 입금을 여기에 다시 적으면 두 번 합산됩니다.
  * 지출 분류는 제본, AI, 광고, 박스 네 가지입니다.
  * 재고는 같은 스프레드시트의 재고 품목·입출고·현재 재고·주문 출고 탭에서 따로 계산합니다.
  * 이익용 주문 연동에는 교재를 넣지 않고, 재고용 주문 출고만 교재 글자를 가져옵니다.
+ * 주문 출고는 주문일·입고일·출고일을 따로 둡니다. 재고 입고는 입고일, 재고 출고는 출고일로만 움직입니다.
+ * 출고일이 비어 있으면 아직 발송하지 않은 주문이므로 재고를 빼지 않습니다. 주문일을 출고일에 복사하지 않습니다.
  *
  * 비밀번호는 코드에 적지 않습니다. 스크립트 속성 LEDGER_PASSWORD 에만 둡니다.
  * 웹 앱은 매 요청마다 그 값과 비교하고, 주문자·연락처·주소·유입 경로는 반환하지 않습니다.
@@ -17,7 +20,7 @@
  * 또는 편집기에서 setup 함수를 실행합니다. 다시 실행해도 됩니다.
  */
 
-var APP_VERSION = '3';
+var APP_VERSION = '4';
 var PASSWORD_KEY = 'LEDGER_PASSWORD';
 var STOCK_RULES_KEY = 'STOCK_RULES_INITIALIZED';
 var SOURCE_SPREADSHEET_ID = '1s_QC5gRuU7E07WGZrBtbMS_S80YHexlPPD_qYVDqTpM';
@@ -29,8 +32,11 @@ var PERSONAL_HEADER_RE = /주문자|고객명|수취인|받는\s*분|받는분|�
 var DOC_MARKER = '[장부 안내]';
 var EXPENSE_CATEGORIES = ['제본', 'AI', '광고', '박스'];
 var SUMMARY_FLOOR = '2026-06';
-var SUMMARY_HEADERS = ['월', '판매', '제본', 'AI', '광고', '박스', '총지출', '순이익', '이익률'];
-var SUMMARY_METRICS = { '월': 1, '판매': 1, '주문 수입': 1, '기타 수입': 1, '총수입': 1, '총지출': 1, '순이익': 1, '이익률': 1 };
+var SUMMARY_HEADERS = ['월', '입금', '제본', 'AI', '광고', '박스', '총지출', '순이익', '이익률', '누적 수입', '누적 지출', '누적 순이익', '누적 수익률'];
+var SUMMARY_METRICS = {
+  '월': 1, '판매': 1, '입금': 1, '주문 수입': 1, '기타 수입': 1, '총수입': 1, '총지출': 1, '순이익': 1, '이익률': 1,
+  '누적 수입': 1, '누적 판매': 1, '누적 입금': 1, '누적 지출': 1, '누적 순이익': 1, '누적 수익률': 1, '누적 이익률': 1
+};
 
 var formulaSep_ = ',';
 
@@ -132,7 +138,7 @@ function loadLedger_() {
 
 function mutate_(action, data) {
   var sheetName = String(data.sheet || '').trim();
-  if (sheetName === '입출고' || sheetName === '재고 품목' || sheetName === '박스규칙') {
+  if (sheetName === '입출고' || sheetName === '재고 품목' || sheetName === '박스규칙' || sheetName === '주문 출고') {
     return mutateStock_(action, sheetName, data);
   }
   if (sheetName !== '수입' && sheetName !== '지출') fail_('수입, 지출, 재고만 수정할 수 있습니다.');
@@ -286,7 +292,7 @@ function readSheetSummary_(sh) {
     else months.push(row);
   }
   if (!months.length) return null;
-  return { months: months, total: total };
+  return withCumulative_({ months: months, total: total });
 }
 
 function summaryRowFromValues_(headers, row, key, isTotal) {
@@ -299,7 +305,8 @@ function summaryRowFromValues_(headers, row, key, isTotal) {
     var n = asNumber_(row[i]);
     expenses[name] = n == null ? 0 : n;
   }
-  var sales = numHeader_(headers, row, '판매');
+  var sales = numHeader_(headers, row, '입금');
+  if (sales == null) sales = numHeader_(headers, row, '판매');
   if (sales == null) {
     var orderIncome = numHeader_(headers, row, '주문 수입');
     var otherIncome = numHeader_(headers, row, '기타 수입');
@@ -370,7 +377,7 @@ function computeSummary_(income, expense, orders) {
     bucket.totalExpense += row.amount;
   });
   months.forEach(finishMonth_);
-  return { months: months, total: totalFromMonths_(months) };
+  return withCumulative_({ months: months, total: totalFromMonths_(months) });
 }
 
 function blankMonth_(key) {
@@ -410,7 +417,37 @@ function totalFromMonths_(months) {
   });
   finishMonth_(total);
   total.month = '합계';
+  total.cumSales = total.sales;
+  total.cumExpense = total.totalExpense;
+  total.cumProfit = total.profit;
+  total.cumMargin = total.margin;
   return total;
+}
+
+function applyCumulative_(months) {
+  var sales = 0;
+  var expense = 0;
+  (months || []).forEach(function(row) {
+    sales += Number(row.sales) || 0;
+    expense += Number(row.totalExpense) || 0;
+    row.cumSales = sales;
+    row.cumExpense = expense;
+    row.cumProfit = sales - expense;
+    row.cumMargin = marginOf_(row.cumProfit, sales);
+  });
+  return months;
+}
+
+function withCumulative_(summary) {
+  if (!summary) return summary;
+  applyCumulative_(summary.months || []);
+  if (summary.total) {
+    summary.total.cumSales = summary.total.sales;
+    summary.total.cumExpense = summary.total.totalExpense;
+    summary.total.cumProfit = summary.total.profit;
+    summary.total.cumMargin = marginOf_(summary.total.profit, summary.total.sales);
+  }
+  return summary;
 }
 
 function alignSummary_(summary, income, expense, orders) {
@@ -426,10 +463,10 @@ function alignSummary_(summary, income, expense, orders) {
     return row;
   });
   var same = !added && (summary.months || []).length === months.length;
-  return {
+  return withCumulative_({
     months: months,
     total: same && summary.total ? summary.total : totalFromMonths_(months)
-  };
+  });
 }
 
 function summaryMonthKeys_(dates, todayKey) {
@@ -540,6 +577,7 @@ function writeRecord_(sh, map, row, sheetName, record) {
   if (sheetName === '지출') writeExpense_(sh, map, row, record);
   else writeIncome_(sh, map, row, record);
   clearPersonalOnRow_(sh, row, headerMap_(sh));
+  fitColumns_(sh);
 }
 
 function rejectDroppedFields_(record, sheetName) {
@@ -746,11 +784,32 @@ function parseMonthLabel_(value) {
   }
   var s = String(value == null ? '' : value).trim();
   var m = s.match(/^(\d{4})\s*[-./년]\s*(\d{1,2})/);
-  if (!m) return null;
-  var y = Number(m[1]);
-  var mo = Number(m[2]);
+  if (m) {
+    var y4 = Number(m[1]);
+    var mo4 = Number(m[2]);
+    if (mo4 < 1 || mo4 > 12) return null;
+    return { key: y4 + '-' + (mo4 < 10 ? '0' + mo4 : String(mo4)), y: y4, m: mo4 };
+  }
+  var yy = s.match(/^(\d{2})\s*[-./]\s*(\d{1,2})$/);
+  if (!yy) return null;
+  var y = 2000 + Number(yy[1]);
+  var mo = Number(yy[2]);
   if (mo < 1 || mo > 12) return null;
   return { key: y + '-' + (mo < 10 ? '0' + mo : String(mo)), y: y, m: mo };
+}
+
+function formatYyMm_(key) {
+  var parsed = parseMonthLabel_(key);
+  if (!parsed) return String(key || '');
+  var mm = parsed.m < 10 ? '0' + parsed.m : String(parsed.m);
+  return String(parsed.y).slice(-2) + '-' + mm;
+}
+
+function monthKeyToDate_(key) {
+  var parsed = parseMonthLabel_(key);
+  if (!parsed) return '';
+  var mm = parsed.m < 10 ? '0' + parsed.m : String(parsed.m);
+  return Utilities.parseDate(parsed.y + '-' + mm + '-01', sheetTz_(), 'yyyy-MM-dd');
 }
 
 function asNumber_(value) {
@@ -776,7 +835,7 @@ function sumObj_(obj) {
 // ── 초기 설정 ────────────────────────────────────────
 
 /**
- * 시트를 판매 / 제본 / AI / 광고 / 박스 구조로 맞추고, 비밀번호가 있으면 저장합니다.
+ * 시트를 입금 / 제본 / AI / 광고 / 박스 구조로 맞추고, 비밀번호가 있으면 저장합니다.
  * 편집기에서 그냥 실행하면 비밀번호 창은 뜨지 않을 수 있습니다.
  * @param {string=} initialPassword
  * @param {boolean=} alreadyPrompted 메뉴에서 이미 물어봤으면 true
@@ -796,7 +855,8 @@ function setup(initialPassword, alreadyPrompted) {
     rebuildSummary_(ss, ctx, report);
     fixNotes_(ss, report);
     migrateInventory_(ss, ctx, report);
-    report.push('장부 구조를 판매와 지출 네 분류로 맞췄습니다.');
+    fitLedgerColumns_(ss);
+    report.push('장부 구조를 입금과 지출 네 분류로 맞췄습니다. 월별 요약 열 너비를 내용에 맞췄습니다.');
   } catch (err) {
     error = err;
     report.push('오류: ' + ((err && err.message) ? err.message : err));
@@ -1087,8 +1147,8 @@ function rebuildSummary_(ss, ctx, report) {
   ensureSize_(sh, Math.max(needed, clearRows), SUMMARY_HEADERS.length);
   sh.getRange(1, 1, clearRows, width).clearContent();
   sh.getRange(1, 1, 1, SUMMARY_HEADERS.length).setValues([SUMMARY_HEADERS]);
-  sh.getRange(2, 1, months.length, 1).setNumberFormat('@');
-  sh.getRange(2, 1, months.length, 1).setValues(months.map(function(key) { return [key]; }));
+  sh.getRange(2, 1, months.length, 1).setNumberFormat('yy-mm');
+  sh.getRange(2, 1, months.length, 1).setValues(months.map(function(key) { return [monthKeyToDate_(key)]; }));
   var formulas = [];
   var i;
   for (i = 0; i < months.length; i++) {
@@ -1102,11 +1162,16 @@ function rebuildSummary_(ss, ctx, report) {
       categoryFormula_(letters, month, expenseEnd, '박스'),
       '=C' + row + '+D' + row + '+E' + row + '+F' + row,
       '=B' + row + '-G' + row,
-      '=IF(B' + row + '=0,"",H' + row + '/B' + row + ')'
+      '=IF(B' + row + '=0,"–",H' + row + '/B' + row + ')',
+      '=SUM($B$2:B' + row + ')',
+      '=SUM($G$2:G' + row + ')',
+      '=J' + row + '-K' + row,
+      '=IF(J' + row + '=0,"–",L' + row + '/J' + row + ')'
     ]);
   }
-  sh.getRange(2, 2, formulas.length, 8).setFormulas(localizeGrid_(formulas));
+  sh.getRange(2, 2, formulas.length, 12).setFormulas(localizeGrid_(formulas));
   var totalRow = months.length + 2;
+  sh.getRange(totalRow, 1).setNumberFormat('@');
   sh.getRange(totalRow, 1).setValue('합계');
   var totals = [];
   var c;
@@ -1114,11 +1179,18 @@ function rebuildSummary_(ss, ctx, report) {
     var letter = indexToCol_(c);
     totals.push('=SUM(' + letter + '2:' + letter + (totalRow - 1) + ')');
   }
-  totals.push('=IF(B' + totalRow + '=0,"",H' + totalRow + '/B' + totalRow + ')');
-  sh.getRange(totalRow, 2, 1, 8).setFormulas(localizeGrid_([totals]));
+  totals.push('=IF(B' + totalRow + '=0,"–",H' + totalRow + '/B' + totalRow + ')');
+  totals.push('=B' + totalRow);
+  totals.push('=G' + totalRow);
+  totals.push('=H' + totalRow);
+  totals.push('=IF(B' + totalRow + '=0,"–",H' + totalRow + '/B' + totalRow + ')');
+  sh.getRange(totalRow, 2, 1, 12).setFormulas(localizeGrid_([totals]));
   sh.getRange(2, 2, totalRow - 1, 7).setNumberFormat('#,##0');
   sh.getRange(2, 9, totalRow - 1, 1).setNumberFormat('0.0%');
-  report.push('월별 요약을 ' + months[0] + '부터 ' + months[months.length - 1] + '까지 다시 썼습니다. 수입, 지출, 주문 연동의 데이터는 바꾸지 않았습니다.');
+  sh.getRange(2, 10, totalRow - 1, 3).setNumberFormat('#,##0');
+  sh.getRange(2, 13, totalRow - 1, 1).setNumberFormat('0.0%');
+  fitColumns_(sh);
+  report.push('월별 요약을 ' + formatYyMm_(months[0]) + '부터 ' + formatYyMm_(months[months.length - 1]) + '까지 다시 썼습니다. 입금, 누적 열, YY-MM 표시를 넣었고 수입·지출·주문 연동의 데이터는 바꾸지 않았습니다.');
 }
 
 function collectSummaryDates_(ss) {
@@ -1208,7 +1280,7 @@ function fixNotes_(ss, report) {
   if (ship) cleared += clearPersonalNotes_(ship, 1);
   orderSh.getRange(1, 8).setValue(guide);
   if (summary) summary.getRange(summaryGuideRow_(summary), 1).setValue(guide).setWrap(true);
-  if (ship && !String(ship.getRange(1, 8).getValue() || '').trim()) ship.getRange(1, 8).setValue(shipGuide_()).setWrap(true);
+  if (ship) placeShipGuide_(ship);
   report.push(cleared ? ('이전 안내 문구 ' + cleared + '곳을 지우고 새 안내를 넣었습니다.') : '안내 문구를 현재 구조로 넣었습니다.');
 }
 
@@ -1225,13 +1297,15 @@ function summaryGuideRow_(sh) {
 function columnGuide_() {
   return [
     DOC_MARKER,
-    '판매는 주문 연동의 금액입니다. 취소·환불은 제외합니다.',
+    '입금은 주문 연동의 금액입니다. 취소·환불은 제외합니다. 월별 요약은 주문일(제출일시)로 달을 나눕니다.',
     '가져오는 값은 제출일시, 상태, 금액뿐입니다.',
-    '수입 시트는 날짜, 금액, 메모입니다. 주문 연동에 없는 판매만 적습니다.',
-    '같은 판매를 주문 연동과 수입 시트에 모두 적으면 두 번 합산됩니다.',
+    '수입 시트는 날짜, 금액, 메모입니다. 주문 연동에 없는 입금만 적습니다.',
+    '같은 입금을 주문 연동과 수입 시트에 모두 적으면 두 번 합산됩니다.',
     '지출 분류는 제본, AI, 광고, 박스입니다.',
-    '이익률은 순이익을 판매로 나눈 값입니다.',
-    '재고는 재고 품목, 입출고, 현재 재고 시트에서 이익과 따로 계산합니다.'
+    '이익률은 순이익을 입금으로 나눈 값입니다. 입금이 0이면 – 입니다.',
+    '누적 수입·누적 지출·누적 순이익·누적 수익률은 첫 달부터 그 달까지의 합입니다.',
+    '재고는 재고 품목, 입출고, 현재 재고 시트에서 이익과 따로 계산합니다.',
+    '재고 입고는 입고일, 재고 출고는 출고일로만 움직입니다. 주문일을 출고일로 쓰지 않습니다.'
   ].join('\n');
 }
 
@@ -1357,7 +1431,7 @@ function refreshShipConversions_(sh, ctx) {
   var map = headerMap_(sh);
   var endRow = (ctx && ctx.endRow) || ORDER_LAST_ROW_DEFAULT;
   var rawDateCol = findHeader_(map, ['원본 제출일시']) || 5;
-  var dateCol = findHeader_(map, ['날짜']);
+  var dateCol = findHeader_(map, ['주문일', '날짜']);
   var changed = rewriteConversionColumn_(sh, endRow, dateCol, rawDateCol, dateFormula_, dateFormulaReady_);
   applyImportNumberFormats_(sh, endRow, { dateCol: dateCol, rawDateCol: rawDateCol });
   return changed;
@@ -1571,6 +1645,18 @@ function firstImport_(formula) {
   return { id: m[1], range: range };
 }
 
+function fitColumns_(sh) {
+  if (!sh) return;
+  var cols = Math.max(1, Math.min(sh.getLastColumn(), 30));
+  try { sh.autoResizeColumns(1, cols); } catch (err) {}
+}
+
+function fitLedgerColumns_(ss) {
+  ['수입', '지출', '주문 연동', '월별 요약', '분류', '재고 품목', '입출고', '현재 재고', '주문 출고'].forEach(function(name) {
+    fitColumns_(ss.getSheetByName(name));
+  });
+}
+
 function ensureSize_(sh, rows, cols) {
   if (sh.getMaxRows() < rows) sh.insertRowsAfter(sh.getMaxRows(), rows - sh.getMaxRows());
   if (sh.getMaxColumns() < cols) sh.insertColumnsAfter(sh.getMaxColumns(), cols - sh.getMaxColumns());
@@ -1691,9 +1777,9 @@ function uniqueTexts_(list) {
 
 var ITEM_HEADERS = ['코드', '이름', '종류', '구매단위', '단위당개수', '기초수량', '최소재고', '메모'];
 var RULE_HEADERS = ['최소권수', '최대권수', '박스코드', '박스개수'];
-var MOVE_HEADERS = ['날짜', '구분', '품목', '수량', '단위', '환산수량', '메모', '출처', '주문행'];
+var MOVE_HEADERS = ['날짜', '구분', '품목', '수량', '단위', '환산수량', '메모', '출처', '주문행', '주문일', '입고일', '출고일'];
 var STOCK_HEADERS = ['코드', '이름', '종류', '기초', '입고', '출고', '조정', '현재', '최소재고', '부족'];
-var SHIP_HEADERS = ['날짜', '상태', '교재', '', '원본 제출일시', '원본 상태', '원본 교재'];
+var SHIP_HEADERS = ['주문일', '상태', '교재', '', '원본 제출일시', '원본 상태', '원본 교재', '입고일', '출고일'];
 var STOCK_ITEM_LAST = 200;
 var STOCK_MOVE_LAST = 5000;
 
@@ -1733,13 +1819,14 @@ function migrateInventory_(ss, ctx, report) {
   ensureHeaderGroup_(items, RULE_HEADERS, 10);
   ensureHeaderGroup_(moves, MOVE_HEADERS, 1);
   ensureHeaderGroup_(current, STOCK_HEADERS, 1);
+  migrateMovementDates_(moves);
   var added = appendItems_(items, itemsToAdd_(readItemRecords_(items)));
   if (added) report.push('재고 품목 ' + added + '개를 채웠습니다. 박스 팩당 개수는 1로 두었으니, 1팩이 여러 개면 단위당개수를 고치세요.');
   else report.push('재고 품목은 이미 있습니다. 기초·최소·팩 수량은 바꾸지 않았습니다.');
   seedRulesOnce_(items, report);
   ensureShipImport_(ship, ctx || orderContextOrDefault_(ss), report);
   var replaced = replaceOrderMovements_(ss);
-  if (replaced.importReady) report.push('주문 출고 ' + replaced.count + '줄을 다시 맞췄습니다.');
+  if (replaced.importReady) report.push('주문 재고 이동 ' + replaced.count + '줄을 다시 맞췄습니다. 출고일이 비어 있는 주문은 재고에서 빼지 않았습니다.');
   else report.push('주문 출고를 아직 읽지 못했습니다. 액세스 허용 뒤 재고 새로고침을 실행하세요.');
   rebuildCurrentStock_(ss);
   report.push('현재 재고 수식을 품목별로 다시 썼습니다.');
@@ -1971,10 +2058,57 @@ function readRuleRecords_(sh) {
   return out;
 }
 
+function migrateMovementDates_(sh) {
+  if (!sh) return;
+  ensureHeaderGroup_(sh, ['주문일', '입고일', '출고일'], 1);
+  var map = headerMap_(sh);
+  var dateCol = findHeader_(map, ['날짜']);
+  var inCol = findHeader_(map, ['입고일']);
+  var outCol = findHeader_(map, ['출고일']);
+  var kindCol = findHeader_(map, ['구분']);
+  var sourceCol = findHeader_(map, ['출처']);
+  var codeCol = findHeader_(map, ['품목']);
+  if (!kindCol || !codeCol || !inCol || !outCol) return;
+  var last = lastFilledRow_(sh, codeCol, STOCK_MOVE_LAST);
+  if (last < 2) return;
+  var width = Math.max(sh.getLastColumn(), dateCol || 1, inCol, outCol, kindCol, sourceCol || 1);
+  var values = sh.getRange(2, 1, last - 1, width).getValues();
+  var inValues = sh.getRange(2, inCol, last - 1, 1).getValues();
+  var outValues = sh.getRange(2, outCol, last - 1, 1).getValues();
+  var changedIn = false;
+  var changedOut = false;
+  var r;
+  for (r = 0; r < values.length; r++) {
+    var kind = compact_(cellAt_(values[r], kindCol));
+    var source = sourceCol ? String(cellAt_(values[r], sourceCol) || '') : '';
+    var legacy = dateCol ? cellAt_(values[r], dateCol) : '';
+    if (!isFilledDate_(legacy)) continue;
+    if (kind === '입고' && !isFilledDate_(inValues[r][0])) {
+      inValues[r][0] = legacy;
+      changedIn = true;
+    }
+    if (kind === '출고' && !isOrderSource_(source) && !isFilledDate_(outValues[r][0])) {
+      outValues[r][0] = legacy;
+      changedOut = true;
+    }
+  }
+  if (changedIn) {
+    sh.getRange(2, inCol, last - 1, 1).setValues(inValues);
+    sh.getRange(2, inCol, last - 1, 1).setNumberFormat('yyyy-mm-dd');
+  }
+  if (changedOut) {
+    sh.getRange(2, outCol, last - 1, 1).setValues(outValues);
+    sh.getRange(2, outCol, last - 1, 1).setNumberFormat('yyyy-mm-dd');
+  }
+}
+
 function readMovementRecords_(sh) {
   if (!sh) return [];
   var map = headerMap_(sh);
   var dateCol = findHeader_(map, ['날짜']);
+  var orderDateCol = findHeader_(map, ['주문일']);
+  var inCol = findHeader_(map, ['입고일']);
+  var outCol = findHeader_(map, ['출고일']);
   var kindCol = findHeader_(map, ['구분']);
   var codeCol = findHeader_(map, ['품목']);
   var qtyCol = findHeader_(map, ['수량']);
@@ -1996,16 +2130,31 @@ function readMovementRecords_(sh) {
     var qty = qtyCol ? asNumber_(cellAt_(values[r], qtyCol)) : null;
     var converted = convCol ? asNumber_(cellAt_(values[r], convCol)) : null;
     var orderRow = orderCol ? asNumber_(cellAt_(values[r], orderCol)) : null;
+    var kind = kindCol ? String(cellAt_(values[r], kindCol) || '').trim() : '';
+    var source = sourceCol ? String(cellAt_(values[r], sourceCol) || '').trim() : '';
+    var legacy = dateCol ? formatCellDate_(cellAt_(values[r], dateCol)) : '';
+    var orderDate = orderDateCol ? formatCellDate_(cellAt_(values[r], orderDateCol)) : '';
+    var inDate = inCol ? formatCellDate_(cellAt_(values[r], inCol)) : '';
+    var outDate = outCol ? formatCellDate_(cellAt_(values[r], outCol)) : '';
+    var kindKey = compact_(kind);
+    if (kindKey === '입고' && !inDate) inDate = legacy;
+    if (kindKey === '출고' && !outDate && !isOrderSource_(source)) outDate = legacy;
+    var effective = legacy;
+    if (kindKey === '입고') effective = inDate || legacy;
+    else if (kindKey === '출고') effective = outDate || '';
     out.push({
       row: r + 2,
-      date: dateCol ? formatCellDate_(cellAt_(values[r], dateCol)) : '',
-      kind: kindCol ? String(cellAt_(values[r], kindCol) || '').trim() : '',
+      date: effective,
+      orderDate: orderDate,
+      inDate: inDate,
+      outDate: outDate,
+      kind: kind,
       code: code,
       qty: qty,
       unit: unitCol ? String(cellAt_(values[r], unitCol) || '').trim() : '개',
       converted: converted,
       memo: memoCol ? String(cellAt_(values[r], memoCol) || '').trim() : '',
-      source: sourceCol ? String(cellAt_(values[r], sourceCol) || '').trim() : '',
+      source: source,
       orderRow: orderRow
     });
   }
@@ -2068,47 +2217,77 @@ function convertedQty_(kind, qty, unit, perPack, purchaseUnit) {
 function movementsFromOrders_(rows, rules) {
   var out = [];
   (rows || []).forEach(function(row) {
-    if (!row || !row.date) return;
+    if (!row) return;
     if (/취소|환불/.test(String(row.status || ''))) return;
     var books = parseWorkbookText_(row.text);
     if (!books.length) return;
     var total = 0;
     books.forEach(function(book) { total += book.qty; });
     var memo = clipText_(row.text, 500);
-    books.forEach(function(book) {
+    var orderDate = row.orderDate || row.date || '';
+    function pushMove(kind, date, box) {
+      if (!date) return;
+      var sign = kind === '입고' ? 1 : -1;
       out.push({
-        date: row.date,
-        kind: '출고',
-        code: book.code,
-        qty: book.qty,
+        date: date,
+        orderDate: orderDate,
+        inDate: kind === '입고' ? date : '',
+        outDate: kind === '출고' ? date : '',
+        kind: kind,
+        code: box ? box.code : '',
+        qty: box ? box.qty : 0,
         unit: '개',
-        converted: -book.qty,
-        memo: memo,
+        converted: sign * (box ? box.qty : 0),
+        memo: box ? ('주문 ' + total + '권') : memo,
         source: '주문',
         orderRow: row.row,
-        box: false
-      });
-    });
-    var box = boxesForOrder_(total, rules);
-    if (box) {
-      out.push({
-        date: row.date,
-        kind: '출고',
-        code: box.code,
-        qty: box.qty,
-        unit: '개',
-        converted: -box.qty,
-        memo: '주문 ' + total + '권',
-        source: '주문',
-        orderRow: row.row,
-        box: true
+        box: !!box
       });
     }
+    books.forEach(function(book) {
+      if (row.inDate) {
+        out.push({
+          date: row.inDate,
+          orderDate: orderDate,
+          inDate: row.inDate,
+          outDate: '',
+          kind: '입고',
+          code: book.code,
+          qty: book.qty,
+          unit: '개',
+          converted: book.qty,
+          memo: memo,
+          source: '주문',
+          orderRow: row.row,
+          box: false
+        });
+      }
+      if (row.outDate) {
+        out.push({
+          date: row.outDate,
+          orderDate: orderDate,
+          inDate: '',
+          outDate: row.outDate,
+          kind: '출고',
+          code: book.code,
+          qty: book.qty,
+          unit: '개',
+          converted: -book.qty,
+          memo: memo,
+          source: '주문',
+          orderRow: row.row,
+          box: false
+        });
+      }
+    });
+    var box = boxesForOrder_(total, rules);
+    if (box && row.outDate) pushMove('출고', row.outDate, box);
   });
   out.sort(function(a, b) {
     var ar = Number(a.orderRow) || 0;
     var br = Number(b.orderRow) || 0;
     if (ar !== br) return ar - br;
+    if (a.kind !== b.kind) return a.kind === '입고' ? -1 : 1;
     return String(a.code).localeCompare(String(b.code), 'ko');
   });
   return out;
@@ -2141,8 +2320,10 @@ function buildStock_(items, movements) {
     if (!mv || !mv.code) return;
     var n = Number(mv.converted);
     if (!isFinite(n)) return;
-    var b = bucket(String(mv.code).trim());
     var kind = compact_(mv.kind);
+    if (kind === '입고' && !mv.inDate) return;
+    if (kind === '출고' && !mv.outDate) return;
+    var b = bucket(String(mv.code).trim());
     if (kind === '입고') b.inbound += n;
     else if (kind === '출고') b.outbound += -n;
     else if (kind === '조정') b.adjustment += n;
@@ -2180,6 +2361,7 @@ function stockSnapshot_(ss) {
   var stock = buildStock_(items, movements);
   var manual = movements.filter(function(mv) { return !isOrderSource_(mv.source); });
   var shipments = movements.filter(function(mv) { return isOrderSource_(mv.source); });
+  var orderDates = orderDateRows_(ship);
   return {
     asOf: Utilities.formatDate(new Date(), sheetTz_(), "yyyy-MM-dd'T'HH:mm:ss"),
     importReady: shipImportReady_(ship),
@@ -2188,8 +2370,32 @@ function stockSnapshot_(ss) {
     rules: rules,
     manual: manual.slice(-80),
     shipments: shipments.slice(-40),
-    orderMovements: shipments.length
+    orderMovements: shipments.length,
+    orderDates: orderDates.rows,
+    orderDateCount: orderDates.count
   };
+}
+
+function orderDateRows_(ship) {
+  var read = readShipOrders_(ship);
+  if (!read.ready) return { rows: [], count: 0 };
+  var rows = [];
+  read.rows.forEach(function(row) {
+    if (/취소|환불/.test(String(row.status || ''))) return;
+    if (!parseWorkbookText_(row.text).length) return;
+    rows.push({
+      row: row.row,
+      orderDate: row.orderDate || '',
+      inDate: row.inDate || '',
+      outDate: row.outDate || '',
+      status: row.status || '',
+      text: clipText_(row.text, 180),
+      shipped: !!row.outDate
+    });
+  });
+  var count = rows.length;
+  rows.reverse();
+  return { rows: rows.slice(0, 60), count: count };
 }
 
 function isOrderSource_(source) {
@@ -2197,21 +2403,24 @@ function isOrderSource_(source) {
 }
 
 function ensureShipImport_(sh, ctx, report) {
+  ensureShipDateColumns_(sh, report);
   var problems = shipSheetHealth_(sh);
   if (problems.length) {
     rebuildShipSheet_(sh, ctx);
-    report.push('주문 출고를 제출일시·상태·교재만 가져오도록 맞췄습니다.');
+    report.push('주문 출고를 제출일시·상태·교재만 가져오도록 맞췄습니다. 입고일과 출고일은 비워 둡니다.');
     return;
   }
-  if (refreshShipConversions_(sh, ctx)) report.push('주문 출고 날짜 변환을 날짜 숫자와 글자 모두 받게 고쳤습니다.');
-  else report.push('주문 출고 가져오기는 이미 제출일시·상태·교재만 가리킵니다.');
+  if (refreshShipConversions_(sh, ctx)) report.push('주문 출고의 주문일 변환을 날짜 숫자와 글자 모두 받게 고쳤습니다. 출고일에는 복사하지 않습니다.');
+  else report.push('주문 출고는 주문일·상태·교재를 가져옵니다. 출고일이 비어 있으면 재고를 빼지 않습니다.');
+  placeShipGuide_(sh);
 }
 
 function shipSheetHealth_(sh) {
   var problems = [];
   if (!sh) return ['시트가 없습니다.'];
   var map = headerMap_(sh);
-  ['날짜', '상태', '교재'].forEach(function(name) {
+  if (!findHeader_(map, ['주문일', '날짜'])) problems.push('주문일 헤더가 없습니다.');
+  ['상태', '교재'].forEach(function(name) {
     if (!findHeader_(map, [name])) problems.push(name + ' 헤더가 없습니다.');
   });
   Object.keys(map).forEach(function(name) {
@@ -2232,7 +2441,7 @@ function shipSheetHealth_(sh) {
   if (!dates) problems.push('제출일시·상태 가져오기가 없습니다.');
   if (!books) problems.push('교재 가져오기가 없습니다.');
   if (dates && books) {
-    problems = problems.concat(expectFormulaRef_(sh, findHeader_(map, ['날짜']), dates.col, '날짜'));
+    problems = problems.concat(expectFormulaRef_(sh, findHeader_(map, ['주문일', '날짜']), dates.col, '주문일'));
     problems = problems.concat(expectFormulaRef_(sh, findHeader_(map, ['상태']), dates.col + 1, '상태'));
     problems = problems.concat(expectFormulaRef_(sh, findHeader_(map, ['교재']), books.col, '교재'));
   }
@@ -2241,9 +2450,9 @@ function shipSheetHealth_(sh) {
 
 function rebuildShipSheet_(sh, ctx) {
   var endRow = (ctx && ctx.endRow) || ORDER_LAST_ROW_DEFAULT;
-  ensureSize_(sh, endRow, 8);
+  ensureSize_(sh, endRow, SHIP_HEADERS.length);
   listImports_(sh).forEach(function(imp) { sh.getRange(imp.row, imp.col).clearContent(); });
-  var clearCols = Math.min(Math.max(sh.getLastColumn(), 8), 12);
+  var clearCols = Math.min(Math.max(sh.getLastColumn(), SHIP_HEADERS.length), 12);
   sh.getRange(1, 1, endRow, clearCols).clearContent();
   sh.getRange(1, 1, 1, SHIP_HEADERS.length).setValues([SHIP_HEADERS]);
   var id = (ctx && ctx.sourceId) || SOURCE_SPREADSHEET_ID;
@@ -2263,15 +2472,83 @@ function rebuildShipSheet_(sh, ctx) {
   sh.getRange(2, 2, height, 1).setFormulas(localizeGrid_(statuses));
   sh.getRange(2, 3, height, 1).setFormulas(localizeGrid_(books));
   applyImportNumberFormats_(sh, endRow, { dateCol: 1, rawDateCol: 5 });
-  sh.getRange(1, 8).setValue(shipGuide_()).setWrap(true);
+  var inCol = findHeader_(headerMap_(sh), ['입고일']);
+  var outCol = findHeader_(headerMap_(sh), ['출고일']);
+  if (inCol) sh.getRange(2, inCol, height, 1).setNumberFormat('yyyy-mm-dd');
+  if (outCol) sh.getRange(2, outCol, height, 1).setNumberFormat('yyyy-mm-dd');
+  placeShipGuide_(sh);
+}
+
+function ensureShipDateColumns_(sh, report) {
+  if (!sh) return;
+  report = report || [];
+  var map = headerMap_(sh);
+  var orderCol = findHeader_(map, ['주문일']);
+  var legacy = findHeader_(map, ['날짜']);
+  if (!orderCol && legacy) {
+    sh.getRange(1, legacy).setValue('주문일');
+    report.push('주문 출고의 날짜 헤더를 주문일로 바꿨습니다. 이 열은 제출일시이고 출고일이 아닙니다.');
+    map = headerMap_(sh);
+  }
+  var missing = [];
+  if (!findHeader_(map, ['입고일'])) missing.push('입고일');
+  if (!findHeader_(map, ['출고일'])) missing.push('출고일');
+  if (!missing.length) {
+    placeShipGuide_(sh);
+    return;
+  }
+  var start = nextDataHeaderCol_(sh);
+  var c;
+  for (c = start; c < start + missing.length + 2; c++) {
+    if (isGuideCell_(sh, c)) sh.getRange(1, c).clearContent();
+  }
+  ensureSize_(sh, Math.max(sh.getMaxRows(), 2), start + missing.length - 1);
+  sh.getRange(1, start, 1, missing.length).setValues([missing]);
+  var height = Math.max(Math.min(sh.getMaxRows(), ORDER_LAST_ROW_DEFAULT) - 1, 1);
+  sh.getRange(2, start, height, missing.length).setNumberFormat('yyyy-mm-dd');
+  report.push('주문 출고에 ' + missing.join(', ') + ' 열을 추가했습니다. 주문일을 출고일로 복사하지 않습니다. 출고일이 비어 있으면 재고를 빼지 않습니다.');
+  placeShipGuide_(sh);
+}
+
+function nextDataHeaderCol_(sh) {
+  var map = headerMap_(sh);
+  var col = 0;
+  Object.keys(map).forEach(function(name) { col = Math.max(col, map[name]); });
+  return col + 1;
+}
+
+function isGuideCell_(sh, col) {
+  if (!col || col > sh.getMaxColumns()) return false;
+  var text = String(sh.getRange(1, col).getValue() || '');
+  if (!text) return false;
+  if (text.indexOf(DOC_MARKER) === 0) return true;
+  return text.length > 40;
+}
+
+function placeShipGuide_(sh) {
+  if (!sh) return;
+  var existing = 0;
+  var last = Math.min(Math.max(sh.getLastColumn(), 1), 20);
+  var c;
+  for (c = 1; c <= last; c++) {
+    var text = String(sh.getRange(1, c).getValue() || '');
+    if (text.indexOf(DOC_MARKER) === 0) existing = c;
+  }
+  var col = existing || (nextDataHeaderCol_(sh) + 1);
+  ensureSize_(sh, 1, col);
+  sh.getRange(1, col).setValue(shipGuide_()).setWrap(true);
 }
 
 function shipGuide_() {
   return [
     DOC_MARKER,
     '재고 출고는 이 시트에서 교재 글자만 읽습니다.',
-    '이익 계산용 주문 연동에는 교재를 넣지 않습니다.',
+    '이익 계산용 주문 연동에는 교재를 넣지 않습니다. 월별 입금은 주문일(제출일시)을 씁니다.',
     '가져오는 값은 제출일시, 상태, 교재뿐입니다.',
+    '입고일과 출고일은 직접 적습니다. 제출일시를 출고일에 복사하지 않습니다.',
+    '입고일이 있으면 그 날짜에 교재를 입고로 더합니다. 박스는 주문 입고에 넣지 않습니다.',
+    '출고일이 있으면 그 날짜에 교재와 박스를 출고로 뺍니다.',
+    '출고일이 비어 있으면 아직 발송하지 않은 주문이므로 재고를 빼지 않습니다.',
     '취소와 환불은 재고에서 빼지 않습니다.'
   ].join('\n');
 }
@@ -2280,12 +2557,14 @@ function readShipOrders_(sh) {
   if (!sh) return { ready: false, rows: [] };
   if (shipSheetHealth_(sh).length) return { ready: false, rows: [] };
   var map = headerMap_(sh);
-  var dateCol = findHeader_(map, ['날짜']);
+  var dateCol = findHeader_(map, ['주문일', '날짜']);
+  var inCol = findHeader_(map, ['입고일']);
+  var outCol = findHeader_(map, ['출고일']);
   var statusCol = findHeader_(map, ['상태']);
   var textCol = findHeader_(map, ['교재']);
   var last = Math.min(Math.max(sh.getLastRow(), 1), ORDER_LAST_ROW_DEFAULT);
   if (last < 2) return { ready: true, rows: [] };
-  var width = Math.max(sh.getLastColumn(), textCol);
+  var width = Math.max(sh.getLastColumn(), textCol || 1, outCol || 1, inCol || 1);
   var values = sh.getRange(2, 1, last - 1, width).getValues();
   var rows = [];
   var r;
@@ -2296,12 +2575,27 @@ function readShipOrders_(sh) {
     if (isSheetError_(dateRaw) || isSheetError_(statusRaw) || isSheetError_(textRaw)) return { ready: false, rows: [] };
     var text = String(textRaw == null ? '' : textRaw).trim();
     var status = String(statusRaw == null ? '' : statusRaw).trim();
-    var date = formatCellDate_(dateRaw);
-    if (!text && !status && !date) continue;
-    if (!date) continue;
-    rows.push({ row: r + 2, date: date, status: status, text: text });
+    var orderDate = formatCellDate_(dateRaw);
+    var inDate = optionalDate_(inCol ? cellAt_(values[r], inCol) : '');
+    var outDate = optionalDate_(outCol ? cellAt_(values[r], outCol) : '');
+    if (!text && !status && !orderDate && !inDate && !outDate) continue;
+    if (!orderDate && !text) continue;
+    rows.push({
+      row: r + 2,
+      date: orderDate,
+      orderDate: orderDate,
+      inDate: inDate,
+      outDate: outDate,
+      status: status,
+      text: text
+    });
   }
   return { ready: true, rows: rows };
+}
+
+function optionalDate_(value) {
+  if (isSheetError_(value)) return '';
+  return formatCellDate_(value);
 }
 
 function shipImportReady_(sh) {
@@ -2365,6 +2659,9 @@ function appendMovementValues_(sh, moves) {
       if (col && col <= width) row[col - 1] = value == null ? '' : value;
     }
     put(['날짜'], mv.date || '');
+    put(['주문일'], mv.orderDate || '');
+    put(['입고일'], mv.inDate || '');
+    put(['출고일'], mv.outDate || '');
     put(['구분'], mv.kind || '');
     put(['품목'], mv.code || '');
     put(['수량'], mv.qty == null ? '' : mv.qty);
@@ -2381,10 +2678,12 @@ function appendMovementValues_(sh, moves) {
     sh.getRange(start, codeCol, codes.length, 1).setNumberFormat('@');
     sh.getRange(start, codeCol, codes.length, 1).setValues(codes);
   }
-  var dateCol = findHeader_(map, ['날짜']);
+  ['날짜', '주문일', '입고일', '출고일'].forEach(function(name) {
+    var col = findHeader_(map, [name]);
+    if (col) sh.getRange(start, col, grid.length, 1).setNumberFormat('yyyy-mm-dd');
+  });
   var qtyCol = findHeader_(map, ['수량']);
   var convCol = findHeader_(map, ['환산수량']);
-  if (dateCol) sh.getRange(start, dateCol, grid.length, 1).setNumberFormat('yyyy-mm-dd');
   if (qtyCol) sh.getRange(start, qtyCol, grid.length, 1).setNumberFormat('#,##0.##');
   if (convCol) sh.getRange(start, convCol, grid.length, 1).setNumberFormat('#,##0.##');
 }
@@ -2402,7 +2701,9 @@ function rebuildCurrentStock_(ss) {
     minimum: colLetter_(items, '최소재고'),
     moveQty: colLetter_(moves, '환산수량'),
     moveKind: colLetter_(moves, '구분'),
-    moveCode: colLetter_(moves, '품목')
+    moveCode: colLetter_(moves, '품목'),
+    moveIn: colLetter_(moves, '입고일'),
+    moveOut: colLetter_(moves, '출고일')
   };
   var dest = {
     code: colLetter_(current, '코드'),
@@ -2466,6 +2767,8 @@ function currentStockFormulas_(itemRow, destRow, moveEnd, src, dest) {
   var moveQty = quoteSheet_('입출고') + '!$' + src.moveQty + '$2:$' + src.moveQty + '$' + moveEnd;
   var moveKind = quoteSheet_('입출고') + '!$' + src.moveKind + '$2:$' + src.moveKind + '$' + moveEnd;
   var moveCode = quoteSheet_('입출고') + '!$' + src.moveCode + '$2:$' + src.moveCode + '$' + moveEnd;
+  var moveIn = src.moveIn ? (quoteSheet_('입출고') + '!$' + src.moveIn + '$2:$' + src.moveIn + '$' + moveEnd) : '';
+  var moveOut = src.moveOut ? (quoteSheet_('입출고') + '!$' + src.moveOut + '$2:$' + src.moveOut + '$' + moveEnd) : '';
   function idx(col) {
     return 'IFERROR(INDEX(' + col + ',MATCH(' + codeCell + ',' + itemCodes + ',0)),"")';
   }
@@ -2474,8 +2777,8 @@ function currentStockFormulas_(itemRow, destRow, moveEnd, src, dest) {
   out['이름'] = '=IF(' + codeCell + '="","",' + idx(names) + ')';
   out['종류'] = '=IF(' + codeCell + '="","",' + idx(kinds) + ')';
   out['기초'] = '=IF(' + codeCell + '="","",IFERROR(INDEX(' + opening + ',MATCH(' + codeCell + ',' + itemCodes + ',0))*1,0))';
-  out['입고'] = '=IF(' + codeCell + '="","",SUMIFS(' + moveQty + ',' + moveKind + ',"입고",' + moveCode + ',' + codeCell + '))';
-  out['출고'] = '=IF(' + codeCell + '="","",-SUMIFS(' + moveQty + ',' + moveKind + ',"출고",' + moveCode + ',' + codeCell + '))';
+  out['입고'] = '=IF(' + codeCell + '="","",SUMIFS(' + moveQty + ',' + moveKind + ',"입고",' + moveCode + ',' + codeCell + (moveIn ? (',' + moveIn + ',"<>"') : '') + '))';
+  out['출고'] = '=IF(' + codeCell + '="","",-SUMIFS(' + moveQty + ',' + moveKind + ',"출고",' + moveCode + ',' + codeCell + (moveOut ? (',' + moveOut + ',"<>"') : '') + '))';
   out['조정'] = '=IF(' + codeCell + '="","",SUMIFS(' + moveQty + ',' + moveKind + ',"조정",' + moveCode + ',' + codeCell + '))';
   out['현재'] = '=IF(' + codeCell + '="","",' + dest.opening + destRow + '+' + dest.inbound + destRow + '-' + dest.outbound + destRow + '+' + dest.adjustment + destRow + ')';
   out['최소재고'] = '=IF(' + codeCell + '="","",IFERROR(INDEX(' + minimum + ',MATCH(' + codeCell + ',' + itemCodes + ',0))*1,0))';
@@ -2504,7 +2807,44 @@ function mutateStock_(action, sheetName, data) {
   detectFormulaSep_(ss);
   if (sheetName === '입출고') return mutateMovement_(ss, action, data);
   if (sheetName === '재고 품목') return mutateItem_(ss, action, data);
+  if (sheetName === '주문 출고') return updateShipDates_(ss, action, data);
   return mutateRule_(ss, action, data);
+}
+
+function updateShipDates_(ss, action, data) {
+  if (action !== 'update') fail_('주문 출고에서는 입고일과 출고일만 고칠 수 있습니다.');
+  var sh = ensureStockSheet_(ss, '주문 출고');
+  ensureShipDateColumns_(sh, []);
+  var map = headerMap_(sh);
+  var row = parseRow_(data.row);
+  var record = data.record || {};
+  rejectBlockedKeys_(record);
+  var orderCol = findHeader_(map, ['주문일', '날짜']);
+  var textCol = findHeader_(map, ['교재']);
+  var actualOrder = orderCol ? formatCellDate_(sh.getRange(row, orderCol).getValue()) : '';
+  var text = textCol ? String(sh.getRange(row, textCol).getValue() || '').trim() : '';
+  if (!text && !actualOrder) fail_('주문이 없는 행입니다.');
+  if (data.match && String(firstField_(data.match, ['orderDate', '주문일']) || '').trim()) {
+    var expect = formatCellDate_(parseDateInput_(firstField_(data.match, ['orderDate', '주문일'])));
+    if (!actualOrder || actualOrder !== expect) fail_('행 내용이 일치하지 않습니다. 재고를 새로고침한 뒤 다시 시도하세요.');
+  }
+  if (hasField_(record, ['입고일', 'inDate'])) writeOptionalDate_(sh, row, findHeader_(map, ['입고일']), firstField_(record, ['입고일', 'inDate']));
+  if (hasField_(record, ['출고일', 'outDate'])) writeOptionalDate_(sh, row, findHeader_(map, ['출고일']), firstField_(record, ['출고일', 'outDate']));
+  replaceOrderMovements_(ss);
+  rebuildCurrentStock_(ss);
+  fitColumns_(sh);
+  return { ok: true, version: APP_VERSION, sheet: '주문 출고', row: row };
+}
+
+function writeOptionalDate_(sh, row, col, value) {
+  if (!col) fail_('날짜 열을 찾지 못했습니다. 초기 설정을 다시 실행하세요.');
+  var cell = sh.getRange(row, col);
+  if (value == null || String(value).trim() === '') {
+    cell.clearContent();
+    return;
+  }
+  cell.setValue(parseDateInput_(value));
+  cell.setNumberFormat('yyyy-mm-dd');
 }
 
 function mutateMovement_(ss, action, data) {
@@ -2543,8 +2883,15 @@ function movementFromRecord_(ss, record) {
   var unit = cleanText_(firstField_(record, ['단위', 'unit']) || '개', 20) || '개';
   var converted = convertedQty_(kind, qty, unit, item.perPack, item.purchaseUnit);
   if (converted == null) fail_('수량을 환산하지 못했습니다.');
+  var rawDate = firstField_(record, ['날짜', 'date']);
+  if (kind === '입고') rawDate = firstField_(record, ['입고일', 'inDate']) || rawDate;
+  if (kind === '출고') rawDate = firstField_(record, ['출고일', 'outDate']) || rawDate;
+  var date = parseDateInput_(rawDate);
   return {
-    date: parseDateInput_(firstField_(record, ['날짜', 'date'])),
+    date: date,
+    orderDate: '',
+    inDate: kind === '입고' ? date : '',
+    outDate: kind === '출고' ? date : '',
     kind: kind,
     code: code,
     qty: kind === '조정' ? qty : Math.abs(qty),
@@ -2558,8 +2905,14 @@ function movementFromRecord_(ss, record) {
 
 function writeMovementRow_(sh, map, row, mv) {
   var date = mv.date instanceof Date ? mv.date : parseDateInput_(mv.date);
+  var kind = compact_(mv.kind);
+  var inDate = kind === '입고' ? date : '';
+  var outDate = kind === '출고' ? date : '';
   writeMapped_(sh, row, map, [
     { names: ['날짜'], kind: 'date', value: date, required: true },
+    { names: ['주문일'], kind: 'text', value: '' },
+    { names: ['입고일'], kind: kind === '입고' ? 'date' : 'text', value: inDate },
+    { names: ['출고일'], kind: kind === '출고' ? 'date' : 'text', value: outDate },
     { names: ['구분'], kind: 'text', value: mv.kind, required: true },
     { names: ['품목'], kind: 'text', value: mv.code, required: true, plain: true },
     { names: ['수량'], kind: 'number', value: mv.qty, required: true },
@@ -2569,6 +2922,7 @@ function writeMovementRow_(sh, map, row, mv) {
     { names: ['출처'], kind: 'text', value: '직접', required: true },
     { names: ['주문행'], kind: 'text', value: '' }
   ]);
+  fitColumns_(sh);
 }
 
 function assertMovementMatch_(sh, map, row, match) {
