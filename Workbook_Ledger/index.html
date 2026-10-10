@@ -277,10 +277,11 @@
     text-align: center;
     letter-spacing: 2px;
     outline: none;
-    margin-bottom: 14px;
+    margin-bottom: 6px;
     min-height: 44px;
   }
   #pw-input:focus { border-color: var(--accent); }
+  #pw-hint { font-size: 12px; font-weight: 500; color: var(--text2); opacity: 0.72; margin: 0 0 8px; }
   #pw-error { font-size: 13px; color: var(--red); min-height: 18px; margin-bottom: 10px; }
   #setup-hint { display: none; text-align: left; font-size: 12px; color: var(--text2); background: var(--surface2); border-radius: 8px; padding: 12px; margin-bottom: 14px; line-height: 1.5; }
   #detail-overlay {
@@ -343,6 +344,7 @@
     <p>장부를 보려면 비밀번호를 입력하세요.</p>
     <div id="setup-hint"></div>
     <input type="password" id="pw-input" placeholder="비밀번호" autocomplete="current-password" enterkeyhint="go">
+    <div id="pw-hint">힌트: 7자리</div>
     <div id="pw-error"></div>
     <button class="btn btn-primary" id="pw-btn" style="width:100%" type="button">확인</button>
   </div>
