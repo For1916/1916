@@ -31,7 +31,8 @@
 | 위치 | 이름 | 넣을 값 |
 | --- | --- | --- |
 | `index.html` `ORDER_CONFIG.SCRIPT_URL` | `PASTE_WEB_APP_URL_HERE` | 웹 앱 배포 주소. `/exec`로 끝나야 합니다. |
-| `index.html` `ORDER_CONFIG.JUSO_CONFM_KEY` | `JUSO_CONFM_KEY_HERE` | 행정안전부 **검색 API** 승인키 |
+
+도로명주소 검색 승인키는 `ORDER_CONFIG.JUSO_CONFM_KEY`에 이미 들어가 있습니다.
 
 ## 주문서가 받는 내용
 
@@ -121,9 +122,7 @@ https://business.juso.go.kr/addrlink/addrLinkApi.do
 
 승인키는 도메인에 묶이므로 구글 서버를 거치지 않습니다. 신청 종류는 **검색 API**여야 합니다. 팝업 API 승인키는 이 페이지에서 동작하지 않습니다.
 
-1. 주소기반산업지원서비스(juso.go.kr)에서 검색 API 승인키를 신청합니다.
-2. 도메인에 `for1916.github.io`를 넣습니다. 페이지 주소는 https://for1916.github.io/1916/Workbook_Order/ 입니다.
-3. 발급된 키를 `ORDER_CONFIG.JUSO_CONFM_KEY`에 넣습니다. 지금 값은 `JUSO_CONFM_KEY_HERE`입니다.
+승인키는 `ORDER_CONFIG.JUSO_CONFM_KEY`에 넣어 두었습니다. 신청 도메인은 `for1916.github.io`이고, 페이지 주소는 https://for1916.github.io/1916/Workbook_Order/ 입니다.
 
 키는 페이지 소스에 보입니다. 검색 API 키는 등록한 도메인에서만 쓰도록 발급되므로, 그 도메인 제한이 공개된 키를 막아 줍니다.
 
@@ -156,7 +155,7 @@ https://business.juso.go.kr/addrlink/addrLinkApi.do
 
 ## 잘 안 될 때
 
-- 페이지 위 노란 글이 보임 → `SCRIPT_URL` 또는 `JUSO_CONFM_KEY`가 아직 자리표시자입니다.
+- 페이지 위 노란 글이 보임 → `SCRIPT_URL`이 아직 자리표시자입니다. 웹 앱을 배포한 뒤 `/exec` 주소를 넣으세요.
 - 주소 검색이 `승인되지 않은 KEY` → 검색 API 키인지, 도메인 `for1916.github.io`가 등록됐는지 확인합니다. 팝업 API 키는 쓸 수 없습니다.
 - 제출 뒤 `서버 응답을 읽지 못했습니다` → 배포 액세스가 **모든 사용자**인지, 주소가 `/exec`인지 확인합니다.
 - `주문 시트를 열 수 없습니다` → 웹 앱을 배포한 계정이 스프레드시트 `황소 워크북 주문 관리`를 수정할 수 있는지 확인합니다. 권한을 바꾼 뒤에는 배포를 새 버전으로 올립니다.
