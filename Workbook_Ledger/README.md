@@ -66,17 +66,15 @@
 
 스크립트를 나중에 고치면 **배포 → 배포 관리 → 연필 → 버전: 새 버전 → 배포** 를 해야 페이지가 새 코드를 사용합니다.
 
-### 5. 페이지에 주소 넣기
+### 5. 페이지 주소
 
-1. `Workbook_Ledger/index.html` 을 엽니다.
-2. 아래 글자를 찾아, 방금 복사한 `/exec` 주소로 **그 글자만** 바꿉니다.
+`Workbook_Ledger/index.html` 의 `SCRIPT_URL` 은 배포된 웹 앱 주소입니다.
 
 ```text
-PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE
+https://script.google.com/macros/s/AKfycbyShKol-v2lx0OTwMFHcZ-QQMqMbRpWXT_4yi0jvvCWjcJtG3EB1uQvJDBd3Rty0g/exec
 ```
 
-3. 저장하고 깃허브에 커밋합니다. 깃허브 웹사이트에서 이 파일을 연 뒤 연필 아이콘으로 고쳐도 됩니다.
-4. 1분 정도 뒤에 https://for1916.github.io/1916/Workbook_Ledger/ 를 열고 비밀번호를 입력합니다.
+웹 앱을 새로 배포해 주소가 바뀌면 이 값만 새 `/exec` 주소로 바꿉니다. 깃허브에 반영된 뒤 1분 정도 지나 https://for1916.github.io/1916/Workbook_Ledger/ 를 열고 비밀번호를 입력합니다.
 
 비밀번호는 그 브라우저 탭의 `sessionStorage` 에만 있습니다. 탭을 닫으면 다시 묻습니다.
 
@@ -114,13 +112,13 @@ PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE
 
 ## 도우미가 같은 웹 앱으로 행을 추가할 때
 
-비밀번호를 요청 본문에 넣어 `POST` 합니다. 주소 쿼리에 비밀번호를 붙이지 마세요. 아래 주소의 `PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE` 는 배포한 `/exec` 주소입니다.
+비밀번호를 요청 본문에 넣어 `POST` 합니다. 주소 쿼리에 비밀번호를 붙이지 마세요. 아래 주소는 배포한 `/exec` 주소입니다.
 
 지출 한 줄:
 
 ```bash
 curl -L --post301 --post302 --post303 \
-  -X POST 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE' \
+  -X POST 'https://script.google.com/macros/s/AKfycbyShKol-v2lx0OTwMFHcZ-QQMqMbRpWXT_4yi0jvvCWjcJtG3EB1uQvJDBd3Rty0g/exec' \
   -H 'Content-Type: text/plain;charset=utf-8' \
   --data '{"password":"비밀번호","action":"add","sheet":"지출","record":{"날짜":"2026-10-09","분류":"박스","금액":4500,"메모":"포장 박스"}}'
 ```
@@ -131,7 +129,7 @@ curl -L --post301 --post302 --post303 \
 
 ```bash
 curl -L --post301 --post302 --post303 \
-  -X POST 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE' \
+  -X POST 'https://script.google.com/macros/s/AKfycbyShKol-v2lx0OTwMFHcZ-QQMqMbRpWXT_4yi0jvvCWjcJtG3EB1uQvJDBd3Rty0g/exec' \
   -H 'Content-Type: text/plain;charset=utf-8' \
   --data '{"password":"비밀번호","action":"add","sheet":"수입","record":{"날짜":"2026-10-09","금액":40000,"메모":"주문 연동에 없는 판매"}}'
 ```
@@ -142,7 +140,7 @@ curl -L --post301 --post302 --post303 \
 
 ```bash
 curl -L --post301 --post302 --post303 \
-  -X POST 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE' \
+  -X POST 'https://script.google.com/macros/s/AKfycbyShKol-v2lx0OTwMFHcZ-QQMqMbRpWXT_4yi0jvvCWjcJtG3EB1uQvJDBd3Rty0g/exec' \
   -H 'Content-Type: text/plain;charset=utf-8' \
   --data '{"password":"비밀번호","action":"load"}'
 ```
@@ -151,14 +149,14 @@ curl -L --post301 --post302 --post303 \
 
 ```bash
 curl -L --post301 --post302 --post303 \
-  -X POST 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE' \
+  -X POST 'https://script.google.com/macros/s/AKfycbyShKol-v2lx0OTwMFHcZ-QQMqMbRpWXT_4yi0jvvCWjcJtG3EB1uQvJDBd3Rty0g/exec' \
   -H 'Content-Type: text/plain;charset=utf-8' \
   --data '{"password":"비밀번호","action":"update","sheet":"지출","row":5,"match":{"date":"2026-10-09","amount":4500},"record":{"날짜":"2026-10-09","분류":"박스","금액":5000,"메모":"포장 박스"}}'
 ```
 
 ```bash
 curl -L --post301 --post302 --post303 \
-  -X POST 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE' \
+  -X POST 'https://script.google.com/macros/s/AKfycbyShKol-v2lx0OTwMFHcZ-QQMqMbRpWXT_4yi0jvvCWjcJtG3EB1uQvJDBd3Rty0g/exec' \
   -H 'Content-Type: text/plain;charset=utf-8' \
   --data '{"password":"비밀번호","action":"delete","sheet":"지출","row":5,"match":{"date":"2026-10-09","amount":4500}}'
 ```
@@ -171,7 +169,7 @@ curl -L --post301 --post302 --post303 \
 
 ```bash
 curl -L --post301 --post302 --post303 \
-  -X POST 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE' \
+  -X POST 'https://script.google.com/macros/s/AKfycbyShKol-v2lx0OTwMFHcZ-QQMqMbRpWXT_4yi0jvvCWjcJtG3EB1uQvJDBd3Rty0g/exec' \
   -H 'Content-Type: text/plain;charset=utf-8' \
   --data '{"password":"비밀번호","action":"stock"}'
 ```
@@ -180,7 +178,7 @@ curl -L --post301 --post302 --post303 \
 
 ```bash
 curl -L --post301 --post302 --post303 \
-  -X POST 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE' \
+  -X POST 'https://script.google.com/macros/s/AKfycbyShKol-v2lx0OTwMFHcZ-QQMqMbRpWXT_4yi0jvvCWjcJtG3EB1uQvJDBd3Rty0g/exec' \
   -H 'Content-Type: text/plain;charset=utf-8' \
   --data '{"password":"비밀번호","action":"add","sheet":"입출고","record":{"날짜":"2026-10-09","구분":"입고","품목":"4-1","수량":2,"단위":"팩","메모":"인쇄소"}}'
 ```
@@ -194,5 +192,5 @@ curl -L --post301 --post302 --post303 \
 - 판매가 0인데 주문은 있음 → `주문 연동` 에서 액세스 허용을 눌렀는지, 상태 칸에 취소·환불이 적혀 있지 않은지 확인합니다. 2026년 7월 13일 40,000원 주문은 그 달 판매에 보여야 합니다. 원본 제출일시가 `₩46,216`처럼 보이면 날짜 숫자가 통화 서식으로 보인 것입니다. `Code.gs`를 다시 붙여 넣고 **초기 설정**을 실행하면 날짜 숫자와 `2026. 7. 13` 글자를 모두 날짜로 바꿉니다.
 - 수입 열이나 주문 연동 옆 칸에 `주문 입금`, `기타 수입`, `네이버폼`, `집계 포함` 같은 예전 안내가 남아 있으면 **초기 설정**이 그 칸을 지웁니다. 지금 쓰는 안내는 `[장부 안내]`로 시작합니다.
 - **황소 장부 → 개인정보 열 점검** 에 개인정보 열이 남아 있다고 나오면 **초기 설정**을 한 번 더 실행합니다.
-- 재고가 비어 있거나 예전 스크립트와 같음 → `Code.gs` 를 다시 붙여 넣고 저장한 뒤 **황소 장부 → 초기 설정**을 실행하고, 웹 앱을 **새 버전**으로 다시 배포합니다. 페이지 주소의 `PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE` 자리만 `/exec` 주소로 바뀌어 있으면 그 주소는 그대로 둡니다.
+- 재고가 비어 있거나 예전 스크립트와 같음 → `Code.gs` 를 다시 붙여 넣고 저장한 뒤 **황소 장부 → 초기 설정**을 실행하고, 웹 앱을 **새 버전**으로 다시 배포합니다. 배포 주소가 바뀌지 않았으면 `index.html` 의 `SCRIPT_URL` 은 그대로 둡니다.
 - 주문했는데 교재 재고가 안 줄어듦 → `주문 출고` 시트에서 액세스 허용을 눌렀는지 확인하고, **재고 새로고침**을 실행합니다. 상태가 취소 또는 환불인 주문은 빼지 않습니다.
