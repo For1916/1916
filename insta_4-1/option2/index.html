@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>황소 워크북 4-1 — option 2 레트로 선셋</title>
+<!--
+  Palette — Figma resource library, 조합 36 레트로 선셋 (Retro sunset)
+  https://www.figma.com/ko-kr/resource-library/color-combinations/
+  Burnt orange, mustard yellow, and teal, tuned for text contrast.
+  Paper        #FBF6EF
+  Cream        #FFFCF7
+  Sand         #F4E4D0
+  Mustard      #C9963A
+  Mustard ink  #6A5428
+  Burnt orange #B84E28
+  Teal         #1F6A62
+  Deep teal    #143E3A
+-->
+<style>
+@font-face {
+  font-family: "Pretendard";
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  src: url("../fonts/Pretendard-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Pretendard";
+  font-weight: 500;
+  font-style: normal;
+  font-display: block;
+  src: url("../fonts/Pretendard-Medium.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Pretendard";
+  font-weight: 600;
+  font-style: normal;
+  font-display: block;
+  src: url("../fonts/Pretendard-SemiBold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Pretendard";
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+  src: url("../fonts/Pretendard-Bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Pretendard";
+  font-weight: 800;
+  font-style: normal;
+  font-display: block;
+  src: url("../fonts/Pretendard-ExtraBold.woff2") format("woff2");
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; letter-spacing: 0; }
+html, body {
+  background: #FBF6EF;
+  font-family: "Pretendard", sans-serif;
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+}
+em { font-style: normal; }
+.card {
+  width: 1080px;
+  height: 1080px;
+  position: relative;
+  overflow: hidden;
+  background: #FBF6EF;
+  color: #143E3A;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-top: 8px solid #B84E28;
+  padding: 28px 60px 0;
+}
+.pager {
+  background: #1F6A62;
+  color: #FFFCF7;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.main {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 22px;
+}
+.kicker {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #B84E28;
+  text-align: center;
+}
+.hero {
+  width: 100%;
+  margin-top: 14px;
+  background: #1F6A62;
+  color: #FFFCF7;
+  border-radius: 28px;
+  text-align: center;
+  padding: 28px 36px;
+}
+.hero h1 {
+  font-weight: 800;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+}
+.signoff {
+  width: 100%;
+  flex: none;
+  height: 92px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.rule {
+  width: 56px;
+  height: 4px;
+  background: #C9963A;
+  display: block;
+}
+.sign {
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #143E3A;
+}
+
+/* card 01 */
+#c1 .hero h1 {
+  font-size: 72px;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+#c1 .lead {
+  margin-top: 26px;
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: center;
+  color: #143E3A;
+}
+#c1 .cta {
+  margin-top: 26px;
+  background: #B84E28;
+  color: #FFFCF7;
+  border-radius: 999px;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 18px 40px;
+}
+#c1 .event {
+  margin-top: 32px;
+  margin-bottom: 4px;
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.event {
+  width: 100%;
+  background: #F4E4D0;
+  border-radius: 24px;
+  padding: 26px 32px 28px;
+  text-align: center;
+}
+.event .label {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #B84E28;
+}
+.event .copy {
+  margin-top: 8px;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #143E3A;
+}
+.event .copy em { font-weight: 800; color: #B84E28; }
+
+/* card 02 */
+#c2 .hero { padding: 18px 36px 20px; }
+#c2 .hero h1 { font-size: 46px; }
+#c2 .hero h1 em { color: #F6D48A; }
+.steps {
+  width: 100%;
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.step {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 168px 1fr;
+  align-items: center;
+  gap: 8px;
+  background: #FFFCF7;
+  border: 1.5px solid #E7D7C4;
+  border-radius: 20px;
+  padding: 13px 26px;
+}
+.step.mid {
+  background: #1F6A62;
+  border-color: #1F6A62;
+}
+.step .tag {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #1F6A62;
+}
+.step.mid .tag { color: #F6D48A; }
+.step .t {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: #143E3A;
+}
+.step.mid .t { color: #FFFCF7; }
+.step .d {
+  margin-top: 2px;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #3E5955;
+}
+.step.mid .d { color: #F4E4D0; }
+.down {
+  color: #B84E28;
+  height: 22px;
+  display: flex;
+  align-items: center;
+}
+.quote {
+  width: 100%;
+  margin-top: 16px;
+  text-align: center;
+  background: #FFFCF7;
+  border-radius: 20px;
+  padding: 16px 32px;
+  border: 1.5px solid #E7D7C4;
+}
+.quote p {
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #143E3A;
+}
+.quote em { font-weight: 800; color: #B84E28; }
+.stats {
+  width: 100%;
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+}
+.stat { text-align: center; padding: 6px 8px 0; }
+.stat b {
+  display: block;
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.005em;
+  color: #1F6A62;
+}
+.stat i {
+  display: block;
+  width: 28px;
+  height: 3px;
+  margin: 8px auto 0;
+  background: #C9963A;
+}
+.stat span {
+  display: block;
+  margin-top: 6px;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #143E3A;
+}
+
+/* card 03 */
+#c3 .hero { padding: 22px 36px; }
+#c3 .hero h1 { font-size: 52px; }
+#c3 .hero h1 em { color: #F6D48A; }
+#c3 .grid {
+  width: 100%;
+  margin-top: 20px;
+  margin-bottom: 8px;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 14px;
+}
+.cell {
+  background: #FFFCF7;
+  border: 1.5px solid #E7D7C4;
+  border-radius: 22px;
+  padding: 18px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.cell .head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #1F6A62;
+  color: #FFFCF7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  flex: none;
+}
+.cell .usage {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #B84E28;
+}
+.cell h2 {
+  margin-top: 8px;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: #143E3A;
+}
+.cell .body {
+  margin-top: 8px;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #143E3A;
+  word-break: keep-all;
+}
+.tip {
+  margin-top: auto;
+  background: #F4E4D0;
+  color: #143E3A;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+  padding: 8px 12px;
+  word-break: keep-all;
+}
+
+/* card 04 */
+#c4 .hero { padding: 26px 36px 28px; }
+#c4 .hero h1 { font-size: 64px; }
+#c4 .lead {
+  margin-top: 16px;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: center;
+  color: #143E3A;
+}
+#c4 .pills {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+#c4 .pill {
+  border: 1.5px solid #1F6A62;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #143E3A;
+  white-space: nowrap;
+  background: #FFFCF7;
+}
+#c4 .pill b { color: #B84E28; font-weight: 800; }
+#c4 .info {
+  width: 100%;
+  margin-top: 16px;
+  background: #FFFCF7;
+  border: 1.5px solid #E7D7C4;
+  border-radius: 22px;
+  padding: 4px 28px;
+}
+#c4 .row {
+  display: grid;
+  grid-template-columns: 176px 1fr;
+  gap: 12px;
+  align-items: baseline;
+  padding: 11px 0;
+  box-shadow: inset 0 1px 0 #E7D7C4;
+}
+#c4 .row:first-child { box-shadow: none; }
+#c4 .k {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #3E5955;
+}
+#c4 .v {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #143E3A;
+  word-break: keep-all;
+}
+#c4 .v.link { color: #1F6A62; font-weight: 700; }
+#c4 .event {
+  margin-top: 14px;
+  background: #1F6A62;
+  border-radius: 22px;
+  padding: 18px 28px 20px;
+}
+#c4 .event .label { color: #F6D48A; }
+#c4 .event .copy { color: #FFFCF7; font-size: 24px; }
+#c4 .event .copy em { color: #F6D48A; }
+#c4 .note {
+  margin-top: 12px;
+  margin-bottom: 4px;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: center;
+  color: #143E3A;
+  word-break: keep-all;
+}
+</style>
+</head>
+<body>
+<section class="card" id="c1">
+  <p class="pager">01 / 04</p>
+  <div class="main">
+    <p class="kicker">ORDER REOPENED</p>
+    <div class="hero"><h1>황소 워크북 4-1</h1></div>
+    <p class="lead">주문이 다시 열렸습니다</p>
+    <p class="cta">주문 재개</p>
+    <div class="event">
+      <p class="label">EVENT</p>
+      <p class="copy">리포스트 · 팔로우 · 댓글 · 좋아요 해주신 분 중<br>추첨을 통해 <em>교재 1권</em>을 더 보내드립니다</p>
+    </div>
+  </div>
+  <div class="signoff"><span class="rule"></span><p class="sign">도진우 수학 연구소</p></div>
+</section>
+
+<section class="card" id="c2">
+  <p class="pager">02 / 04</p>
+  <div class="main">
+    <p class="kicker">WHAT IS IT</p>
+    <div class="hero">
+      <h1>M 6~8문제에<br><em>1:1</em> 대응하는<br>유사 문제</h1>
+    </div>
+    <div class="steps">
+      <article class="step">
+        <p class="tag">원본</p>
+        <div>
+          <p class="t">교재 Mission</p>
+          <p class="d">M 6~8문제</p>
+        </div>
+      </article>
+      <div class="down" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M12 4v14M6 13l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/>
+        </svg>
+      </div>
+      <article class="step mid">
+        <p class="tag">황소 워크북</p>
+        <div>
+          <p class="t">1:1 유사문제</p>
+          <p class="d">동일 구조 · 수치·조건 변형</p>
+        </div>
+      </article>
+      <div class="down" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M12 4v14M6 13l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/>
+        </svg>
+      </div>
+      <article class="step">
+        <p class="tag">효과</p>
+        <div>
+          <p class="t">개념 완전정복</p>
+          <p class="d">실전 사고력 완성</p>
+        </div>
+      </article>
+    </div>
+    <div class="quote">
+      <p>탐구 과제의 핵심 구조와 풀이 메커니즘은 그대로 유지하면서,<br>수치와 조건을 바꿔 <em>진짜</em> 이해력을 확인합니다.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><b>6~8문제</b><i></i><span>유사문제 수</span></div>
+      <div class="stat"><b>1:1</b><i></i><span>완전 대응</span></div>
+      <div class="stat"><b>4가지</b><i></i><span>활용 목적</span></div>
+    </div>
+  </div>
+  <div class="signoff"><span class="rule"></span><p class="sign">도진우 수학 연구소</p></div>
+</section>
+
+<section class="card" id="c3">
+  <p class="pager">03 / 04</p>
+  <div class="main">
+    <p class="kicker">HOW TO USE</p>
+    <div class="hero"><h1>이렇게 <em>활용하세요</em></h1></div>
+    <div class="grid">
+      <article class="cell">
+        <div class="head"><span class="num">01</span><p class="usage">USAGE 01</p></div>
+        <h2>복습 &amp; 개념 정착</h2>
+        <p class="body">수업 직후 황소 교재와 1:1 대응되는<br>유사문제를 풀어보며, 오늘 배운<br>개념이 진짜 내 것인지 확인합니다.</p>
+        <p class="tip">수업 당일 또는 다음 날 풀기 (선택)</p>
+      </article>
+      <article class="cell">
+        <div class="head"><span class="num">02</span><p class="usage">USAGE 02</p></div>
+        <h2>퀵테스트 대비</h2>
+        <p class="body">퀵테 당일, 유사문제로 빠르게 점검합니다.<br>개념을 이해했는지 체크하고<br>실전 감각을 연습합니다.</p>
+        <p class="tip">퀵테 당일 집중 점검용</p>
+      </article>
+      <article class="cell">
+        <div class="head"><span class="num">03</span><p class="usage">USAGE 03</p></div>
+        <h2>단원평가 대비</h2>
+        <p class="body">단원 전체 미션의 유사문제를<br>처음부터 다시 풀면서 취약 문항을 파악합니다.<br>실수 패턴을 짚어 단원평가 완성도를 높입니다.</p>
+        <p class="tip">단원평가 전, 모든 문제 점검</p>
+      </article>
+      <article class="cell">
+        <div class="head"><span class="num">04</span><p class="usage">USAGE 04</p></div>
+        <h2>성취도 평가 대비</h2>
+        <p class="body">성취도 평가 대비에 최적화된<br>통합 복습 루틴입니다.<br>전 단원 유사문제를 회독하며<br>사고력 · 문제해결력을 최종 점검합니다.</p>
+        <p class="tip">성취도 평가 전, 전 범위 복습</p>
+      </article>
+    </div>
+  </div>
+  <div class="signoff"><span class="rule"></span><p class="sign">도진우 수학 연구소</p></div>
+</section>
+
+<section class="card" id="c4">
+  <p class="pager">04 / 04</p>
+  <div class="main">
+    <div class="hero"><h1>주문이<br>다시 열렸습니다</h1></div>
+    <p class="lead">지금 주문하세요</p>
+    <div class="pills">
+      <p class="pill"><b>1</b> 복습</p>
+      <p class="pill"><b>2</b> 퀵테스트 대비</p>
+      <p class="pill"><b>3</b> 단원평가 대비</p>
+      <p class="pill"><b>4</b> 성취도 평가 대비</p>
+    </div>
+    <div class="info">
+      <div class="row"><p class="k">주문</p><p class="v link">1916.s.gy/form41</p></div>
+      <div class="row"><p class="k">배송</p><p class="v">11월 마지막 주 일괄 배송</p></div>
+      <div class="row"><p class="k">대상</p><p class="v">황소 수강생, 편입 대비, 중등 신입학 대비</p></div>
+      <div class="row"><p class="k">알림 / 문의</p><p class="v link">instagram.com/jinu._.heart</p></div>
+      <div class="row"><p class="k">프로필 페이지</p><p class="v link">도진우.enn.kr</p></div>
+    </div>
+    <div class="event">
+      <p class="label">EVENT</p>
+      <p class="copy">리포스트 · 팔로우 · 댓글 · 좋아요 해주신 분 중<br>추첨을 통해 <em>교재 1권</em>을 더 보내드립니다</p>
+    </div>
+    <p class="note">선착순 주문으로 중도 마감될 수 있으며, 이 경우 100% 환불됩니다</p>
+  </div>
+  <div class="signoff"><span class="rule"></span><p class="sign">도진우 수학 연구소</p></div>
+</section>
+</body>
+</html>
