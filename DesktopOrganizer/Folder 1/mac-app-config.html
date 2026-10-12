@@ -173,8 +173,9 @@
         <p><strong>체험 후</strong> 동일 기능 · 라이선스 구매 필요 (미구매 시 제한)</p>
       </div>
       <div class="trial-box btt" id="btt-trial">
-        체험 종료일: <span id="btt-end-date">확인 중</span>
-        <div class="hint">Mac → BetterTouchTool → Settings → License</div>
+        체험 종료일: <span id="btt-end-date">2026. 11. 19.</span>
+        · 남은 <span id="btt-days-left">38</span>일
+        <div class="hint">체험 시작(추정): 2026. 10. 5. · BTT 구매 창 「평가판 38일 남음」 캡처 (2026. 10. 12.)</div>
       </div>
     </section>
 
@@ -213,13 +214,11 @@
   </section>
 
   <script>
-    // Optional: open HTML with ?bttEnd=2026-11-26&setappEnd=2026-11-08
+    // Override: ?bttEnd=2026-11-19&bttDays=38&setappEnd=2026-11-08
     const params = new URLSearchParams(location.search);
-    const btt = params.get("bttEnd");
-    const setapp = params.get("setappEnd");
-    if (btt) document.getElementById("btt-end-date").textContent = btt;
-    else document.getElementById("btt-end-date").textContent = "Mac BTT License 탭 값으로 기입";
-    if (setapp) document.getElementById("setapp-end-date").textContent = setapp;
+    if (params.get("bttEnd")) document.getElementById("btt-end-date").textContent = params.get("bttEnd");
+    if (params.get("bttDays")) document.getElementById("btt-days-left").textContent = params.get("bttDays");
+    if (params.get("setappEnd")) document.getElementById("setapp-end-date").textContent = params.get("setappEnd");
   </script>
 </body>
 </html>
