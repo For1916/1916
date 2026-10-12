@@ -12,7 +12,7 @@
       background: #f4f5f7;
       color: #1a1a1a;
       padding: 40px 48px;
-      width: 1200px;
+      width: 1280px;
       line-height: 1.45;
     }
     h1 {
@@ -33,7 +33,28 @@
       border: 2px solid #e5e7eb;
       padding: 20px 22px;
     }
-    .card.wide { grid-column: 1 / -1; max-width: 720px; }
+    .card.wide { grid-column: 1 / -1; }
+    .card.btt { grid-row: span 1; }
+    .subhead {
+      font-size: 12px;
+      font-weight: 700;
+      color: #4b5563;
+      margin: 12px 0 6px;
+      text-transform: none;
+    }
+    .tier ul {
+      margin: 4px 0 6px 1.15em;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .tier li { margin: 2px 0; }
+    .sources {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 20px;
+      line-height: 1.5;
+    }
+    .sources a { color: #4b5563; }
     .card.alfred { border-color: #a78bfa; }
     .card.btt { border-color: #34d399; }
     .card.cleanshot { border-color: #60a5fa; }
@@ -146,15 +167,28 @@
     <section class="card alfred">
       <div class="card-head">
         <h2>Alfred</h2>
-        <span class="badge purple">기본 무료 · Powerpack 일회성</span>
+        <span class="badge purple">코어 무료 · Powerpack 일회성</span>
       </div>
+      <p class="subhead">내 설정 (예정)</p>
       <ul class="features">
-        <li>앱 / 파일 / 기능 검색</li>
-        <li>Clipboard History · Workflows · Snippets</li>
+        <li>앱 / 파일 / 기능 검색 (Spotlight 대비 한글·워크플로 확장)</li>
+        <li>Clipboard History — 텍스트·이미지·파일 경로 (최대 3개월 등 설정)</li>
+        <li>Workflows — 반복 작업·파일 정리·텍스트 변환 자동화</li>
       </ul>
       <div class="tier">
-        <p><strong>무료</strong> 앱·파일 검색, 웹 검색, 계산기, 시스템 명령(기본)</p>
-        <p><strong>유료 (Powerpack)</strong> 클립보드 기록, Workflows, Snippets, 테마·딥 링크 등</p>
+        <p><strong>무료 (Alfred 5 코어)</strong></p>
+        <ul>
+          <li>앱 실행·파일 검색, 웹/맞춤 검색, Fallback 검색(Google·Wikipedia 등)</li>
+          <li>계산기, 사전, 북마크, Quick Look, Large Type</li>
+          <li>시스템 명령(앱 종료·숨김 등), 연락처 기본 검색</li>
+        </ul>
+        <p><strong>유료 (Powerpack)</strong></p>
+        <ul>
+          <li>Clipboard History, Snippets·텍스트 확장(날짜·클립보드 변수 등)</li>
+          <li>Workflows(핫키·키워드·Remote), File Navigation·Universal Actions</li>
+          <li>Contacts Viewer, Music Mini Player, 1Password 연동</li>
+          <li>터미널/Shell 실행, 커스텀 테마, 설정 동기화·백업</li>
+        </ul>
       </div>
     </section>
 
@@ -163,14 +197,36 @@
         <h2>BetterTouchTool</h2>
         <span class="badge green">45일 체험 → 일회성 약 $25</span>
       </div>
+      <p class="subhead">내 설정 (예정)</p>
       <ul class="features">
-        <li>Right Option → 한/영 전환</li>
-        <li>Finder Enter → 열기 · F2 → 이름 변경</li>
-        <li>트랙패드/마우스 제스처 · 앱별 설정</li>
+        <li>Right Option → 한/영 전환 (Karabiner 없이)</li>
+        <li>Finder Enter → 파일 열기 · F2 → 이름 변경</li>
+        <li>검증 후 Karabiner 제거 후보</li>
       </ul>
       <div class="tier">
-        <p><strong>체험 중 (45일)</strong> 위 기능 전부 사용 가능</p>
-        <p><strong>체험 후</strong> 동일 기능 · 라이선스 구매 필요 (미구매 시 제한)</p>
+        <p><strong>체험 / 유료</strong> — 별도 무료 티어 없음. 체험·라이선스 모두 <em>600+ 액션·전 트리거</em> 동일</p>
+        <p><strong>키보드</strong></p>
+        <ul>
+          <li>전역·앱별 단축키, 좌/우 modifier 구분, 길게 누르기·Key Sequence</li>
+          <li>Hyper Key(예: Caps Lock → ⌘⌥⌃⇧), 텍스트 확장·스니펫</li>
+          <li>조건 분기: 활성 앱·창·Wi‑Fi·시간·사용자 변수</li>
+        </ul>
+        <p><strong>트랙패드·마우스</strong></p>
+        <ul>
+          <li>탭·스와이프·Tip Tap·Force Click 등 손가락 수·앱별 제스처</li>
+          <li>제스처 → 창 조작·단축키·스크립트·앱 전환 등 연결</li>
+        </ul>
+        <p><strong>창 관리</strong></p>
+        <ul>
+          <li>가장자리/모서리 스냅, 사용자 Snap Area, 키보드·제스처로 반쪽·최대화</li>
+          <li>modifier+드래그로 창 이동·리사이즈, Window Switcher, Stage Manager 연동</li>
+        </ul>
+        <p><strong>기타 (공식)</strong></p>
+        <ul>
+          <li>Floating Menu·위젯(HUD), 텍스트 선택 시 빠른 액션 메뉴</li>
+          <li>Stream Deck·매크로 패드 네이티브(Elgato 등, 제조사 앱 불필요)</li>
+          <li>메뉴 막대 항목·스크린샷 편집·드로잉 제스처·매크로 체인</li>
+        </ul>
       </div>
       <div class="trial-box btt" id="btt-trial">
         체험 종료일: <span id="btt-end-date">2026. 11. 19.</span>
@@ -184,13 +240,26 @@
         <h2>CleanShot X</h2>
         <span class="badge blue">Setapp 또는 개별 약 $35</span>
       </div>
+      <p class="subhead">내 설정 (예정)</p>
       <ul class="features">
-        <li>영역/창/전체/스크롤 캡처 · OCR · 녹화</li>
-        <li>지정 폴더 자동 저장 + 클립보드 복사</li>
+        <li>캡처(영역/창/전체/스크롤) — 채팅·코드 등 긴 화면</li>
+        <li>지정 폴더 자동 저장 + 클립보드 동시 복사</li>
+        <li>스크롤 캡처 · OCR · 화면 녹화(GIF/영상)</li>
       </ul>
       <div class="tier">
-        <p><strong>무료</strong> 없음 (macOS ⌘⇧3/4만 무료 대안)</p>
-        <p><strong>유료</strong> 캡처·편집·클라우드·GIF 등 전 기능 — Setapp 구독 또는 단품</p>
+        <p><strong>무료</strong></p>
+        <ul>
+          <li>앱 자체 무료 버전 없음 — macOS 기본 캡처(⌘⇧3/4/5)·미리보기 Markup만 무료 대안</li>
+        </ul>
+        <p><strong>유료 (단품·Setapp)</strong></p>
+        <ul>
+          <li>캡처: 영역·창·전체·스크롤(가로/세로), 셀프 타이머, Quick Access Overlay</li>
+          <li>편집: 화살표·텍스트·단계 번호, 블러·픽셀·가리기, 배경·크롭, .cleanshot 재편집</li>
+          <li>OCR: 이미지·스캔에서 텍스트 복사(온디바이스), QR 코드, 30+ 언어</li>
+          <li>녹화: MP4·GIF, 웹캠 오버레이, 녹화 후 간단 편집</li>
+          <li>핀(화면 고정), 드래그 앤 드롭 공유, 폴더·클립보드 자동 저장</li>
+          <li>CleanShot Cloud: 링크 공유·협업(댓글)·비밀번호 링크 — <em>클라우드 없이도 앱 사용 가능</em>, 단품은 저장 용량 제한(약 1GB급)</li>
+        </ul>
       </div>
       <div class="trial-box setapp" id="setapp-trial">
         Setapp 7일 체험 종료일: <span id="setapp-end-date">체험 시작 후 +7일</span>
@@ -212,6 +281,15 @@
       <span class="no"><strong>아니오</strong> — BTT Lifetime + CleanShot X 등 필요 앱만 단품</span>
     </div>
   </section>
+
+  <p class="sources">
+    기능 정리 출처:
+    <a href="https://www.alfredapp.com/help/overview/">Alfred Features</a> ·
+    <a href="https://www.alfredapp.com/powerpack/">Alfred Powerpack</a> ·
+    <a href="https://folivora.ai/features/">BetterTouchTool Features</a> ·
+    <a href="https://cleanshot.com/features">CleanShot X Features</a>
+    (2026-10 웹 검색·공식 페이지 기준)
+  </p>
 
   <script>
     // Override: ?bttEnd=2026-11-19&bttDays=38&setappEnd=2026-11-08
