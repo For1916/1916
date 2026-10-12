@@ -1,0 +1,15 @@
+말씀하신 경로 (Mac Finder)
+  DesktopOrganizer / Folder 1
+  (Codex 폴더와 같은 단계에 있는 DesktopOrganizer)
+
+Cloud Agent가 실제로 쓸 수 있는 위치
+  GitHub 레포 for1916/1916 안의 DesktopOrganizer/Folder 1
+  → Mac 바탕화면 경로와 자동으로 같지 않습니다.
+
+Mac Finder에 넣는 방법
+  1) Cursor에서 DesktopOrganizer의 **상위 폴더**(Codex가 보이는 그 위치)를 워크스페이스로 연 다음 **로컬 Agent**로 같은 작업 요청
+  2) 이 채팅에 첨부된 PNG를 Finder에서 Folder 1로 드래그
+  3) Mac에서 "Mac Finder에 저장.command" 실행 (이 폴더가 이미 Mac의 Folder 1일 때만 동작)
+
+최신 PNG 파일명
+  새 Mac 앱 구성 (Mole 제외, 체험일 표기).png
