@@ -2,21 +2,16 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>황소 워크북 4-1 — option 1 얼어붙은 호수</title>
+<title>황소 워크북 4-1 — option 1 버블검 팝</title>
 <!--
-  Palette — Figma resource library, 조합 85 얼어붙은 호수 (Frozen lake)
+  Palette — Figma resource library, 조합 37 버블검 팝 (Bubblegum pop)
   https://www.figma.com/ko-kr/resource-library/color-combinations/
-  Slate anchors are Figma’s published slate grays; icy blue and snow white
-  sit in the same cool family.
-  Snow white   #F7FBFD
-  Icy field    #D3E9F4
-  Pale ice     #E7F4FA
-  Icy blue     #7EB6D6
-  Light slate  #ADCCED
-  Lake         #18597A
-  Slate gray   #6D8196
-  Slate text   #546373
-  Deep slate   #36404A
+  Bright bubblegum pink, vivid turquoise, and clean white.
+  White        #FFFFFF
+  Ink          #111111
+  Turquoise    #00D1C1
+  Bubblegum    #FF2D87
+  Deep pink    #D1006A
 -->
 <style>
 @font-face {
@@ -57,7 +52,7 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; letter-spacing: 0; }
 html, body {
-  background: #D3E9F4;
+  background: #00D1C1;
   font-family: "Pretendard", sans-serif;
   font-synthesis: none;
   text-rendering: geometricPrecision;
@@ -69,11 +64,11 @@ em { font-style: normal; }
   height: 1080px;
   position: relative;
   overflow: hidden;
-  background: #D3E9F4;
-  color: #36404A;
+  background: #00D1C1;
+  color: #111111;
   display: flex;
   flex-direction: column;
-  border-top: 10px solid #7EB6D6;
+  border-top: 10px solid #FF2D87;
 }
 .pager {
   position: absolute;
@@ -82,7 +77,7 @@ em { font-style: normal; }
   font-size: 20px;
   font-weight: 600;
   line-height: 1;
-  color: #18597A;
+  color: #111111;
 }
 .main {
   flex: 1;
@@ -98,20 +93,20 @@ em { font-style: normal; }
   font-size: 18px;
   font-weight: 700;
   line-height: 1.4;
-  color: #18597A;
+  color: #111111;
 }
 .kicker i {
   width: 10px;
   height: 10px;
-  background: #18597A;
+  background: #111111;
   display: block;
   flex: none;
 }
 .sign {
   height: 100px;
   flex: none;
-  background: #18597A;
-  color: #F7FBFD;
+  background: #D1006A;
+  color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -128,20 +123,20 @@ em { font-style: normal; }
   line-height: 1.12;
   letter-spacing: -0.005em;
   white-space: nowrap;
-  color: #36404A;
+  color: #111111;
 }
 #c1 .lead {
   margin-top: 20px;
   font-size: 34px;
   font-weight: 500;
   line-height: 1.45;
-  color: #36404A;
+  color: #111111;
 }
 #c1 .cta {
   margin-top: 32px;
   align-self: flex-start;
-  background: #18597A;
-  color: #F7FBFD;
+  background: #D1006A;
+  color: #FFFFFF;
   font-size: 28px;
   font-weight: 700;
   line-height: 1;
@@ -156,24 +151,24 @@ em { font-style: normal; }
 }
 
 .event {
-  background: #F7FBFD;
-  border-left: 8px solid #18597A;
+  background: #FFFFFF;
+  border-left: 8px solid #D1006A;
   padding: 28px 32px 30px;
 }
 .event .label {
   font-size: 16px;
   font-weight: 700;
   line-height: 1.4;
-  color: #18597A;
+  color: #D1006A;
 }
 .event .copy {
   margin-top: 10px;
   font-size: 26px;
   font-weight: 500;
   line-height: 1.5;
-  color: #36404A;
+  color: #111111;
 }
-.event .copy em { font-weight: 800; color: #18597A; }
+.event .copy em { font-weight: 800; color: #D1006A; }
 
 /* card 02 */
 #c2 .kicker { margin-top: 8px; }
@@ -183,9 +178,9 @@ em { font-style: normal; }
   font-weight: 800;
   line-height: 1.22;
   letter-spacing: -0.005em;
-  color: #36404A;
+  color: #111111;
 }
-#c2 h1 em { color: #18597A; }
+#c2 h1 em { color: #111111; }
 .flow {
   margin-top: 28px;
   display: flex;
@@ -195,71 +190,71 @@ em { font-style: normal; }
 .step {
   flex: 1;
   min-width: 0;
-  background: #F7FBFD;
+  background: #FFFFFF;
   padding: 22px 18px 20px;
   display: flex;
   flex-direction: column;
 }
-.step.mid { background: #18597A; color: #F7FBFD; }
+.step.mid { background: #D1006A; color: #FFFFFF; }
 .step .tag {
   font-size: 16px;
   font-weight: 700;
   line-height: 1.4;
-  color: #18597A;
+  color: #D1006A;
 }
-.step.mid .tag { color: #ADCCED; }
+.step.mid .tag { color: #FFFFFF; }
 .step .t {
   margin-top: 12px;
   font-size: 28px;
   font-weight: 800;
   line-height: 1.25;
-  color: #36404A;
+  color: #111111;
 }
-.step.mid .t { color: #F7FBFD; }
+.step.mid .t { color: #FFFFFF; }
 .step .d {
   margin-top: 10px;
   font-size: 18px;
   font-weight: 500;
   line-height: 1.5;
-  color: #546373;
+  color: #111111;
 }
-.step.mid .d { color: #E7F4FA; }
+.step.mid .d { color: #FFFFFF; }
 .arrow {
   width: 28px;
   flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #18597A;
+  color: #111111;
 }
 .quote {
   margin-top: 22px;
-  background: #F7FBFD;
-  border-left: 8px solid #7EB6D6;
+  background: #FFFFFF;
+  border-left: 8px solid #FF2D87;
   padding: 22px 28px;
 }
 .quote p {
   font-size: 24px;
   font-weight: 500;
   line-height: 1.5;
-  color: #36404A;
+  color: #111111;
 }
-.quote em { font-weight: 800; color: #18597A; }
+.quote em { font-weight: 800; color: #D1006A; }
 .stats {
   margin-top: 22px;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  background: #F7FBFD;
+  background: #FFFFFF;
 }
 .stat { text-align: center; padding: 18px 8px 16px; }
-.stat + .stat { box-shadow: inset 1px 0 0 #D3E9F4; }
+.stat + .stat { box-shadow: inset 1px 0 0 #FF2D87; }
 .stat b {
   display: block;
   font-size: 42px;
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.005em;
-  color: #18597A;
+  color: #D1006A;
 }
 .stat span {
   display: block;
@@ -267,7 +262,7 @@ em { font-style: normal; }
   font-size: 18px;
   font-weight: 500;
   line-height: 1.5;
-  color: #546373;
+  color: #111111;
 }
 
 /* card 03 */
@@ -277,9 +272,9 @@ em { font-style: normal; }
   font-weight: 800;
   line-height: 1.2;
   letter-spacing: -0.005em;
-  color: #36404A;
+  color: #111111;
 }
-#c3 h1 em { color: #18597A; }
+#c3 h1 em { color: #111111; }
 .grid {
   margin-top: 24px;
   flex: 1;
@@ -290,7 +285,7 @@ em { font-style: normal; }
   gap: 16px;
 }
 .cell {
-  background: #F7FBFD;
+  background: #FFFFFF;
   padding: 20px 22px 16px;
   display: flex;
   flex-direction: column;
@@ -301,27 +296,27 @@ em { font-style: normal; }
   font-size: 15px;
   font-weight: 700;
   line-height: 1.4;
-  color: #18597A;
+  color: #D1006A;
 }
 .cell h2 {
   margin-top: 6px;
   font-size: 28px;
   font-weight: 800;
   line-height: 1.3;
-  color: #36404A;
+  color: #111111;
 }
 .cell .body {
   margin-top: 10px;
   font-size: 22px;
   font-weight: 400;
   line-height: 1.5;
-  color: #36404A;
+  color: #111111;
   word-break: keep-all;
 }
 .tip {
   margin-top: auto;
-  background: #D3E9F4;
-  color: #18597A;
+  background: #FF2D87;
+  color: #111111;
   font-size: 17px;
   font-weight: 600;
   line-height: 1.5;
@@ -336,14 +331,14 @@ em { font-style: normal; }
   font-weight: 800;
   line-height: 1.18;
   letter-spacing: -0.005em;
-  color: #36404A;
+  color: #111111;
 }
 #c4 .lead {
   margin-top: 12px;
   font-size: 28px;
   font-weight: 500;
   line-height: 1.45;
-  color: #546373;
+  color: #111111;
 }
 .pills {
   margin-top: 22px;
@@ -352,18 +347,18 @@ em { font-style: normal; }
   gap: 10px;
 }
 .pill {
-  background: #F7FBFD;
+  background: #FFFFFF;
   padding: 10px 16px;
   font-size: 18px;
   font-weight: 600;
   line-height: 1.4;
-  color: #36404A;
+  color: #111111;
   white-space: nowrap;
 }
-.pill b { color: #18597A; font-weight: 800; }
+.pill b { color: #D1006A; font-weight: 800; }
 .info {
   margin-top: 18px;
-  background: #F7FBFD;
+  background: #FFFFFF;
   padding: 4px 28px;
 }
 .row {
@@ -372,39 +367,39 @@ em { font-style: normal; }
   gap: 16px;
   align-items: baseline;
   padding: 12px 0;
-  box-shadow: inset 0 1px 0 #D3E9F4;
+  box-shadow: inset 0 1px 0 #FF2D87;
 }
 .row:first-child { box-shadow: none; }
 .row .k {
   font-size: 18px;
   font-weight: 500;
   line-height: 1.5;
-  color: #546373;
+  color: #111111;
 }
 .row .v {
   font-size: 22px;
   font-weight: 600;
   line-height: 1.5;
-  color: #36404A;
+  color: #111111;
   word-break: keep-all;
 }
-.row .v.link { color: #18597A; font-weight: 700; }
+.row .v.link { color: #D1006A; font-weight: 700; }
 #c4 .event {
   margin-top: 16px;
-  background: #18597A;
+  background: #D1006A;
   border-left: 0;
-  color: #F7FBFD;
+  color: #FFFFFF;
   padding: 20px 28px 22px;
 }
-#c4 .event .label { color: #ADCCED; }
-#c4 .event .copy { color: #F7FBFD; margin-top: 8px; font-size: 24px; }
-#c4 .event .copy em { color: #F7FBFD; }
+#c4 .event .label { color: #FFFFFF; }
+#c4 .event .copy { color: #FFFFFF; margin-top: 8px; font-size: 24px; }
+#c4 .event .copy em { color: #FFFFFF; }
 .note {
   margin-top: 14px;
   font-size: 18px;
   font-weight: 400;
   line-height: 1.5;
-  color: #36404A;
+  color: #111111;
   word-break: keep-all;
 }
 </style>
@@ -429,7 +424,7 @@ em { font-style: normal; }
   <p class="pager">02 / 04</p>
   <div class="main">
     <p class="kicker"><i></i>WHAT IS IT</p>
-    <h1>M 6~8문제에<br><em>1:1</em> 대응하는<br>유사 문제</h1>
+    <h1>M 6~8문제에<br><em>1:1</em> 대응하는<br>유사 문항</h1>
     <div class="flow">
       <article class="step">
         <p class="tag">원본</p>
@@ -443,8 +438,8 @@ em { font-style: normal; }
       </div>
       <article class="step mid">
         <p class="tag">황소 워크북</p>
-        <p class="t">1:1<br>유사문제</p>
-        <p class="d">동일 구조 · 수치·조건 변형</p>
+        <p class="t">1:1<br>유사 문항</p>
+        <p class="d">수치 · 조건 · 구조 변형</p>
       </article>
       <div class="arrow" aria-hidden="true">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -453,15 +448,15 @@ em { font-style: normal; }
       </div>
       <article class="step">
         <p class="tag">효과</p>
-        <p class="t">개념<br>완전정복</p>
-        <p class="d">실전 사고력 완성</p>
+        <p class="t">심화<br>사고력 완성</p>
+        <p class="d">고난도 문항 해결력</p>
       </article>
     </div>
     <div class="quote">
-      <p>탐구 과제의 핵심 구조와 풀이 메커니즘은 그대로 유지하면서,<br>수치와 조건을 바꿔 <em>진짜</em> 이해력을 확인합니다.</p>
+      <p>탐구 과제의 핵심 구조와 풀이 메커니즘은 그대로 유지하면서,<br>수치·조건·구조를 바꿔 응용력과 사고의 깊이를 점검합니다.</p>
     </div>
     <div class="stats">
-      <div class="stat"><b>6~8문제</b><span>유사문제 수</span></div>
+      <div class="stat"><b>6~8문제</b><span>유사 문항 수</span></div>
       <div class="stat"><b>1:1</b><span>완전 대응</span></div>
       <div class="stat"><b>4가지</b><span>활용 목적</span></div>
     </div>
@@ -478,25 +473,25 @@ em { font-style: normal; }
       <article class="cell">
         <p class="usage">USAGE 01</p>
         <h2>복습 &amp; 개념 정착</h2>
-        <p class="body">수업 직후 황소 교재와 1:1 대응되는<br>유사문제를 풀어보며, 오늘 배운<br>개념이 진짜 내 것인지 확인합니다.</p>
+        <p class="body">수업 직후 Mission 문제와<br>1:1 대응되는 유사 문항을 풀며,<br>배운 풀이 전략을 스스로<br>적용할 수 있는지 확인합니다.</p>
         <p class="tip">수업 당일 또는 다음 날 풀기 (선택)</p>
       </article>
       <article class="cell">
         <p class="usage">USAGE 02</p>
         <h2>퀵테스트 대비</h2>
-        <p class="body">퀵테 당일, 유사문제로 빠르게 점검합니다.<br>개념을 이해했는지 체크하고<br>실전 감각을 연습합니다.</p>
+        <p class="body">퀵테 당일, 유사 문항으로 빠르게 점검합니다.<br>개념을 이해했는지 체크하고<br>실전 감각을 연습합니다.</p>
         <p class="tip">퀵테 당일 집중 점검용</p>
       </article>
       <article class="cell">
         <p class="usage">USAGE 03</p>
         <h2>단원평가 대비</h2>
-        <p class="body">단원 전체 미션의 유사문제를<br>처음부터 다시 풀면서<br>취약 문항을 파악합니다.<br>실수 패턴을 짚어 단원평가 완성도를 높입니다.</p>
+        <p class="body">단원 전체 미션의 유사 문항을<br>처음부터 다시 풀면서<br>취약 문항을 파악합니다.<br>실수 패턴을 짚어 단원평가 완성도를 높입니다.</p>
         <p class="tip">단원평가 전, 모든 문제 점검</p>
       </article>
       <article class="cell">
         <p class="usage">USAGE 04</p>
         <h2>성취도 평가 대비</h2>
-        <p class="body">성취도 평가 대비에 최적화된<br>통합 복습 루틴입니다.<br>전 단원 유사문제를 회독하며<br>사고력 · 문제해결력을 최종 점검합니다.</p>
+        <p class="body">성취도 평가 대비에 최적화된<br>통합 복습 루틴입니다.<br>전 단원 유사 문항을 회독하며<br>사고력 · 문제해결력을 최종 점검합니다.</p>
         <p class="tip">성취도 평가 전, 전 범위 복습</p>
       </article>
     </div>
