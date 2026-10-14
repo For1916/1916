@@ -530,8 +530,10 @@
       <div class="form-grid">
         <div class="field"><label for="ex-date">날짜</label><input id="ex-date" type="date" required></div>
         <div class="field"><span class="label-line"><label for="ex-category" class="tip-text">분류</label><button type="button" class="tip tip-icon" data-tip="category" aria-label="분류 설명"><span class="tip-mark" aria-hidden="true">ⓘ</span></button></span><select id="ex-category" required></select></div>
+        <div class="field"><label for="ex-item">항목</label><input id="ex-item" list="expense-item-list" maxlength="200" placeholder="Claude, Cursor 등" autocomplete="off"></div>
         <div class="field"><label for="ex-amount">금액</label><input id="ex-amount" type="text" inputmode="decimal" required placeholder="4500"></div>
         <div class="field full"><label for="ex-memo">메모</label><textarea id="ex-memo" maxlength="2000" placeholder="필요한 메모만 적습니다"></textarea></div>
+        <datalist id="expense-item-list"></datalist>
       </div>
       <div class="form-actions"><button class="btn btn-primary" type="submit" id="ex-submit">지출 저장</button></div>
     </form>
@@ -539,7 +541,7 @@
 
   <section id="tab-list" class="panel">
     <div class="filter-bar">
-      <input id="list-search" type="search" placeholder="메모 검색">
+      <input id="list-search" type="search" placeholder="분류·항목·메모 검색">
       <select id="list-month"><option value="">모든 달</option></select>
       <select id="list-category" aria-label="분류 필터"><option value="">전체</option></select>
       <button class="btn btn-ghost btn-sm" type="button" id="btn-reload">새로고침</button>
@@ -553,6 +555,7 @@
           <tr>
             <th class="sortable" data-sort-table="expense" data-sort-key="date">날짜<span class="sort-ind" data-sort-ind="expense" data-sort-key="date"></span></th>
             <th class="sortable" data-sort-table="expense" data-sort-key="category"><button type="button" class="tip" data-tip="category" aria-label="분류 설명"><span class="tip-text">분류</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button><span class="sort-ind" data-sort-ind="expense" data-sort-key="category"></span></th>
+            <th class="sortable" data-sort-table="expense" data-sort-key="item">항목<span class="sort-ind" data-sort-ind="expense" data-sort-key="item"></span></th>
             <th class="sortable num" data-sort-table="expense" data-sort-key="amount">금액<span class="sort-ind" data-sort-ind="expense" data-sort-key="amount"></span></th>
             <th class="sortable" data-sort-table="expense" data-sort-key="memo">메모<span class="sort-ind" data-sort-ind="expense" data-sort-key="memo"></span></th>
             <th></th>
@@ -711,6 +714,7 @@
 var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyShKol-v2lx0OTwMFHcZ-QQMqMbRpWXT_4yi0jvvCWjcJtG3EB1uQvJDBd3Rty0g/exec';
 var SS_KEY = 'hwangso-workbook-ledger-password';
 var DEFAULT_CATEGORIES = ['AI', '광고', '제본', '박스', '기타'];
+var DEFAULT_EXPENSE_ITEMS = ['Claude', 'Cursor', 'Codex', 'ChatGPT', '인스타그램 광고', '제본', '박스'];
 var SUMMARY_DASH = '–';
 var state = { meta: { expenseCategories: DEFAULT_CATEGORIES.slice() }, summary: null, income: [], expense: [], orders: [], selected: '합계', editing: null, showAll: false, stock: null, stockLoaded: false };
 var listSort = { expense: { key: 'date', asc: false }, sales: { key: 'date', asc: false } };
@@ -1373,9 +1377,55 @@ function fillListCategoryFilters() {
   });
   wrap.innerHTML = html;
 }
+function deriveExpenseItemFromMemo(memo, category) {
+  var text = String(memo || '').trim();
+  if (!text) return '';
+  var hints = [
+    { re: /^Claude\b/i, item: 'Claude' },
+    { re: /^Cursor\b/i, item: 'Cursor' },
+    { re: /^Codex\b/i, item: 'Codex' },
+    { re: /^ChatGPT\b/i, item: 'ChatGPT' },
+    { re: /^GPT\b/i, item: 'ChatGPT' },
+    { re: /^인스타(그램)?\s*광고/i, item: '인스타그램 광고' },
+    { re: /^제본\b/i, item: '제본' },
+    { re: /^박스\b/i, item: '박스' }
+  ];
+  for (var i = 0; i < hints.length; i++) {
+    if (hints[i].re.test(text)) return hints[i].item;
+  }
+  var token = text.split(/\s+/)[0];
+  if (token && token.length >= 2) return token;
+  var cat = canonicalCategoryClient(category);
+  if (cat === '제본') return '제본';
+  if (cat === '박스') return '박스';
+  return '';
+}
+function displayExpenseItem(row) {
+  if (row.item) return row.item;
+  return deriveExpenseItemFromMemo(row.memo, row.category);
+}
+function refreshExpenseItemDatalist() {
+  var dl = $('expense-item-list');
+  if (!dl) return;
+  var seen = {};
+  var items = [];
+  DEFAULT_EXPENSE_ITEMS.forEach(function(name) {
+    if (!seen[name]) { seen[name] = true; items.push(name); }
+  });
+  (state.expense || []).forEach(function(row) {
+    var it = String(row.item || '').trim();
+    if (!it && row.memo) it = deriveExpenseItemFromMemo(row.memo, row.category);
+    if (it && !seen[it]) { seen[it] = true; items.push(it); }
+  });
+  items.sort(function(a, b) { return a.localeCompare(b, 'ko'); });
+  dl.innerHTML = items.map(function(name) {
+    return '<option value="' + escapeHtml(name) + '"></option>';
+  }).join('');
+}
 function applyMeta() {
   fillSelect($('ex-category'), categories(), '선택');
   fillListCategoryFilters();
+  refreshExpenseItemDatalist();
 }
 function listSortValue(row, table, key, manualIncome) {
   if (key === 'amount') {
@@ -1387,7 +1437,8 @@ function listSortValue(row, table, key, manualIncome) {
     return d ? new Date(d + 'T00:00:00').getTime() : -Infinity;
   }
   if (key === 'status') return manualIncome ? '직접 입력' : String(row.status || '');
-  if (key === 'category' || key === 'memo' || key === 'item') return String(row[key] || '');
+  if (key === 'item') return String(displayExpenseItem(row) || '');
+  if (key === 'category' || key === 'memo') return String(row[key] || '');
   return String(row[key] || '');
 }
 function compareListSort(a, b, table, key, asc, manualA, manualB) {
@@ -1569,7 +1620,10 @@ function matchesFilter(row, fields, opts) {
   if (month && String(row.date || '').slice(0, 7) !== month) return false;
   if (cat && (!opts || !opts.skipCategory) && String(row.category || '') !== cat) return false;
   if (!q) return true;
-  var blob = fields.map(function(key) { return row[key] || ''; }).join(' ').toLowerCase();
+  var blob = fields.map(function(key) {
+    if (key === 'item') return displayExpenseItem(row);
+    return row[key] || '';
+  }).join(' ').toLowerCase();
   return blob.indexOf(q) !== -1;
 }
 function expenseRows() {
@@ -1594,10 +1648,12 @@ function renderList() {
   var rows = expenseRows();
   var shown = state.showAll ? rows : rows.slice(0, 300);
   $('list-body').innerHTML = shown.map(function(row, index) {
-    return '<tr><td>' + escapeHtml(row.date || '-') + '</td><td>' + escapeHtml(row.category || '-') + (row.item ? '<div style="color:var(--text2);font-size:12px">' + escapeHtml(row.item) + '</div>' : '') + '</td><td class="num neg">' + fmt(row.amount) + '</td><td>' + escapeHtml(row.memo || '') + '</td><td><button type="button" class="btn btn-ghost btn-sm" data-edit="' + index + '">수정</button></td></tr>';
+    var itemLabel = displayExpenseItem(row);
+    return '<tr><td>' + escapeHtml(row.date || '-') + '</td><td>' + escapeHtml(row.category || '-') + '</td><td>' + (itemLabel ? escapeHtml(itemLabel) : '–') + '</td><td class="num neg">' + fmt(row.amount) + '</td><td>' + escapeHtml(row.memo || '') + '</td><td><button type="button" class="btn btn-ghost btn-sm" data-edit="' + index + '">수정</button></td></tr>';
   }).join('');
   $('list-cards').innerHTML = shown.map(function(row, index) {
-    return '<article class="trade-card"><div class="trade-card-header"><div class="trade-card-title">' + escapeHtml(row.category || '지출') + '</div><span class="badge badge-expense">지출</span></div><div class="trade-card-meta">' + escapeHtml(row.date || '-') + (row.item ? ' · ' + escapeHtml(row.item) : '') + '</div><strong class="neg">' + fmt(row.amount) + '</strong>' + (row.memo ? '<div class="trade-card-meta">' + escapeHtml(row.memo) + '</div>' : '') + '<div class="card-actions"><button type="button" class="btn btn-ghost btn-sm" data-edit="' + index + '">수정</button></div></article>';
+    var cardItem = displayExpenseItem(row);
+    return '<article class="trade-card"><div class="trade-card-header"><div class="trade-card-title">' + escapeHtml(cardItem || row.category || '지출') + '</div><span class="badge badge-expense">지출</span></div><div class="trade-card-meta">' + escapeHtml(row.date || '-') + (cardItem && row.category ? ' · ' + escapeHtml(row.category) : '') + '</div><strong class="neg">' + fmt(row.amount) + '</strong>' + (row.memo ? '<div class="trade-card-meta">' + escapeHtml(row.memo) + '</div>' : '') + '<div class="card-actions"><button type="button" class="btn btn-ghost btn-sm" data-edit="' + index + '">수정</button></div></article>';
   }).join('');
   $('list-empty').style.display = rows.length ? 'none' : 'block';
   var expenseSubtotal = rows.reduce(function(sum, row) { return sum + (Number(row.amount) || 0); }, 0);
@@ -1666,6 +1722,7 @@ function openEdit(row) {
   form.innerHTML = '<div class="form-grid">' +
     fieldHtml('ed-date', '날짜', '<input id="ed-date" type="date" required value="' + escapeHtml(row.date) + '">') +
     fieldHtml('ed-category', '분류', '<select id="ed-category" required></select>', 'category') +
+    fieldHtml('ed-item', '항목', '<input id="ed-item" list="expense-item-list" maxlength="200" value="' + escapeHtml(displayExpenseItem(row)) + '" autocomplete="off">') +
     fieldHtml('ed-amount', '금액', '<input id="ed-amount" type="text" inputmode="decimal" required value="' + escapeHtml(row.amount == null ? '' : row.amount) + '">') +
     '<div class="field full"><label for="ed-memo">메모</label><textarea id="ed-memo" maxlength="2000">' + escapeHtml(row.memo || '') + '</textarea></div></div>' +
     '<div class="form-actions"><button class="btn btn-danger" type="button" id="ed-delete">삭제</button><button class="btn btn-primary" type="submit">저장</button></div>';
@@ -2039,12 +2096,15 @@ $('expense-form').addEventListener('submit', async function(event) {
   if (!$('ex-category').value) { toast('분류를 선택하세요', 'error'); return; }
   $('ex-submit').disabled = true;
   try {
-    await api('add', { sheet: '지출', record: {
+    var exRecord = {
       '날짜': $('ex-date').value,
       '분류': $('ex-category').value,
       '금액': amount,
       '메모': $('ex-memo').value.trim()
-    }});
+    };
+    var exItem = $('ex-item').value.trim();
+    if (exItem) exRecord['항목'] = exItem;
+    await api('add', { sheet: '지출', record: exRecord });
     $('ex-amount').value = '';
     $('ex-memo').value = '';
     toast('지출을 저장했습니다');
@@ -2158,12 +2218,16 @@ $('edit-form').addEventListener('submit', async function(event) {
     '날짜': $('ed-date').value,
     '금액': amount,
     '메모': $('ed-memo').value.trim()
-  } : {
-    '날짜': $('ed-date').value,
-    '분류': $('ed-category').value,
-    '금액': amount,
-    '메모': $('ed-memo').value.trim()
-  };
+  } : (function() {
+    var rec = {
+      '날짜': $('ed-date').value,
+      '분류': $('ed-category').value,
+      '금액': amount,
+      '메모': $('ed-memo').value.trim()
+    };
+    if ($('ed-item')) rec['항목'] = $('ed-item').value.trim();
+    return rec;
+  })();
   try {
     await api('update', {
       sheet: incomeEdit ? '수입' : '지출',

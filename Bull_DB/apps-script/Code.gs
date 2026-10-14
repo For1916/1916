@@ -33,6 +33,16 @@ var MANUAL_LAST_ROW = 5000;
 var PERSONAL_HEADER_RE = /주문자|고객명|수취인|받는\s*분|받는분|연락처|전화|휴대폰|핸드폰|휴대전화|주소|우편번호|이메일|유입|모아폼|moaform|답변\s*id|응답\s*id|answer\s*id|submission/i;
 var DOC_MARKER = '[장부 안내]';
 var EXPENSE_CATEGORIES = ['AI', '광고', '제본', '박스', '기타'];
+var EXPENSE_ITEM_HINTS = [
+  { re: /^Claude\b/i, item: 'Claude' },
+  { re: /^Cursor\b/i, item: 'Cursor' },
+  { re: /^Codex\b/i, item: 'Codex' },
+  { re: /^ChatGPT\b/i, item: 'ChatGPT' },
+  { re: /^GPT\b/i, item: 'ChatGPT' },
+  { re: /^인스타(그램)?\s*광고/i, item: '인스타그램 광고' },
+  { re: /^제본\b/i, item: '제본' },
+  { re: /^박스\b/i, item: '박스' }
+];
 var SUMMARY_FLOOR = '2026-06';
 var SUMMARY_DASH = '–';
 var SUMMARY_HEADERS = ['월', '입금', 'AI', '광고', '제본', '박스', '기타', '총지출', '순이익', '이익률(ROI)', '누적 수입', '누적 지출', '누적 순이익', '누적 회수율'];
@@ -202,7 +212,28 @@ function readExpense_(sh) {
     { key: 'memo', names: ['메모'], kind: 'text' }
   ], function(row) {
     return row.date || row.item || row.category || row.amount != null;
+  }).map(function(row) {
+    if (!compact_(row.item)) {
+      var derived = deriveExpenseItemFromMemo_(row.memo, row.category);
+      if (derived) row.item = derived;
+    }
+    return row;
   });
+}
+
+function deriveExpenseItemFromMemo_(memo, category) {
+  var text = String(memo == null ? '' : memo).trim();
+  if (!text) return '';
+  var i;
+  for (i = 0; i < EXPENSE_ITEM_HINTS.length; i++) {
+    if (EXPENSE_ITEM_HINTS[i].re.test(text)) return EXPENSE_ITEM_HINTS[i].item;
+  }
+  var token = text.split(/\s+/)[0];
+  if (token && token.length >= 2) return token;
+  var cat = canonicalCategory_(category);
+  if (cat === '제본') return '제본';
+  if (cat === '박스') return '박스';
+  return '';
 }
 
 function readOrders_(sh) {
@@ -921,6 +952,7 @@ function onOpen() {
   SpreadsheetApp.getUi().createMenu('황소 장부')
     .addItem('초기 설정', 'setupFromMenu')
     .addItem('비밀번호 설정', 'setPasswordFromMenu')
+    .addItem('지출 항목 채우기(메모→항목)', 'backfillExpenseItemsFromMenu')
     .addItem('재고 새로고침', 'refreshStockFromMenu')
     .addItem('개인정보 열 점검', 'auditLedger')
     .addToUi();
@@ -1081,6 +1113,7 @@ function isFilledDate_(value) {
 function migrateExpense_(sh, report) {
   remapExpenseCategories_(sh, report);
   var map = headerMap_(sh);
+  var savedItems = readExpenseItemColumn_(sh, map);
   var remove = [];
   Object.keys(map).forEach(function(name) {
     if (keptExpenseHeader_(name)) return;
@@ -1092,15 +1125,94 @@ function migrateExpense_(sh, report) {
     sh.deleteColumn(item.col);
     report.push('지출 시트에서 [' + item.name + '] 열을 삭제했습니다.');
   });
-  map = headerMap_(sh);
-  if (!findHeader_(map, ['항목'])) {
-    var catCol = findHeader_(map, ['분류']);
-    if (!catCol) fail_('지출 시트에서 분류 열을 찾지 못했습니다.');
-    sh.insertColumnAfter(catCol);
-    sh.getRange(1, catCol + 1).setValue('항목');
-    report.push('지출 시트에 항목 열을 추가했습니다.');
+  ensureExpenseItemColumnAtEnd_(sh, savedItems, report);
+  if (!remove.length) report.push('지출 시트 열은 날짜·분류·금액·메모·항목입니다.');
+}
+
+function readExpenseItemColumn_(sh, map) {
+  var itemCol = findHeader_(map, ['항목']);
+  if (!itemCol) return null;
+  var last = sh.getLastRow();
+  if (last < 2) return [];
+  var height = Math.min(last, MANUAL_LAST_ROW) - 1;
+  return sh.getRange(2, itemCol, height, 1).getValues();
+}
+
+function ensureExpenseItemColumnAtEnd_(sh, savedItems, report) {
+  var map = headerMap_(sh);
+  var itemCol = findHeader_(map, ['항목']);
+  var memoCol = findHeader_(map, ['메모']);
+  if (!memoCol) fail_('지출 시트에서 메모 열을 찾지 못했습니다.');
+  var values = savedItems;
+  if (itemCol && itemCol !== memoCol + 1) {
+    if (!values) {
+      var last = sh.getLastRow();
+      var height = last < 2 ? 0 : Math.min(last, MANUAL_LAST_ROW) - 1;
+      values = height ? sh.getRange(2, itemCol, height, 1).getValues() : [];
+    }
+    sh.deleteColumn(itemCol);
+    map = headerMap_(sh);
+    memoCol = findHeader_(map, ['메모']);
+    itemCol = 0;
+    report.push('지출 시트에서 항목 열을 마지막으로 옮깁니다.');
   }
-  if (!remove.length) report.push('지출 시트 열은 날짜·분류·항목·금액·메모입니다.');
+  if (!itemCol) {
+    sh.insertColumnAfter(memoCol);
+    itemCol = memoCol + 1;
+    sh.getRange(1, itemCol).setValue('항목');
+    report.push('지출 시트에 항목 열을 마지막에 추가했습니다.');
+  }
+  if (values && values.length) {
+    sh.getRange(2, itemCol, values.length, 1).setValues(values);
+  }
+}
+
+function backfillExpenseItems() {
+  return backfillExpenseItems_(false);
+}
+
+function backfillExpenseItemsFromMenu() {
+  var ui = SpreadsheetApp.getUi();
+  var res = ui.confirm(
+    '지출 시트',
+    '항목 칸이 비어 있는 행만 메모(와 분류)에서 추정해 채웁니다. 날짜·분류·금액·메모는 바꾸지 않습니다. 계속할까요?',
+    ui.ButtonSet.YES_NO
+  );
+  if (res !== ui.Button.YES) return;
+  try {
+    ui.alert(backfillExpenseItems_());
+  } catch (err) {
+    ui.alert(String(err && err.message ? err.message : err).slice(0, 1500));
+  }
+}
+
+function backfillExpenseItems_(dryRun) {
+  var ss = activeSs_();
+  var sh = mustSheet_(ss, '지출');
+  var report = [];
+  ensureExpenseItemColumnAtEnd_(sh, null, report);
+  var map = headerMap_(sh);
+  var itemCol = findHeader_(map, ['항목']);
+  var memoCol = findHeader_(map, ['메모']);
+  var catCol = findHeader_(map, ['분류']);
+  if (!itemCol || !memoCol) fail_('지출 시트에서 항목 또는 메모 열을 찾지 못했습니다.');
+  var last = sh.getLastRow();
+  if (last < 2) return '채울 지출 행이 없습니다.';
+  var height = Math.min(last, MANUAL_LAST_ROW) - 1;
+  var items = sh.getRange(2, itemCol, height, 1).getValues();
+  var memos = sh.getRange(2, memoCol, height, 1).getValues();
+  var cats = catCol ? sh.getRange(2, catCol, height, 1).getValues() : null;
+  var filled = 0;
+  var i;
+  for (i = 0; i < items.length; i++) {
+    if (compact_(items[i][0])) continue;
+    var derived = deriveExpenseItemFromMemo_(memos[i][0], cats ? cats[i][0] : '');
+    if (!derived) continue;
+    filled++;
+    if (!dryRun) items[i][0] = derived;
+  }
+  if (!dryRun && filled) sh.getRange(2, itemCol, items.length, 1).setValues(items);
+  return '항목을 ' + filled + '행에 채웠습니다.' + (dryRun ? ' (미리보기)' : '') + (report.length ? '\n' + report.join('\n') : '');
 }
 
 function keptExpenseHeader_(name) {
