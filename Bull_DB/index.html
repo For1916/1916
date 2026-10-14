@@ -530,9 +530,11 @@
       <div class="form-grid">
         <div class="field"><label for="ex-date">날짜</label><input id="ex-date" type="date" required></div>
         <div class="field"><span class="label-line"><label for="ex-category" class="tip-text">분류</label><button type="button" class="tip tip-icon" data-tip="category" aria-label="분류 설명"><span class="tip-mark" aria-hidden="true">ⓘ</span></button></span><select id="ex-category" required></select></div>
+        <div class="field"><label for="ex-item">항목</label><input id="ex-item" type="text" list="expense-item-suggestions" maxlength="200" placeholder="Claude, Cursor" autocomplete="off"></div>
         <div class="field"><label for="ex-amount">금액</label><input id="ex-amount" type="text" inputmode="decimal" required placeholder="4500"></div>
         <div class="field full"><label for="ex-memo">메모</label><textarea id="ex-memo" maxlength="2000" placeholder="필요한 메모만 적습니다"></textarea></div>
       </div>
+      <datalist id="expense-item-suggestions"></datalist>
       <div class="form-actions"><button class="btn btn-primary" type="submit" id="ex-submit">지출 저장</button></div>
     </form>
   </section>
@@ -553,6 +555,7 @@
           <tr>
             <th class="sortable" data-sort-table="expense" data-sort-key="date">날짜<span class="sort-ind" data-sort-ind="expense" data-sort-key="date"></span></th>
             <th class="sortable" data-sort-table="expense" data-sort-key="category"><button type="button" class="tip" data-tip="category" aria-label="분류 설명"><span class="tip-text">분류</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button><span class="sort-ind" data-sort-ind="expense" data-sort-key="category"></span></th>
+            <th class="sortable" data-sort-table="expense" data-sort-key="item">항목<span class="sort-ind" data-sort-ind="expense" data-sort-key="item"></span></th>
             <th class="sortable num" data-sort-table="expense" data-sort-key="amount">금액<span class="sort-ind" data-sort-ind="expense" data-sort-key="amount"></span></th>
             <th class="sortable" data-sort-table="expense" data-sort-key="memo">메모<span class="sort-ind" data-sort-ind="expense" data-sort-key="memo"></span></th>
             <th></th>
@@ -1357,6 +1360,23 @@ function expenseCategoryOptions() {
   cats.sort(function(a, b) { return String(a).localeCompare(String(b), 'ko'); });
   return cats;
 }
+function expenseItemSuggestions() {
+  var seen = {};
+  var list = [];
+  state.expense.forEach(function(row) {
+    var t = String(row.item || '').trim();
+    if (t && !seen[t]) { seen[t] = true; list.push(t); }
+  });
+  list.sort(function(a, b) { return a.localeCompare(b, 'ko'); });
+  return list;
+}
+function refreshExpenseItemDatalist() {
+  var dl = $('expense-item-suggestions');
+  if (!dl) return;
+  dl.innerHTML = expenseItemSuggestions().map(function(t) {
+    return '<option value="' + escapeHtml(t) + '"></option>';
+  }).join('');
+}
 function fillListCategoryFilters() {
   var sel = $('list-category');
   if (!sel) return;
@@ -1376,6 +1396,7 @@ function fillListCategoryFilters() {
 function applyMeta() {
   fillSelect($('ex-category'), categories(), '선택');
   fillListCategoryFilters();
+  refreshExpenseItemDatalist();
 }
 function listSortValue(row, table, key, manualIncome) {
   if (key === 'amount') {
@@ -1594,7 +1615,7 @@ function renderList() {
   var rows = expenseRows();
   var shown = state.showAll ? rows : rows.slice(0, 300);
   $('list-body').innerHTML = shown.map(function(row, index) {
-    return '<tr><td>' + escapeHtml(row.date || '-') + '</td><td>' + escapeHtml(row.category || '-') + (row.item ? '<div style="color:var(--text2);font-size:12px">' + escapeHtml(row.item) + '</div>' : '') + '</td><td class="num neg">' + fmt(row.amount) + '</td><td>' + escapeHtml(row.memo || '') + '</td><td><button type="button" class="btn btn-ghost btn-sm" data-edit="' + index + '">수정</button></td></tr>';
+    return '<tr><td>' + escapeHtml(row.date || '-') + '</td><td>' + escapeHtml(row.category || '-') + '</td><td>' + escapeHtml(row.item || '') + '</td><td class="num neg">' + fmt(row.amount) + '</td><td>' + escapeHtml(row.memo || '') + '</td><td><button type="button" class="btn btn-ghost btn-sm" data-edit="' + index + '">수정</button></td></tr>';
   }).join('');
   $('list-cards').innerHTML = shown.map(function(row, index) {
     return '<article class="trade-card"><div class="trade-card-header"><div class="trade-card-title">' + escapeHtml(row.category || '지출') + '</div><span class="badge badge-expense">지출</span></div><div class="trade-card-meta">' + escapeHtml(row.date || '-') + (row.item ? ' · ' + escapeHtml(row.item) : '') + '</div><strong class="neg">' + fmt(row.amount) + '</strong>' + (row.memo ? '<div class="trade-card-meta">' + escapeHtml(row.memo) + '</div>' : '') + '<div class="card-actions"><button type="button" class="btn btn-ghost btn-sm" data-edit="' + index + '">수정</button></div></article>';
@@ -1666,6 +1687,7 @@ function openEdit(row) {
   form.innerHTML = '<div class="form-grid">' +
     fieldHtml('ed-date', '날짜', '<input id="ed-date" type="date" required value="' + escapeHtml(row.date) + '">') +
     fieldHtml('ed-category', '분류', '<select id="ed-category" required></select>', 'category') +
+    fieldHtml('ed-item', '항목', '<input id="ed-item" type="text" list="expense-item-suggestions" maxlength="200" placeholder="Claude, Cursor" autocomplete="off" value="' + escapeHtml(row.item || '') + '">') +
     fieldHtml('ed-amount', '금액', '<input id="ed-amount" type="text" inputmode="decimal" required value="' + escapeHtml(row.amount == null ? '' : row.amount) + '">') +
     '<div class="field full"><label for="ed-memo">메모</label><textarea id="ed-memo" maxlength="2000">' + escapeHtml(row.memo || '') + '</textarea></div></div>' +
     '<div class="form-actions"><button class="btn btn-danger" type="button" id="ed-delete">삭제</button><button class="btn btn-primary" type="submit">저장</button></div>';
@@ -2042,10 +2064,12 @@ $('expense-form').addEventListener('submit', async function(event) {
     await api('add', { sheet: '지출', record: {
       '날짜': $('ex-date').value,
       '분류': $('ex-category').value,
+      '항목': $('ex-item').value.trim(),
       '금액': amount,
       '메모': $('ex-memo').value.trim()
     }});
     $('ex-amount').value = '';
+    $('ex-item').value = '';
     $('ex-memo').value = '';
     toast('지출을 저장했습니다');
     await reload();
@@ -2161,6 +2185,7 @@ $('edit-form').addEventListener('submit', async function(event) {
   } : {
     '날짜': $('ed-date').value,
     '분류': $('ed-category').value,
+    '항목': $('ed-item').value.trim(),
     '금액': amount,
     '메모': $('ed-memo').value.trim()
   };
