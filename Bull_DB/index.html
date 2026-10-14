@@ -210,6 +210,24 @@
     letter-spacing: 0.4px;
     white-space: nowrap;
   }
+  th.sortable { cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
+  th.sortable.sort-active { color: var(--accent); }
+  th.sortable .sort-ind { display: inline-block; margin-left: 3px; font-size: 9px; line-height: 1; vertical-align: middle; color: var(--accent); min-width: 1em; }
+  .cat-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .cat-chips button {
+    min-height: 36px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text2);
+    cursor: pointer;
+  }
+  .cat-chips button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .list-subtotal { font-size: 13px; font-weight: 700; color: var(--text); margin: 0 0 12px; }
   tbody tr { border-bottom: 1px solid var(--border); }
   tbody tr:hover, tbody tr.selected { background: var(--surface2); }
   tbody td { padding: 10px 12px; vertical-align: middle; white-space: nowrap; }
@@ -523,14 +541,21 @@
     <div class="filter-bar">
       <input id="list-search" type="search" placeholder="메모 검색">
       <select id="list-month"><option value="">모든 달</option></select>
+      <select id="list-category" aria-label="분류 필터"><option value="">전체</option></select>
       <button class="btn btn-ghost btn-sm" type="button" id="btn-reload">새로고침</button>
     </div>
+    <div class="cat-chips" id="list-cat-chips" role="group" aria-label="분류 필터"></div>
+    <p id="list-subtotal" class="list-subtotal" style="display:none" aria-live="polite"></p>
     <h2 class="section-label">지출</h2>
     <div class="table-wrap desk-only">
       <table>
         <thead>
           <tr>
-            <th>날짜</th><th><button type="button" class="tip" data-tip="category" aria-label="분류 설명"><span class="tip-text">분류</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th><th class="num">금액</th><th>메모</th><th></th>
+            <th class="sortable" data-sort-table="expense" data-sort-key="date">날짜<span class="sort-ind" data-sort-ind="expense" data-sort-key="date"></span></th>
+            <th class="sortable" data-sort-table="expense" data-sort-key="category"><button type="button" class="tip" data-tip="category" aria-label="분류 설명"><span class="tip-text">분류</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button><span class="sort-ind" data-sort-ind="expense" data-sort-key="category"></span></th>
+            <th class="sortable num" data-sort-table="expense" data-sort-key="amount">금액<span class="sort-ind" data-sort-ind="expense" data-sort-key="amount"></span></th>
+            <th class="sortable" data-sort-table="expense" data-sort-key="memo">메모<span class="sort-ind" data-sort-ind="expense" data-sort-key="memo"></span></th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="list-body"></tbody>
@@ -545,7 +570,10 @@
       <table>
         <thead>
           <tr>
-            <th>날짜</th><th><button type="button" class="tip" data-tip="orderStatus" aria-label="상태 설명"><span class="tip-text">상태</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button></th><th class="num">금액</th><th></th>
+            <th class="sortable" data-sort-table="sales" data-sort-key="date">날짜<span class="sort-ind" data-sort-ind="sales" data-sort-key="date"></span></th>
+            <th class="sortable" data-sort-table="sales" data-sort-key="status"><button type="button" class="tip" data-tip="orderStatus" aria-label="상태 설명"><span class="tip-text">상태</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button><span class="sort-ind" data-sort-ind="sales" data-sort-key="status"></span></th>
+            <th class="sortable num" data-sort-table="sales" data-sort-key="amount">금액<span class="sort-ind" data-sort-ind="sales" data-sort-key="amount"></span></th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="sales-body"></tbody>
@@ -685,6 +713,7 @@ var SS_KEY = 'hwangso-workbook-ledger-password';
 var DEFAULT_CATEGORIES = ['AI', '광고', '제본', '박스', '기타'];
 var SUMMARY_DASH = '–';
 var state = { meta: { expenseCategories: DEFAULT_CATEGORIES.slice() }, summary: null, income: [], expense: [], orders: [], selected: '합계', editing: null, showAll: false, stock: null, stockLoaded: false };
+var listSort = { expense: { key: 'date', asc: false }, sales: { key: 'date', asc: false } };
 
 function scriptUrl() { return String(SCRIPT_URL || '').trim(); }
 function isConfigured() { return /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec\/?$/.test(scriptUrl()); }
@@ -1320,8 +1349,87 @@ function fillSelect(el, values, placeholder) {
 }
 
 function categories() { return DEFAULT_CATEGORIES.slice(); }
+function expenseCategoryOptions() {
+  var cats = categories().slice();
+  state.expense.forEach(function(row) {
+    if (row.category && cats.indexOf(row.category) === -1) cats.push(row.category);
+  });
+  cats.sort(function(a, b) { return String(a).localeCompare(String(b), 'ko'); });
+  return cats;
+}
+function fillListCategoryFilters() {
+  var sel = $('list-category');
+  if (!sel) return;
+  var keep = sel.value;
+  var cats = expenseCategoryOptions();
+  fillSelect(sel, cats, '전체');
+  if (keep === '' || cats.indexOf(keep) !== -1) sel.value = keep;
+  var wrap = $('list-cat-chips');
+  if (!wrap) return;
+  var cur = sel.value;
+  var html = '<button type="button" data-cat="" class="' + (!cur ? 'active' : '') + '">전체</button>';
+  cats.forEach(function(c) {
+    html += '<button type="button" data-cat="' + escapeHtml(c) + '" class="' + (cur === c ? 'active' : '') + '">' + escapeHtml(c) + '</button>';
+  });
+  wrap.innerHTML = html;
+}
 function applyMeta() {
   fillSelect($('ex-category'), categories(), '선택');
+  fillListCategoryFilters();
+}
+function listSortValue(row, table, key, manualIncome) {
+  if (key === 'amount') {
+    var n = Number(row.amount);
+    return Number.isNaN(n) ? 0 : n;
+  }
+  if (key === 'date') {
+    var d = String(row.date || '');
+    return d ? new Date(d + 'T00:00:00').getTime() : -Infinity;
+  }
+  if (key === 'status') return manualIncome ? '직접 입력' : String(row.status || '');
+  if (key === 'category' || key === 'memo' || key === 'item') return String(row[key] || '');
+  return String(row[key] || '');
+}
+function compareListSort(a, b, table, key, asc, manualA, manualB) {
+  var textKeys = { category: 1, memo: 1, item: 1, status: 1 };
+  var va = listSortValue(a, table, key, manualA);
+  var vb = listSortValue(b, table, key, manualB);
+  if (textKeys[key]) {
+    var cmp = String(va).localeCompare(String(vb), 'ko');
+    return asc ? cmp : -cmp;
+  }
+  if (va < vb) return asc ? -1 : 1;
+  if (va > vb) return asc ? 1 : -1;
+  return 0;
+}
+function sortListRows(rows, table, manualFlags) {
+  var s = listSort[table];
+  var flags = manualFlags || [];
+  return rows.slice().sort(function(a, b) {
+    var ia = rows.indexOf(a);
+    var ib = rows.indexOf(b);
+    return compareListSort(a, b, table, s.key, s.asc, flags[ia], flags[ib]);
+  });
+}
+function updateListSortIndicators(table) {
+  var s = listSort[table];
+  document.querySelectorAll('[data-sort-ind="' + table + '"]').forEach(function(el) {
+    var key = el.getAttribute('data-sort-key');
+    el.textContent = key === s.key ? (s.asc ? '▲' : '▼') : '';
+  });
+  document.querySelectorAll('th.sortable[data-sort-table="' + table + '"]').forEach(function(th) {
+    th.classList.toggle('sort-active', th.getAttribute('data-sort-key') === s.key);
+  });
+}
+function toggleListSort(table, key) {
+  var s = listSort[table];
+  if (s.key === key) s.asc = !s.asc;
+  else {
+    s.key = key;
+    s.asc = key === 'category' || key === 'memo' || key === 'status' || key === 'item';
+  }
+  state.showAll = false;
+  renderList();
 }
 
 function summaryRows() {
@@ -1454,23 +1562,32 @@ function renderSelected() {
   }).join('');
 }
 
-function matchesFilter(row, fields) {
+function matchesFilter(row, fields, opts) {
   var q = ($('list-search').value || '').trim().toLowerCase();
   var month = $('list-month').value;
+  var cat = $('list-category') ? $('list-category').value : '';
   if (month && String(row.date || '').slice(0, 7) !== month) return false;
+  if (cat && (!opts || !opts.skipCategory) && String(row.category || '') !== cat) return false;
   if (!q) return true;
   var blob = fields.map(function(key) { return row[key] || ''; }).join(' ').toLowerCase();
   return blob.indexOf(q) !== -1;
 }
 function expenseRows() {
-  return state.expense.filter(function(row) {
+  var rows = state.expense.filter(function(row) {
     return matchesFilter(row, ['category', 'item', 'memo']);
-  }).sort(function(a, b) { return String(b.date || '').localeCompare(String(a.date || '')); });
+  });
+  return sortListRows(rows, 'expense');
 }
 function salesRows() {
-  return state.orders.filter(function(row) {
-    return matchesFilter(row, ['status', 'memo']);
-  }).sort(function(a, b) { return String(b.date || '').localeCompare(String(a.date || '')); });
+  var rows = state.orders.filter(function(row) {
+    return matchesFilter(row, ['status', 'memo'], { skipCategory: true });
+  });
+  return sortListRows(rows, 'sales');
+}
+function manualIncomeRows() {
+  var rows = state.income.filter(function(row) { return row.counts && matchesFilter(row, ['memo'], { skipCategory: true }); });
+  var flags = rows.map(function() { return true; });
+  return sortListRows(rows, 'sales', flags);
 }
 
 function renderList() {
@@ -1483,7 +1600,21 @@ function renderList() {
     return '<article class="trade-card"><div class="trade-card-header"><div class="trade-card-title">' + escapeHtml(row.category || '지출') + '</div><span class="badge badge-expense">지출</span></div><div class="trade-card-meta">' + escapeHtml(row.date || '-') + (row.item ? ' · ' + escapeHtml(row.item) : '') + '</div><strong class="neg">' + fmt(row.amount) + '</strong>' + (row.memo ? '<div class="trade-card-meta">' + escapeHtml(row.memo) + '</div>' : '') + '<div class="card-actions"><button type="button" class="btn btn-ghost btn-sm" data-edit="' + index + '">수정</button></div></article>';
   }).join('');
   $('list-empty').style.display = rows.length ? 'none' : 'block';
-  $('list-more').textContent = rows.length > shown.length ? ('최근 순서로 ' + shown.length + '건만 표시 중입니다.') : (rows.length ? (rows.length + '건') : '');
+  var expenseSubtotal = rows.reduce(function(sum, row) { return sum + (Number(row.amount) || 0); }, 0);
+  var catFilter = $('list-category') && $('list-category').value;
+  var searchOn = ($('list-search').value || '').trim();
+  var monthOn = $('list-month').value;
+  var subEl = $('list-subtotal');
+  if (subEl) {
+    if (catFilter || searchOn || monthOn) {
+      subEl.style.display = 'block';
+      subEl.textContent = '지출 ' + rows.length + '건 · 합계 ' + fmt(expenseSubtotal);
+    } else {
+      subEl.style.display = 'none';
+      subEl.textContent = '';
+    }
+  }
+  $('list-more').textContent = rows.length > shown.length ? ('정렬된 목록에서 ' + shown.length + '건만 표시 중입니다.') : (rows.length ? (rows.length + '건') : '');
   if (rows.length > shown.length) {
     var more = document.createElement('button');
     more.type = 'button';
@@ -1496,7 +1627,7 @@ function renderList() {
     btn.addEventListener('click', function() { openEdit(shown[Number(btn.getAttribute('data-edit'))]); });
   });
   var sales = salesRows();
-  var manuals = state.income.filter(function(row) { return row.counts && matchesFilter(row, ['memo']); });
+  var manuals = manualIncomeRows();
   var salesHtml = sales.map(function(row) {
     var badge = row.included ? '<span class="badge badge-order">주문</span>' : '<span class="badge badge-muted">제외</span>';
     return '<tr><td>' + escapeHtml(row.date || '-') + '</td><td>' + escapeHtml(row.status || '-') + '</td><td class="num ' + (row.included ? 'money-in' : '') + '">' + fmt(row.amount) + '</td><td>' + badge + '</td></tr>';
@@ -1517,6 +1648,8 @@ function renderList() {
   document.querySelectorAll('[data-income]').forEach(function(btn) {
     btn.addEventListener('click', function() { openIncomeEdit(manuals[Number(btn.getAttribute('data-income'))]); });
   });
+  updateListSortIndicators('expense');
+  updateListSortIndicators('sales');
 }
 
 function fieldHtml(id, label, control, tipKey) {
@@ -1877,6 +2010,21 @@ $('month-body').addEventListener('click', function(event) {
 });
 $('list-search').addEventListener('input', function() { state.showAll = false; renderList(); });
 $('list-month').addEventListener('change', function() { state.showAll = false; renderList(); });
+$('list-category').addEventListener('change', function() { state.showAll = false; fillListCategoryFilters(); renderList(); });
+$('list-cat-chips').addEventListener('click', function(event) {
+  var btn = event.target.closest('button[data-cat]');
+  if (!btn) return;
+  $('list-category').value = btn.getAttribute('data-cat');
+  state.showAll = false;
+  fillListCategoryFilters();
+  renderList();
+});
+$('tab-list').addEventListener('click', function(event) {
+  if (event.target.closest('.tip')) return;
+  var th = event.target.closest('th.sortable');
+  if (!th) return;
+  toggleListSort(th.getAttribute('data-sort-table'), th.getAttribute('data-sort-key'));
+});
 $('btn-reload').addEventListener('click', function() { reload().catch(function(err) { toast(err.message, 'error'); }); });
 $('btn-lock').addEventListener('click', function() { lock(); });
 $('pw-btn').addEventListener('click', submitPassword);
