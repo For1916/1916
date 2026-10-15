@@ -25,7 +25,7 @@
 2. 지금 웹 앱을 배포한 프로젝트를 엽니다. **배포 → 배포 관리** 에 아래 주소가 있는 프로젝트입니다.
 
 ```text
-https://script.google.com/macros/s/AKfycbwv9b613EfnpLSqtV6QnIq4tpuMkaPdLKsaF1UzDzZHjj93vUgVxQEnjNH6Hm5LiJu7/exec
+https://trade-db.for1916.workers.dev
 ```
 
 3. 편집기에 있는 코드를 복사해 컴퓨터에 저장해 둡니다. 시트도 **파일 → 다운로드** 로 복사해 두면 더 안전합니다.
