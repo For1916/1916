@@ -271,8 +271,24 @@
   .badge-order { background: var(--accent-soft); color: var(--accent); }
   .badge-muted { background: var(--surface2); color: var(--text2); }
   .badge-cat { border-radius: 999px; color: #fff; vertical-align: middle; }
-  .expense-cat-cell { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .expense-cat-cell .expense-item-inline { font-weight: 700; font-size: inherit; color: var(--text); }
+  .expense-cat-cell,
+  .trade-card-title:has(.badge-cat) {
+    display: grid;
+    grid-template-columns: 42px 1fr;
+    gap: 8px;
+    align-items: center;
+  }
+  .expense-cat-cell .cell-modal-open,
+  .trade-card-title:has(.badge-cat) .cell-modal-open { text-align: center; }
+  .expense-cat-cell .badge-cat,
+  .trade-card-title:has(.badge-cat) .badge-cat {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding-inline: 4px;
+    box-sizing: border-box;
+  }
+  .expense-cat-cell .expense-item-inline { font-weight: 700; font-size: inherit; color: var(--text); min-width: 0; }
   td.cell-editable, td.cell-modal-open { transition: background 0.12s ease; }
   td.cell-editable { cursor: pointer; }
   td.cell-editable:hover { background: var(--accent-soft); }
