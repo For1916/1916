@@ -244,6 +244,33 @@
   .badge-expense { background: var(--red-soft); color: var(--red); }
   .badge-order { background: var(--accent-soft); color: var(--accent); }
   .badge-muted { background: var(--surface2); color: var(--text2); }
+  .badge-cat-ai { background: #EDE8FC; color: #5B21B6; }
+  .badge-cat-ads { background: var(--amber-soft); color: var(--amber); }
+  .badge-cat-bind { background: var(--blue-soft); color: var(--blue); }
+  .badge-cat-box { background: var(--accent-soft); color: var(--accent-dark); }
+  .badge-cat-etc { background: var(--surface2); color: var(--text2); }
+  td.cell-editable, td.cell-modal-open { transition: background 0.12s ease; }
+  td.cell-editable { cursor: pointer; }
+  td.cell-editable:hover { background: var(--accent-soft); }
+  td.cell-modal-open { cursor: pointer; }
+  td.cell-modal-open:hover { background: var(--surface2); }
+  td.cell-editable.is-editing { padding: 6px 8px; background: var(--surface); }
+  td.cell-editable.is-editing input,
+  td.cell-editable.is-editing textarea {
+    width: 100%;
+    font: inherit;
+    font-size: 13px;
+    padding: 6px 8px;
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    background: var(--surface2);
+    color: var(--text);
+    min-height: 36px;
+  }
+  td.cell-editable.is-editing textarea { min-height: 56px; resize: vertical; white-space: pre-wrap; }
+  .cell-item strong { font-weight: 700; }
+  .trade-card .cell-editable-tap { cursor: pointer; border-radius: 6px; padding: 2px 4px; margin: -2px -4px; }
+  .trade-card .cell-editable-tap:hover { background: var(--accent-soft); }
   .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
   .stat-card {
     background: var(--surface);
@@ -555,9 +582,9 @@
           <tr>
             <th class="sortable" data-sort-table="expense" data-sort-key="date">날짜<span class="sort-ind" data-sort-ind="expense" data-sort-key="date"></span></th>
             <th class="sortable" data-sort-table="expense" data-sort-key="category"><button type="button" class="tip" data-tip="category" aria-label="분류 설명"><span class="tip-text">분류</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button><span class="sort-ind" data-sort-ind="expense" data-sort-key="category"></span></th>
+            <th class="sortable" data-sort-table="expense" data-sort-key="item">항목<span class="sort-ind" data-sort-ind="expense" data-sort-key="item"></span></th>
             <th class="sortable num" data-sort-table="expense" data-sort-key="amount">금액<span class="sort-ind" data-sort-ind="expense" data-sort-key="amount"></span></th>
             <th class="sortable" data-sort-table="expense" data-sort-key="memo">메모<span class="sort-ind" data-sort-ind="expense" data-sort-key="memo"></span></th>
-            <th></th>
           </tr>
         </thead>
         <tbody id="list-body"></tbody>
@@ -575,7 +602,7 @@
             <th class="sortable" data-sort-table="sales" data-sort-key="date">날짜<span class="sort-ind" data-sort-ind="sales" data-sort-key="date"></span></th>
             <th class="sortable" data-sort-table="sales" data-sort-key="status"><button type="button" class="tip" data-tip="orderStatus" aria-label="상태 설명"><span class="tip-text">상태</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button><span class="sort-ind" data-sort-ind="sales" data-sort-key="status"></span></th>
             <th class="sortable num" data-sort-table="sales" data-sort-key="amount">금액<span class="sort-ind" data-sort-ind="sales" data-sort-key="amount"></span></th>
-            <th></th>
+            <th class="sortable" data-sort-table="sales" data-sort-key="memo">메모<span class="sort-ind" data-sort-ind="sales" data-sort-key="memo"></span></th>
           </tr>
         </thead>
         <tbody id="sales-body"></tbody>
@@ -937,6 +964,165 @@ function categoryTip(name) {
   if (name === '박스') return tipLabel(name, 'box');
   if (name === '기타') return tipLabel(name, 'etc');
   return tipLabel(name, 'etc', name);
+}
+function categoryBadgeClass(cat) {
+  var c = String(cat || '');
+  if (c === 'AI') return 'badge badge-cat-ai';
+  if (c === '광고') return 'badge badge-cat-ads';
+  if (c === '제본') return 'badge badge-cat-bind';
+  if (c === '박스') return 'badge badge-cat-box';
+  return 'badge badge-cat-etc';
+}
+function categoryBadgeHtml(cat) {
+  var label = String(cat || '-');
+  return '<span class="' + categoryBadgeClass(cat) + '">' + escapeHtml(label) + '</span>';
+}
+var inlineEdit = null;
+function findExpenseRow(sheetRow) {
+  return state.expense.find(function(row) { return row.row === sheetRow; });
+}
+function findManualIncomeRow(sheetRow) {
+  return state.income.find(function(row) { return row.counts && row.row === sheetRow; });
+}
+function expenseRecordFromRow(row, patch) {
+  return {
+    '날짜': patch.date != null ? patch.date : row.date,
+    '분류': patch.category != null ? patch.category : row.category,
+    '항목': patch.item != null ? patch.item : (row.item || ''),
+    '금액': patch.amount != null ? patch.amount : row.amount,
+    '메모': patch.memo != null ? patch.memo : (row.memo || '')
+  };
+}
+function incomeRecordFromRow(row, patch) {
+  return {
+    '날짜': patch.date != null ? patch.date : row.date,
+    '금액': patch.amount != null ? patch.amount : row.amount,
+    '메모': patch.memo != null ? patch.memo : (row.memo || '')
+  };
+}
+function cancelInlineEdit(reRender) {
+  if (!inlineEdit) return;
+  inlineEdit.cancelled = true;
+  inlineEdit = null;
+  if (reRender) renderList();
+}
+async function commitInlineExpense(row, field, rawValue) {
+  var patch = {};
+  if (field === 'amount') {
+    var amount = parseAmount(rawValue);
+    if (amount == null) { toast('금액을 확인해 주세요', 'error'); return false; }
+    if (amount === Number(row.amount)) return true;
+    patch.amount = amount;
+  } else if (field === 'item') {
+    var item = String(rawValue).trim();
+    if (item === String(row.item || '').trim()) return true;
+    patch.item = item;
+  } else if (field === 'memo') {
+    var memo = String(rawValue).trim();
+    if (memo === String(row.memo || '').trim()) return true;
+    patch.memo = memo;
+  } else return true;
+  try {
+    await api('update', {
+      sheet: '지출',
+      row: row.row,
+      match: { date: row.date, amount: row.amount },
+      record: expenseRecordFromRow(row, patch)
+    });
+    toast('수정했습니다');
+    await reload();
+    return true;
+  } catch (err) {
+    toast(err.message, 'error');
+    return false;
+  }
+}
+async function commitInlineIncome(row, field, rawValue) {
+  var patch = {};
+  if (field === 'amount') {
+    var amount = parseAmount(rawValue);
+    if (amount == null) { toast('금액을 확인해 주세요', 'error'); return false; }
+    if (amount === Number(row.amount)) return true;
+    patch.amount = amount;
+  } else if (field === 'memo') {
+    var memo = String(rawValue).trim();
+    if (memo === String(row.memo || '').trim()) return true;
+    patch.memo = memo;
+  } else return true;
+  try {
+    await api('update', {
+      sheet: '수입',
+      row: row.row,
+      match: { date: row.date, amount: row.amount },
+      record: incomeRecordFromRow(row, patch)
+    });
+    toast('수정했습니다');
+    await reload();
+    return true;
+  } catch (err) {
+    toast(err.message, 'error');
+    return false;
+  }
+}
+function startInlineEdit(td, kind, row, field) {
+  if (!row || !td) return;
+  if (inlineEdit && inlineEdit.td === td) return;
+  if (inlineEdit) {
+    inlineEdit.cancelled = true;
+    inlineEdit = null;
+    renderList();
+    td = document.querySelector('[data-inline-kind="' + kind + '"][data-inline-field="' + field + '"][data-sheet-row="' + row.row + '"]');
+    if (!td) return;
+  }
+  var original = field === 'amount' ? String(row.amount == null ? '' : row.amount) : field === 'item' ? String(row.item || '') : String(row.memo || '');
+  var isMemo = field === 'memo';
+  var input = document.createElement(isMemo ? 'textarea' : 'input');
+  if (!isMemo) input.type = 'text';
+  if (field === 'amount') input.inputMode = 'decimal';
+  if (field === 'item') {
+    input.setAttribute('list', 'expense-item-suggestions');
+    input.maxLength = 200;
+  }
+  if (isMemo) input.maxLength = 2000;
+  input.value = original;
+  input.className = 'inline-edit-input';
+  td.classList.add('is-editing');
+  td.innerHTML = '';
+  td.appendChild(input);
+  inlineEdit = { kind: kind, row: row, field: field, original: original, td: td, input: input, cancelled: false };
+  input.focus();
+  if (input.select) input.select();
+  function finish(save) {
+    if (!inlineEdit || inlineEdit.td !== td) return;
+    var ctx = inlineEdit;
+    inlineEdit = null;
+    td.classList.remove('is-editing');
+    if (!save || ctx.cancelled) {
+      renderList();
+      return;
+    }
+    var promise = ctx.kind === 'income'
+      ? commitInlineIncome(ctx.row, ctx.field, ctx.input.value)
+      : commitInlineExpense(ctx.row, ctx.field, ctx.input.value);
+    promise.then(function(ok) { if (!ok) renderList(); });
+  }
+  input.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      inlineEdit.cancelled = true;
+      input.blur();
+    } else if (event.key === 'Enter' && !isMemo && !event.shiftKey) {
+      event.preventDefault();
+      input.blur();
+    }
+  });
+  input.addEventListener('blur', function() {
+    if (inlineEdit && inlineEdit.cancelled) finish(false);
+    else finish(true);
+  });
+}
+function inlineEditAttr(kind, field, sheetRow) {
+  return ' data-inline-kind="' + kind + '" data-inline-field="' + field + '" data-sheet-row="' + sheetRow + '"';
 }
 function anchorBox(el) {
   var rect = el.getBoundingClientRect();
@@ -1515,7 +1701,7 @@ function toggleListSort(table, key) {
   if (s.key === key) s.asc = !s.asc;
   else {
     s.key = key;
-    s.asc = key === 'category' || key === 'memo' || key === 'status';
+    s.asc = key === 'category' || key === 'item' || key === 'memo' || key === 'status';
   }
   state.showAll = false;
   renderList();
@@ -1682,11 +1868,23 @@ function manualIncomeRows() {
 function renderList() {
   var rows = expenseRows();
   var shown = state.showAll ? rows : rows.slice(0, 300);
-  $('list-body').innerHTML = shown.map(function(row, index) {
-    return '<tr><td>' + escapeHtml(row.date || '-') + '</td><td>' + escapeHtml(row.category || '-') + (row.item ? '<div style="color:var(--text2);font-size:12px">' + escapeHtml(row.item) + '</div>' : '') + '</td><td class="num neg">' + fmt(row.amount) + '</td><td>' + escapeHtml(row.memo || '') + '</td><td><button type="button" class="btn btn-ghost btn-sm" data-edit="' + index + '">수정</button></td></tr>';
+  $('list-body').innerHTML = shown.map(function(row) {
+    var itemLabel = row.item ? escapeHtml(row.item) : '—';
+    return '<tr data-expense-row="' + row.row + '">' +
+      '<td class="cell-modal-open" data-expense-modal="' + row.row + '" title="날짜·분류 수정·삭제">' + escapeHtml(row.date || '-') + '</td>' +
+      '<td class="cell-modal-open" data-expense-modal="' + row.row + '" title="날짜·분류 수정·삭제">' + categoryBadgeHtml(row.category) + '</td>' +
+      '<td class="cell-editable cell-item"' + inlineEditAttr('expense', 'item', row.row) + '><strong>' + itemLabel + '</strong></td>' +
+      '<td class="num neg cell-editable"' + inlineEditAttr('expense', 'amount', row.row) + '>' + fmt(row.amount) + '</td>' +
+      '<td class="cell-editable cell-memo"' + inlineEditAttr('expense', 'memo', row.row) + '>' + escapeHtml(row.memo || '') + '</td></tr>';
   }).join('');
-  $('list-cards').innerHTML = shown.map(function(row, index) {
-    return '<article class="trade-card"><div class="trade-card-header"><div class="trade-card-title">' + escapeHtml(row.category || '지출') + '</div><span class="badge badge-expense">지출</span></div><div class="trade-card-meta">' + escapeHtml(row.date || '-') + (row.item ? ' · ' + escapeHtml(row.item) : '') + '</div><strong class="neg">' + fmt(row.amount) + '</strong>' + (row.memo ? '<div class="trade-card-meta">' + escapeHtml(row.memo) + '</div>' : '') + '<div class="card-actions"><button type="button" class="btn btn-ghost btn-sm" data-edit="' + index + '">수정</button></div></article>';
+  $('list-cards').innerHTML = shown.map(function(row) {
+    var itemLabel = row.item ? escapeHtml(row.item) : '—';
+    return '<article class="trade-card" data-expense-row="' + row.row + '">' +
+      '<div class="trade-card-header"><div class="trade-card-title cell-modal-open" data-expense-modal="' + row.row + '">' + categoryBadgeHtml(row.category) + '</div><span class="badge badge-expense">지출</span></div>' +
+      '<div class="trade-card-meta cell-modal-open" data-expense-modal="' + row.row + '">' + escapeHtml(row.date || '-') + '</div>' +
+      '<div class="cell-editable-tap"' + inlineEditAttr('expense', 'item', row.row) + '><strong>' + itemLabel + '</strong></div>' +
+      '<strong class="neg cell-editable-tap"' + inlineEditAttr('expense', 'amount', row.row) + '>' + fmt(row.amount) + '</strong>' +
+      '<div class="trade-card-meta cell-editable-tap"' + inlineEditAttr('expense', 'memo', row.row) + '">' + (row.memo ? escapeHtml(row.memo) : '메모') + '</div></article>';
   }).join('');
   $('list-empty').style.display = rows.length ? 'none' : 'block';
   var expenseSubtotal = rows.reduce(function(sum, row) { return sum + (Number(row.amount) || 0); }, 0);
@@ -1712,31 +1910,33 @@ function renderList() {
     more.addEventListener('click', function() { state.showAll = true; renderList(); });
     $('list-more').appendChild(more);
   }
-  document.querySelectorAll('[data-edit]').forEach(function(btn) {
-    btn.addEventListener('click', function() { openEdit(shown[Number(btn.getAttribute('data-edit'))]); });
-  });
   var sales = salesRows();
   var manuals = manualIncomeRows();
   var salesHtml = sales.map(function(row) {
     var badge = row.included ? '<span class="badge badge-order">주문</span>' : '<span class="badge badge-muted">제외</span>';
     return '<tr><td>' + escapeHtml(row.date || '-') + '</td><td>' + escapeHtml(row.status || '-') + '</td><td class="num ' + (row.included ? 'money-in' : '') + '">' + fmt(row.amount) + '</td><td>' + badge + '</td></tr>';
   }).join('');
-  salesHtml += manuals.map(function(row, index) {
-    return '<tr><td>' + escapeHtml(row.date || '-') + '</td><td>직접 입력' + (row.memo ? '<div style="color:var(--text2);font-size:12px">' + escapeHtml(row.memo) + '</div>' : '') + '</td><td class="num money-in">' + fmt(row.amount) + '</td><td><button type="button" class="btn btn-ghost btn-sm" data-income="' + index + '">수정</button></td></tr>';
+  salesHtml += manuals.map(function(row) {
+    return '<tr data-income-row="' + row.row + '">' +
+      '<td class="cell-modal-open" data-income-modal="' + row.row + '" title="날짜 수정·삭제">' + escapeHtml(row.date || '-') + '</td>' +
+      '<td><span class="badge badge-income">직접 입력</span></td>' +
+      '<td class="num money-in cell-editable"' + inlineEditAttr('income', 'amount', row.row) + '>' + fmt(row.amount) + '</td>' +
+      '<td class="cell-editable cell-memo"' + inlineEditAttr('income', 'memo', row.row) + '>' + escapeHtml(row.memo || '') + '</td></tr>';
   }).join('');
   $('sales-body').innerHTML = salesHtml;
   var salesCards = sales.map(function(row) {
     var badge = row.included ? '<span class="badge badge-order">주문</span>' : '<span class="badge badge-muted">제외</span>';
     return '<article class="trade-card"><div class="trade-card-header"><div class="trade-card-title">' + escapeHtml(row.date || '-') + '</div>' + badge + '</div><div class="trade-card-meta">' + escapeHtml(row.status || '상태 없음') + '</div><strong class="' + (row.included ? 'money-in' : '') + '">' + fmt(row.amount) + '</strong></article>';
   }).join('');
-  salesCards += manuals.map(function(row, index) {
-    return '<article class="trade-card"><div class="trade-card-header"><div class="trade-card-title">직접 입력</div><span class="badge badge-income">입금</span></div><div class="trade-card-meta">' + escapeHtml(row.date || '-') + (row.memo ? ' · ' + escapeHtml(row.memo) : '') + '</div><strong class="money-in">' + fmt(row.amount) + '</strong><div class="card-actions"><button type="button" class="btn btn-ghost btn-sm" data-income="' + index + '">수정</button></div></article>';
+  salesCards += manuals.map(function(row) {
+    return '<article class="trade-card" data-income-row="' + row.row + '">' +
+      '<div class="trade-card-header"><div class="trade-card-title">직접 입력</div><span class="badge badge-income">입금</span></div>' +
+      '<div class="trade-card-meta cell-modal-open" data-income-modal="' + row.row + '">' + escapeHtml(row.date || '-') + '</div>' +
+      '<strong class="money-in cell-editable-tap"' + inlineEditAttr('income', 'amount', row.row) + '>' + fmt(row.amount) + '</strong>' +
+      '<div class="trade-card-meta cell-editable-tap"' + inlineEditAttr('income', 'memo', row.row) + '">' + (row.memo ? escapeHtml(row.memo) : '메모') + '</div></article>';
   }).join('');
   $('sales-cards').innerHTML = salesCards;
   $('sales-empty').style.display = (sales.length || manuals.length) ? 'none' : 'block';
-  document.querySelectorAll('[data-income]').forEach(function(btn) {
-    btn.addEventListener('click', function() { openIncomeEdit(manuals[Number(btn.getAttribute('data-income'))]); });
-  });
   updateListSortIndicators('expense');
   updateListSortIndicators('sales');
 }
@@ -1747,7 +1947,7 @@ function fieldHtml(id, label, control, tipKey) {
     : '<label for="' + id + '">' + label + '</label>';
   return '<div class="field">' + name + control + '</div>';
 }
-function openEdit(row) {
+function openEdit(row, focusField) {
   if (!row) return;
   state.editing = row;
   $('edit-title').textContent = '지출 수정';
@@ -1765,8 +1965,18 @@ function openEdit(row) {
   $('ed-category').value = cats.indexOf(row.category) === -1 ? '' : row.category;
   $('detail-overlay').style.display = 'flex';
   $('ed-delete').addEventListener('click', deleteEditing);
+  if (focusField) {
+    var focusId = focusField === 'amount' ? 'ed-amount' : focusField === 'item' ? 'ed-item' : focusField === 'memo' ? 'ed-memo' : focusField;
+    var focusEl = $(focusId);
+    if (focusEl) {
+      window.requestAnimationFrame(function() {
+        focusEl.focus();
+        if (focusEl.select) focusEl.select();
+      });
+    }
+  }
 }
-function openIncomeEdit(row) {
+function openIncomeEdit(row, focusField) {
   if (!row) return;
   state.editing = { kind: 'income', row: row };
   $('edit-title').textContent = '직접 입력한 입금';
@@ -1778,6 +1988,16 @@ function openIncomeEdit(row) {
     '<div class="form-actions"><button class="btn btn-danger" type="button" id="ed-delete">삭제</button><button class="btn btn-primary" type="submit">저장</button></div>';
   $('detail-overlay').style.display = 'flex';
   $('ed-delete').addEventListener('click', deleteEditing);
+  if (focusField) {
+    var focusId = focusField === 'amount' ? 'ed-amount' : focusField === 'memo' ? 'ed-memo' : focusField;
+    var focusEl = $(focusId);
+    if (focusEl) {
+      window.requestAnimationFrame(function() {
+        focusEl.focus();
+        if (focusEl.select) focusEl.select();
+      });
+    }
+  }
 }
 function closeEdit() {
   state.editing = null;
@@ -2116,11 +2336,44 @@ $('list-cat-chips').addEventListener('click', function(event) {
   fillListCategoryFilters();
   renderList();
 });
+function handleListTableClick(event) {
+  if (event.target.closest('.tip')) return;
+  var inlineCell = event.target.closest('[data-inline-kind]');
+  if (inlineCell) {
+    var kind = inlineCell.getAttribute('data-inline-kind');
+    var field = inlineCell.getAttribute('data-inline-field');
+    var sheetRow = Number(inlineCell.getAttribute('data-sheet-row'));
+    if (!sheetRow || !field) return;
+    var row = kind === 'income' ? findManualIncomeRow(sheetRow) : findExpenseRow(sheetRow);
+    if (!row) return;
+    if (inlineCell.tagName !== 'TD') {
+      if (kind === 'income') openIncomeEdit(row, field);
+      else openEdit(row, field);
+      return;
+    }
+    startInlineEdit(inlineCell, kind, row, field);
+    return;
+  }
+  var expenseModal = event.target.closest('[data-expense-modal]');
+  if (expenseModal) {
+    var expenseRow = findExpenseRow(Number(expenseModal.getAttribute('data-expense-modal')));
+    if (expenseRow) openEdit(expenseRow);
+    return;
+  }
+  var incomeModal = event.target.closest('[data-income-modal]');
+  if (incomeModal) {
+    var incomeRow = findManualIncomeRow(Number(incomeModal.getAttribute('data-income-modal')));
+    if (incomeRow) openIncomeEdit(incomeRow);
+  }
+}
 $('tab-list').addEventListener('click', function(event) {
   if (event.target.closest('.tip')) return;
   var th = event.target.closest('th.sortable');
-  if (!th) return;
-  toggleListSort(th.getAttribute('data-sort-table'), th.getAttribute('data-sort-key'));
+  if (th) {
+    toggleListSort(th.getAttribute('data-sort-table'), th.getAttribute('data-sort-key'));
+    return;
+  }
+  handleListTableClick(event);
 });
 $('btn-reload').addEventListener('click', function() { reload().catch(function(err) { toast(err.message, 'error'); }); });
 $('btn-lock').addEventListener('click', function() { lock(); });
