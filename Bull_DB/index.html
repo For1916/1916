@@ -748,7 +748,7 @@
 
 <script>
 // 웹 앱 URL입니다. 비밀번호는 이 파일에 적지 않습니다. 스크립트 속성에만 있습니다.
-var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyShKol-v2lx0OTwMFHcZ-QQMqMbRpWXT_4yi0jvvCWjcJtG3EB1uQvJDBd3Rty0g/exec';
+var SCRIPT_URL = 'https://bull-db.for1916.workers.dev';
 var SS_KEY = 'hwangso-workbook-ledger-password';
 var LOAD_CACHE_KEY = 'hwangso-workbook-ledger-load-v1';
 var PERSONAL_FIELD_RE = /주문자|고객명|수취인|받는\s*분|받는분|연락처|전화|휴대폰|핸드폰|휴대전화|주소|우편번호|이메일|유입|모아폼|moaform|답변\s*id|응답\s*id|answer\s*id|submission|phone|address/i;
@@ -758,7 +758,7 @@ var state = { meta: { expenseCategories: DEFAULT_CATEGORIES.slice() }, summary: 
 var listSort = { expense: { key: 'date', asc: false }, sales: { key: 'date', asc: false } };
 
 function scriptUrl() { return String(SCRIPT_URL || '').trim(); }
-function isConfigured() { return /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec\/?$/.test(scriptUrl()); }
+function isConfigured() { var u = scriptUrl(); return /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec\/?$/.test(u) || /^https:\/\/[A-Za-z0-9-]+\.[A-Za-z0-9-]+\.workers\.dev\/?$/.test(u); }
 function $(id) { return document.getElementById(id); }
 function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -1642,7 +1642,7 @@ function showSetupHint(message) {
   var hint = $('setup-hint');
   if (!isConfigured()) {
     hint.style.display = 'block';
-    hint.textContent = '웹 앱 주소가 올바르지 않습니다. index.html 의 SCRIPT_URL 이 /exec 로 끝나는 배포 주소인지 확인하세요.';
+    hint.textContent = '웹 앱 주소가 올바르지 않습니다. index.html 의 SCRIPT_URL 이 Worker 주소(workers.dev) 또는 /exec 로 끝나는 배포 주소인지 확인하세요.';
     return;
   }
   if (message) {
