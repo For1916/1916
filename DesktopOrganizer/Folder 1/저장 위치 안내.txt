@@ -1,0 +1,17 @@
+로컬 저장 경로 (Mac)
+  ~/Documents/DesktopOrganizer/Folder 1/
+  (= Finder 「문서」 → DesktopOrganizer → Folder 1)
+
+Cloud Agent는 위 Mac 폴더에 직접 저장할 수 없습니다.
+  이 작업은 GitHub 레포(for1916/1916) 안의 같은 경로에만 파일이 있습니다.
+
+Mac 문서 폴더에 넣기
+  1) Mac에서 터미널 한 줄:
+     mkdir -p ~/Documents/DesktopOrganizer/Folder\ 1 && curl -fsSL "https://github.com/For1916/1916/raw/cursor/mac-app-infographic-no-mole-de41/DesktopOrganizer/Folder%201/%EC%83%88%20Mac%20%EC%95%B1%20%EA%B5%AC%EC%84%B1%20(Mole%20%EC%A0%9C%EC%99%B8%2C%20%EC%B2%B4%ED%97%98%EC%9D%BC%20%ED%91%9C%EA%B8%B0).png" -o ~/Documents/DesktopOrganizer/Folder\ 1/"새 Mac 앱 구성 (Mole 제외, 체험일 표기).png" && open -R ~/Documents/DesktopOrganizer/Folder\ 1/
+
+  2) 또는 Cursor에서 **문서 폴더(DesktopOrganizer의 상위)** 를 워크스페이스로 열고 **로컬 Agent**로 저장 요청
+
+  3) 이 채팅의 PNG 파일을 Finder에서 Folder 1로 드래그
+
+파일명
+  새 Mac 앱 구성 (Mole 제외, 체험일 표기).png

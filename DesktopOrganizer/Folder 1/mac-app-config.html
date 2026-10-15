@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>새 Mac 앱 구성</title>
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      background: #f4f5f7;
+      color: #1a1a1a;
+      padding: 40px 48px;
+      width: 1280px;
+      line-height: 1.45;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 28px;
+      letter-spacing: -0.02em;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      border: 2px solid #e5e7eb;
+      padding: 20px 22px;
+    }
+    .card.wide { grid-column: 1 / -1; }
+    .card.btt { grid-row: span 1; }
+    .subhead {
+      font-size: 12px;
+      font-weight: 700;
+      color: #4b5563;
+      margin: 12px 0 6px;
+      text-transform: none;
+    }
+    .tier ul {
+      margin: 4px 0 6px 1.15em;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .tier li { margin: 2px 0; }
+    .sources {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 20px;
+      line-height: 1.5;
+    }
+    .sources a { color: #4b5563; }
+    .card.alfred { border-color: #a78bfa; }
+    .card.btt { border-color: #34d399; }
+    .card.cleanshot { border-color: #60a5fa; }
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .card-head h2 { font-size: 20px; font-weight: 700; }
+    .badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+    .badge.purple { background: #ede9fe; color: #5b21b6; }
+    .badge.green { background: #d1fae5; color: #065f46; }
+    .badge.blue { background: #dbeafe; color: #1e40af; }
+    .badge.orange { background: #ffedd5; color: #9a3412; }
+    ul.features { list-style: none; font-size: 14px; margin-bottom: 14px; }
+    ul.features li { padding: 4px 0; padding-left: 1.1em; position: relative; }
+    ul.features li::before { content: "·"; position: absolute; left: 0; font-weight: 700; }
+    .tier {
+      font-size: 13px;
+      border-radius: 8px;
+      padding: 12px 14px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+    }
+    .tier p { margin: 6px 0; }
+    .tier strong { font-weight: 700; }
+    .trial-box {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .trial-box.btt {
+      background: #fef2f2;
+      border: 2px solid #f87171;
+      color: #991b1b;
+    }
+    .trial-box.setapp {
+      background: #fff7ed;
+      border: 1px solid #fdba74;
+      color: #9a3412;
+      font-weight: 500;
+    }
+    .trial-box .hint {
+      font-size: 12px;
+      font-weight: 400;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+    .steps {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      padding: 22px 24px;
+      margin-bottom: 20px;
+    }
+    .steps h3 { font-size: 17px; margin-bottom: 16px; }
+    .step-row { display: flex; gap: 14px; align-items: stretch; flex-wrap: wrap; }
+    .step {
+      flex: 1;
+      min-width: 200px;
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 13px;
+    }
+    .step .num {
+      display: inline-block;
+      background: #3b82f6;
+      color: #fff;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 22px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .decision {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 13px;
+    }
+    .decision span {
+      padding: 10px 14px;
+      border-radius: 8px;
+      flex: 1;
+      min-width: 240px;
+    }
+    .decision .yes { background: #d1fae5; border: 1px solid #6ee7b7; }
+    .decision .no { background: #fce7f3; border: 1px solid #f9a8d4; }
+    .decision-title { font-weight: 700; margin-bottom: 10px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>새 Mac 앱 구성</h1>
+
+  <div class="grid">
+    <section class="card alfred">
+      <div class="card-head">
+        <h2>Alfred</h2>
+        <span class="badge purple">코어 무료 · Powerpack 일회성</span>
+      </div>
+      <p class="subhead">내 설정 (예정)</p>
+      <ul class="features">
+        <li>앱 / 파일 / 기능 검색 (Spotlight 대비 한글·워크플로 확장)</li>
+        <li>Clipboard History — 텍스트·이미지·파일 경로 (최대 3개월 등 설정)</li>
+        <li>Workflows — 반복 작업·파일 정리·텍스트 변환 자동화</li>
+      </ul>
+      <div class="tier">
+        <p><strong>무료 (Alfred 5 코어)</strong></p>
+        <ul>
+          <li>앱 실행·파일 검색, 웹/맞춤 검색, Fallback 검색(Google·Wikipedia 등)</li>
+          <li>계산기, 사전, 북마크, Quick Look, Large Type</li>
+          <li>시스템 명령(앱 종료·숨김 등), 연락처 기본 검색</li>
+        </ul>
+        <p><strong>유료 (Powerpack)</strong></p>
+        <ul>
+          <li>Clipboard History, Snippets·텍스트 확장(날짜·클립보드 변수 등)</li>
+          <li>Workflows(핫키·키워드·Remote), File Navigation·Universal Actions</li>
+          <li>Contacts Viewer, Music Mini Player, 1Password 연동</li>
+          <li>터미널/Shell 실행, 커스텀 테마, 설정 동기화·백업</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="card btt">
+      <div class="card-head">
+        <h2>BetterTouchTool</h2>
+        <span class="badge green">45일 체험 → 일회성 약 $25</span>
+      </div>
+      <p class="subhead">내 설정 (예정)</p>
+      <ul class="features">
+        <li>Right Option → 한/영 전환 (Karabiner 없이)</li>
+        <li>Finder Enter → 파일 열기 · F2 → 이름 변경</li>
+        <li>검증 후 Karabiner 제거 후보</li>
+      </ul>
+      <div class="tier">
+        <p><strong>체험 / 유료</strong> — 별도 무료 티어 없음. 체험·라이선스 모두 <em>600+ 액션·전 트리거</em> 동일</p>
+        <p><strong>키보드</strong></p>
+        <ul>
+          <li>전역·앱별 단축키, 좌/우 modifier 구분, 길게 누르기·Key Sequence</li>
+          <li>Hyper Key(예: Caps Lock → ⌘⌥⌃⇧), 텍스트 확장·스니펫</li>
+          <li>조건 분기: 활성 앱·창·Wi‑Fi·시간·사용자 변수</li>
+        </ul>
+        <p><strong>트랙패드·마우스</strong></p>
+        <ul>
+          <li>탭·스와이프·Tip Tap·Force Click 등 손가락 수·앱별 제스처</li>
+          <li>제스처 → 창 조작·단축키·스크립트·앱 전환 등 연결</li>
+        </ul>
+        <p><strong>창 관리</strong></p>
+        <ul>
+          <li>가장자리/모서리 스냅, 사용자 Snap Area, 키보드·제스처로 반쪽·최대화</li>
+          <li>modifier+드래그로 창 이동·리사이즈, Window Switcher, Stage Manager 연동</li>
+        </ul>
+        <p><strong>기타 (공식)</strong></p>
+        <ul>
+          <li>Floating Menu·위젯(HUD), 텍스트 선택 시 빠른 액션 메뉴</li>
+          <li>Stream Deck·매크로 패드 네이티브(Elgato 등, 제조사 앱 불필요)</li>
+          <li>메뉴 막대 항목·스크린샷 편집·드로잉 제스처·매크로 체인</li>
+        </ul>
+      </div>
+      <div class="trial-box btt" id="btt-trial">
+        체험 종료일: <span id="btt-end-date">2026. 11. 19.</span>
+        · 남은 <span id="btt-days-left">38</span>일
+        <div class="hint">체험 시작(추정): 2026. 10. 5. · BTT 구매 창 「평가판 38일 남음」 캡처 (2026. 10. 12.)</div>
+      </div>
+    </section>
+
+    <section class="card cleanshot wide">
+      <div class="card-head">
+        <h2>CleanShot X</h2>
+        <span class="badge blue">Setapp 또는 개별 약 $35</span>
+      </div>
+      <p class="subhead">내 설정 (예정)</p>
+      <ul class="features">
+        <li>캡처(영역/창/전체/스크롤) — 채팅·코드 등 긴 화면</li>
+        <li>지정 폴더 자동 저장 + 클립보드 동시 복사</li>
+        <li>스크롤 캡처 · OCR · 화면 녹화(GIF/영상)</li>
+      </ul>
+      <div class="tier">
+        <p><strong>무료</strong></p>
+        <ul>
+          <li>앱 자체 무료 버전 없음 — macOS 기본 캡처(⌘⇧3/4/5)·미리보기 Markup만 무료 대안</li>
+        </ul>
+        <p><strong>유료 (단품·Setapp)</strong></p>
+        <ul>
+          <li>캡처: 영역·창·전체·스크롤(가로/세로), 셀프 타이머, Quick Access Overlay</li>
+          <li>편집: 화살표·텍스트·단계 번호, 블러·픽셀·가리기, 배경·크롭, .cleanshot 재편집</li>
+          <li>OCR: 이미지·스캔에서 텍스트 복사(온디바이스), QR 코드, 30+ 언어</li>
+          <li>녹화: MP4·GIF, 웹캠 오버레이, 녹화 후 간단 편집</li>
+          <li>핀(화면 고정), 드래그 앤 드롭 공유, 폴더·클립보드 자동 저장</li>
+          <li>CleanShot Cloud: 링크 공유·협업(댓글)·비밀번호 링크 — <em>클라우드 없이도 앱 사용 가능</em>, 단품은 저장 용량 제한(약 1GB급)</li>
+        </ul>
+      </div>
+      <div class="trial-box setapp" id="setapp-trial">
+        Setapp 7일 체험 종료일: <span id="setapp-end-date">체험 시작 후 +7일</span>
+        <div class="hint">Setapp 앱 → 계정 → 구독/체험 정보</div>
+      </div>
+    </section>
+  </div>
+
+  <section class="steps">
+    <h3>진행 순서</h3>
+    <div class="step-row">
+      <div class="step"><span class="num">1</span><br>Alfred 설치(무료) · BTT 체험 시작</div>
+      <div class="step"><span class="num">2</span><br>BTT 키/제스처 설정 · Alfred Workflow 학습</div>
+      <div class="step"><span class="num">3</span><br>Setapp 7일 체험 — CleanShot X 등 필요 앱만 검증</div>
+    </div>
+    <p class="decision-title" style="margin-top:18px">Setapp 앱을 여러 개 계속 쓸 계획인가?</p>
+    <div class="decision">
+      <span class="yes"><strong>예</strong> — Setapp 연간 구독(교육 할인 가능)</span>
+      <span class="no"><strong>아니오</strong> — BTT Lifetime + CleanShot X 등 필요 앱만 단품</span>
+    </div>
+  </section>
+
+  <p class="sources">
+    기능 정리 출처:
+    <a href="https://www.alfredapp.com/help/overview/">Alfred Features</a> ·
+    <a href="https://www.alfredapp.com/powerpack/">Alfred Powerpack</a> ·
+    <a href="https://folivora.ai/features/">BetterTouchTool Features</a> ·
+    <a href="https://cleanshot.com/features">CleanShot X Features</a>
+    (2026-10 웹 검색·공식 페이지 기준)
+  </p>
+
+  <script>
+    // Override: ?bttEnd=2026-11-19&bttDays=38&setappEnd=2026-11-08
+    const params = new URLSearchParams(location.search);
+    if (params.get("bttEnd")) document.getElementById("btt-end-date").textContent = params.get("bttEnd");
+    if (params.get("bttDays")) document.getElementById("btt-days-left").textContent = params.get("bttDays");
+    if (params.get("setappEnd")) document.getElementById("setapp-end-date").textContent = params.get("setappEnd");
+  </script>
+</body>
+</html>
