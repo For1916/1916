@@ -244,6 +244,9 @@
   .badge-expense { background: var(--red-soft); color: var(--red); }
   .badge-order { background: var(--accent-soft); color: var(--accent); }
   .badge-muted { background: var(--surface2); color: var(--text2); }
+  .badge-cat { border-radius: 999px; color: #fff; vertical-align: middle; }
+  .expense-cat-cell { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .expense-cat-cell .expense-item-inline { font-weight: 700; font-size: inherit; color: var(--text); }
   .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
   .stat-card {
     background: var(--surface);
@@ -724,6 +727,24 @@ function isConfigured() { return /^https:\/\/script\.google\.com\/macros\/s\/[A-
 function $(id) { return document.getElementById(id); }
 function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+var CATEGORY_PALETTE = ['#E53935', '#D81B60', '#8E24AA', '#5E35B1', '#3949AB', '#1E88E5', '#00897B', '#2E7D32', '#F57C00', '#6D4C41', '#546E7A', '#C2185B'];
+function categoryColor(name) {
+  var s = String(name || '');
+  var h = 0;
+  for (var i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  return CATEGORY_PALETTE[Math.abs(h) % CATEGORY_PALETTE.length];
+}
+function categoryBadgeHtml(category) {
+  var label = category || '-';
+  var color = categoryColor(label);
+  return '<span class="badge badge-cat" style="background:' + color + '">' + escapeHtml(label) + '</span>';
+}
+function expenseCategoryCellHtml(row) {
+  var badge = categoryBadgeHtml(row.category);
+  var item = String(row.item || '').trim();
+  if (!item) return badge;
+  return '<span class="expense-cat-cell">' + badge + '<strong class="expense-item-inline">' + escapeHtml(item) + '</strong></span>';
 }
 var TIPS = {
   month: {
@@ -1447,7 +1468,12 @@ function fillListCategoryFilters() {
   var cur = sel.value;
   var html = '<button type="button" data-cat="" class="' + (!cur ? 'active' : '') + '">전체</button>';
   cats.forEach(function(c) {
-    html += '<button type="button" data-cat="' + escapeHtml(c) + '" class="' + (cur === c ? 'active' : '') + '">' + escapeHtml(c) + '</button>';
+    var color = categoryColor(c);
+    var active = cur === c;
+    var style = active
+      ? ' style="background:' + color + ';border-color:' + color + ';color:#fff;"'
+      : ' style="border-color:' + color + ';color:' + color + ';"';
+    html += '<button type="button" data-cat="' + escapeHtml(c) + '" class="' + (active ? 'active' : '') + '"' + style + '>' + escapeHtml(c) + '</button>';
   });
   wrap.innerHTML = html;
 }
@@ -1683,7 +1709,7 @@ function renderList() {
   var rows = expenseRows();
   var shown = state.showAll ? rows : rows.slice(0, 300);
   $('list-body').innerHTML = shown.map(function(row, index) {
-    return '<tr><td>' + escapeHtml(row.date || '-') + '</td><td>' + escapeHtml(row.category || '-') + (row.item ? '<div style="color:var(--text2);font-size:12px">' + escapeHtml(row.item) + '</div>' : '') + '</td><td class="num neg">' + fmt(row.amount) + '</td><td>' + escapeHtml(row.memo || '') + '</td><td><button type="button" class="btn btn-ghost btn-sm" data-edit="' + index + '">수정</button></td></tr>';
+    return '<tr><td>' + escapeHtml(row.date || '-') + '</td><td>' + expenseCategoryCellHtml(row) + '</td><td class="num neg">' + fmt(row.amount) + '</td><td>' + escapeHtml(row.memo || '') + '</td><td><button type="button" class="btn btn-ghost btn-sm" data-edit="' + index + '">수정</button></td></tr>';
   }).join('');
   $('list-cards').innerHTML = shown.map(function(row, index) {
     return '<article class="trade-card"><div class="trade-card-header"><div class="trade-card-title">' + escapeHtml(row.category || '지출') + '</div><span class="badge badge-expense">지출</span></div><div class="trade-card-meta">' + escapeHtml(row.date || '-') + (row.item ? ' · ' + escapeHtml(row.item) : '') + '</div><strong class="neg">' + fmt(row.amount) + '</strong>' + (row.memo ? '<div class="trade-card-meta">' + escapeHtml(row.memo) + '</div>' : '') + '<div class="card-actions"><button type="button" class="btn btn-ghost btn-sm" data-edit="' + index + '">수정</button></div></article>';
