@@ -989,6 +989,9 @@ function categoryTip(name) {
   return tipLabel(name, 'etc', name);
 }
 var inlineEdit = null;
+var inlineSaveInFlight = false;
+var softRefreshSeq = 0;
+var lastSoftRefreshFailToast = 0;
 function findExpenseRow(sheetRow) {
   return state.expense.find(function(row) { return row.row === sheetRow; });
 }
@@ -1017,7 +1020,51 @@ function cancelInlineEdit(reRender) {
   inlineEdit = null;
   if (reRender) renderList();
 }
+function applyLocalPatchExpense(row, patch) {
+  if (!row || !patch) return;
+  if (patch.date != null) row.date = patch.date;
+  if (patch.category != null) row.category = patch.category;
+  if (patch.item != null) row.item = patch.item;
+  if (patch.amount != null) row.amount = patch.amount;
+  if (patch.memo != null) row.memo = patch.memo;
+}
+function applyLocalPatchIncome(row, patch) {
+  if (!row || !patch) return;
+  if (patch.date != null) row.date = patch.date;
+  if (patch.amount != null) row.amount = patch.amount;
+  if (patch.memo != null) row.memo = patch.memo;
+}
+function refreshSummaryFromLocal() {
+  state.summary = extendSummary(state.summary, state.income, state.expense, state.orders);
+  renderSummary();
+}
+function removeLocalExpenseRow(sheetRow) {
+  state.expense = state.expense.filter(function(r) { return r.row !== sheetRow; });
+}
+function removeLocalIncomeRow(sheetRow) {
+  state.income = state.income.filter(function(r) { return !(r.counts && r.row === sheetRow); });
+}
+function softRefresh() {
+  var seq = ++softRefreshSeq;
+  return api('load').then(function(data) {
+    if (seq !== softRefreshSeq) return;
+    applyLoadData(data);
+    writeLoadCache(data);
+    setStatus('연결됨');
+  }).catch(function(err) {
+    if (err.wrongPassword) {
+      lock(err.message);
+      return;
+    }
+    var now = Date.now();
+    if (now - lastSoftRefreshFailToast > 45000) {
+      lastSoftRefreshFailToast = now;
+      toast('서버 동기화를 건너뛰었습니다. 화면은 최근 저장 내용을 보여 줍니다.');
+    }
+  });
+}
 async function commitInlineExpense(row, field, rawValue) {
+  if (inlineSaveInFlight) return false;
   var patch = {};
   if (field === 'amount') {
     var amount = parseAmount(rawValue);
@@ -1033,6 +1080,8 @@ async function commitInlineExpense(row, field, rawValue) {
     if (memo === String(row.memo || '').trim()) return true;
     patch.memo = memo;
   } else return true;
+  inlineSaveInFlight = true;
+  setStatus('저장 중…');
   try {
     await api('update', {
       sheet: '지출',
@@ -1040,15 +1089,23 @@ async function commitInlineExpense(row, field, rawValue) {
       match: { date: row.date, amount: row.amount },
       record: expenseRecordFromRow(row, patch)
     });
+    applyLocalPatchExpense(row, patch);
+    refreshSummaryFromLocal();
+    renderList();
     toast('수정했습니다');
-    await reload();
+    softRefresh();
     return true;
   } catch (err) {
-    toast(err.message, 'error');
+    if (err.wrongPassword) lock(err.message);
+    else toast(err.message, 'error');
     return false;
+  } finally {
+    inlineSaveInFlight = false;
+    setStatus('연결됨');
   }
 }
 async function commitInlineIncome(row, field, rawValue) {
+  if (inlineSaveInFlight) return false;
   var patch = {};
   if (field === 'amount') {
     var amount = parseAmount(rawValue);
@@ -1060,6 +1117,8 @@ async function commitInlineIncome(row, field, rawValue) {
     if (memo === String(row.memo || '').trim()) return true;
     patch.memo = memo;
   } else return true;
+  inlineSaveInFlight = true;
+  setStatus('저장 중…');
   try {
     await api('update', {
       sheet: '수입',
@@ -1067,16 +1126,24 @@ async function commitInlineIncome(row, field, rawValue) {
       match: { date: row.date, amount: row.amount },
       record: incomeRecordFromRow(row, patch)
     });
+    applyLocalPatchIncome(row, patch);
+    refreshSummaryFromLocal();
+    renderList();
     toast('수정했습니다');
-    await reload();
+    softRefresh();
     return true;
   } catch (err) {
-    toast(err.message, 'error');
+    if (err.wrongPassword) lock(err.message);
+    else toast(err.message, 'error');
     return false;
+  } finally {
+    inlineSaveInFlight = false;
+    setStatus('연결됨');
   }
 }
 function startInlineEdit(td, kind, row, field) {
   if (!row || !td) return;
+  if (inlineSaveInFlight) return;
   if (inlineEdit && inlineEdit.td === td) return;
   if (inlineEdit) {
     inlineEdit.cancelled = true;
@@ -1100,15 +1167,22 @@ function startInlineEdit(td, kind, row, field) {
   td.classList.add('is-editing');
   td.innerHTML = '';
   td.appendChild(input);
+  var finishCalled = false;
   inlineEdit = { kind: kind, row: row, field: field, original: original, td: td, input: input, cancelled: false };
   input.focus();
   if (input.select) input.select();
   function finish(save) {
+    if (finishCalled) return;
     if (!inlineEdit || inlineEdit.td !== td) return;
+    finishCalled = true;
     var ctx = inlineEdit;
     inlineEdit = null;
     td.classList.remove('is-editing');
     if (!save || ctx.cancelled) {
+      renderList();
+      return;
+    }
+    if (inlineSaveInFlight) {
       renderList();
       return;
     }
@@ -1588,7 +1662,11 @@ async function api(action, extra) {
   var text = await res.text();
   var data;
   try { data = JSON.parse(text); }
-  catch (e) { throw new Error('서버 응답을 읽지 못했습니다. 배포에서 액세스 권한이 모든 사용자인지 확인해 주세요.'); }
+  catch (e) {
+    var parseErr = new Error('서버 응답을 JSON으로 읽지 못했습니다.');
+    parseErr.parseFailed = true;
+    throw parseErr;
+  }
   if (!data.ok) {
     var err = new Error(data.error || '요청에 실패했습니다.');
     err.wrongPassword = data.error === '비밀번호가 올바르지 않습니다.';
@@ -2046,9 +2124,16 @@ async function deleteEditing() {
     var sheet = item.kind === 'income' ? '수입' : '지출';
     await api('delete', { sheet: sheet, row: target.row, match: { date: target.date, amount: target.amount } });
     closeEdit();
+    if (item.kind === 'income') removeLocalIncomeRow(target.row);
+    else removeLocalExpenseRow(target.row);
+    refreshSummaryFromLocal();
+    renderList();
     toast('삭제했습니다');
-    await reload();
-  } catch (err) { toast(err.message, 'error'); }
+    softRefresh();
+  } catch (err) {
+    if (err.wrongPassword) lock(err.message);
+    else toast(err.message, 'error');
+  }
 }
 
 var reloadSeq = 0;
@@ -2323,7 +2408,12 @@ async function submitPassword() {
   try {
     await api('auth');
     unlock();
-    await reload();
+    try {
+      await reload();
+    } catch (reloadErr) {
+      if (reloadErr.wrongPassword) lock(reloadErr.message);
+      else toast(reloadErr.message, 'error');
+    }
     $('ex-date').value = $('ex-date').value || todayISO();
   } catch (err) {
     sessionStorage.removeItem(SS_KEY);
@@ -2547,9 +2637,29 @@ $('edit-form').addEventListener('submit', async function(event) {
       record: record
     });
     closeEdit();
+    if (incomeEdit) {
+      applyLocalPatchIncome(target, {
+        date: record['날짜'],
+        amount: record['금액'],
+        memo: record['메모']
+      });
+    } else {
+      applyLocalPatchExpense(target, {
+        date: record['날짜'],
+        category: record['분류'],
+        item: record['항목'],
+        amount: record['금액'],
+        memo: record['메모']
+      });
+    }
+    refreshSummaryFromLocal();
+    renderList();
     toast('수정했습니다');
-    await reload();
-  } catch (err) { toast(err.message, 'error'); }
+    softRefresh();
+  } catch (err) {
+    if (err.wrongPassword) lock(err.message);
+    else toast(err.message, 'error');
+  }
 });
 
 bindTips();
@@ -2559,7 +2669,14 @@ showSetupHint();
 if (sessionStorage.getItem(SS_KEY) && isConfigured()) {
   api('auth').then(function() { unlock(); return reload(); }).then(function() {
     $('ex-date').value = $('ex-date').value || todayISO();
-  }).catch(function(err) { lock(err.message); });
+  }).catch(function(err) {
+    if (err.wrongPassword) lock(err.message);
+    else {
+      sessionStorage.removeItem(SS_KEY);
+      toast(err.message, 'error');
+      setStatus('연결 실패');
+    }
+  });
 } else if (!isConfigured()) {
   setStatus('주소 필요');
 }
