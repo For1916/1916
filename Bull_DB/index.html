@@ -268,7 +268,23 @@
     min-height: 36px;
   }
   td.cell-editable.is-editing textarea { min-height: 56px; resize: vertical; white-space: pre-wrap; }
-  .cell-item strong { font-weight: 700; }
+  span.cell-editable.is-editing { display: inline-flex; align-items: center; min-width: 6em; vertical-align: middle; }
+  span.cell-editable.is-editing input {
+    width: 100%;
+    min-width: 8em;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    background: var(--surface2);
+    color: var(--text);
+  }
+  .cell-category-item { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .cell-item-inline { cursor: pointer; }
+  .cell-item-inline:hover { background: var(--accent-soft); border-radius: 4px; }
+  .cell-item-inline strong { font-weight: 700; }
   .trade-card .cell-editable-tap { cursor: pointer; border-radius: 6px; padding: 2px 4px; margin: -2px -4px; }
   .trade-card .cell-editable-tap:hover { background: var(--accent-soft); }
   .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
@@ -582,7 +598,6 @@
           <tr>
             <th class="sortable" data-sort-table="expense" data-sort-key="date">날짜<span class="sort-ind" data-sort-ind="expense" data-sort-key="date"></span></th>
             <th class="sortable" data-sort-table="expense" data-sort-key="category"><button type="button" class="tip" data-tip="category" aria-label="분류 설명"><span class="tip-text">분류</span><span class="tip-mark" aria-hidden="true">ⓘ</span></button><span class="sort-ind" data-sort-ind="expense" data-sort-key="category"></span></th>
-            <th class="sortable" data-sort-table="expense" data-sort-key="item">항목<span class="sort-ind" data-sort-ind="expense" data-sort-key="item"></span></th>
             <th class="sortable num" data-sort-table="expense" data-sort-key="amount">금액<span class="sort-ind" data-sort-ind="expense" data-sort-key="amount"></span></th>
             <th class="sortable" data-sort-table="expense" data-sort-key="memo">메모<span class="sort-ind" data-sort-ind="expense" data-sort-key="memo"></span></th>
           </tr>
@@ -1123,6 +1138,12 @@ function startInlineEdit(td, kind, row, field) {
 }
 function inlineEditAttr(kind, field, sheetRow) {
   return ' data-inline-kind="' + kind + '" data-inline-field="' + field + '" data-sheet-row="' + sheetRow + '"';
+}
+function expenseCategoryItemCell(row) {
+  var itemLabel = row.item ? escapeHtml(row.item) : '—';
+  return '<td class="cell-category-item">' +
+    '<span class="cell-modal-open" data-expense-modal="' + row.row + '" title="분류 수정·삭제">' + categoryBadgeHtml(row.category) + '</span>' +
+    '<span class="cell-editable cell-item-inline"' + inlineEditAttr('expense', 'item', row.row) + '><strong>' + itemLabel + '</strong></span></td>';
 }
 function anchorBox(el) {
   var rect = el.getBoundingClientRect();
@@ -1869,20 +1890,17 @@ function renderList() {
   var rows = expenseRows();
   var shown = state.showAll ? rows : rows.slice(0, 300);
   $('list-body').innerHTML = shown.map(function(row) {
-    var itemLabel = row.item ? escapeHtml(row.item) : '—';
     return '<tr data-expense-row="' + row.row + '">' +
-      '<td class="cell-modal-open" data-expense-modal="' + row.row + '" title="날짜·분류 수정·삭제">' + escapeHtml(row.date || '-') + '</td>' +
-      '<td class="cell-modal-open" data-expense-modal="' + row.row + '" title="날짜·분류 수정·삭제">' + categoryBadgeHtml(row.category) + '</td>' +
-      '<td class="cell-editable cell-item"' + inlineEditAttr('expense', 'item', row.row) + '><strong>' + itemLabel + '</strong></td>' +
+      '<td class="cell-modal-open" data-expense-modal="' + row.row + '" title="날짜 수정·삭제">' + escapeHtml(row.date || '-') + '</td>' +
+      expenseCategoryItemCell(row) +
       '<td class="num neg cell-editable"' + inlineEditAttr('expense', 'amount', row.row) + '>' + fmt(row.amount) + '</td>' +
       '<td class="cell-editable cell-memo"' + inlineEditAttr('expense', 'memo', row.row) + '>' + escapeHtml(row.memo || '') + '</td></tr>';
   }).join('');
   $('list-cards').innerHTML = shown.map(function(row) {
     var itemLabel = row.item ? escapeHtml(row.item) : '—';
     return '<article class="trade-card" data-expense-row="' + row.row + '">' +
-      '<div class="trade-card-header"><div class="trade-card-title cell-modal-open" data-expense-modal="' + row.row + '">' + categoryBadgeHtml(row.category) + '</div><span class="badge badge-expense">지출</span></div>' +
+      '<div class="trade-card-header"><div class="trade-card-title"><span class="cell-modal-open" data-expense-modal="' + row.row + '">' + categoryBadgeHtml(row.category) + '</span> <span class="cell-editable-tap"' + inlineEditAttr('expense', 'item', row.row) + '><strong>' + itemLabel + '</strong></span></div><span class="badge badge-expense">지출</span></div>' +
       '<div class="trade-card-meta cell-modal-open" data-expense-modal="' + row.row + '">' + escapeHtml(row.date || '-') + '</div>' +
-      '<div class="cell-editable-tap"' + inlineEditAttr('expense', 'item', row.row) + '><strong>' + itemLabel + '</strong></div>' +
       '<strong class="neg cell-editable-tap"' + inlineEditAttr('expense', 'amount', row.row) + '>' + fmt(row.amount) + '</strong>' +
       '<div class="trade-card-meta cell-editable-tap"' + inlineEditAttr('expense', 'memo', row.row) + '">' + (row.memo ? escapeHtml(row.memo) : '메모') + '</div></article>';
   }).join('');
@@ -2346,7 +2364,9 @@ function handleListTableClick(event) {
     if (!sheetRow || !field) return;
     var row = kind === 'income' ? findManualIncomeRow(sheetRow) : findExpenseRow(sheetRow);
     if (!row) return;
-    if (inlineCell.tagName !== 'TD') {
+    var deskTable = inlineCell.closest('.table-wrap.desk-only');
+    var inlineOnDesk = deskTable && (inlineCell.tagName === 'TD' || inlineCell.classList.contains('cell-item-inline'));
+    if (!inlineOnDesk) {
       if (kind === 'income') openIncomeEdit(row, field);
       else openEdit(row, field);
       return;
