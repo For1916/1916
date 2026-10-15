@@ -244,11 +244,9 @@
   .badge-expense { background: var(--red-soft); color: var(--red); }
   .badge-order { background: var(--accent-soft); color: var(--accent); }
   .badge-muted { background: var(--surface2); color: var(--text2); }
-  .badge-cat-ai { background: #EDE8FC; color: #5B21B6; }
-  .badge-cat-ads { background: var(--amber-soft); color: var(--amber); }
-  .badge-cat-bind { background: var(--blue-soft); color: var(--blue); }
-  .badge-cat-box { background: var(--accent-soft); color: var(--accent-dark); }
-  .badge-cat-etc { background: var(--surface2); color: var(--text2); }
+  .badge-cat { border-radius: 999px; color: #fff; vertical-align: middle; }
+  .expense-cat-cell { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .expense-cat-cell .expense-item-inline { font-weight: 700; font-size: inherit; color: var(--text); }
   td.cell-editable, td.cell-modal-open { transition: background 0.12s ease; }
   td.cell-editable { cursor: pointer; }
   td.cell-editable:hover { background: var(--accent-soft); }
@@ -281,10 +279,8 @@
     background: var(--surface2);
     color: var(--text);
   }
-  .cell-category-item { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .cell-item-inline { cursor: pointer; }
-  .cell-item-inline:hover { background: var(--accent-soft); border-radius: 4px; }
-  .cell-item-inline strong { font-weight: 700; }
+  .expense-item-inline.cell-editable { cursor: pointer; }
+  .expense-item-inline.cell-editable:hover { background: var(--accent-soft); border-radius: 4px; }
   .trade-card .cell-editable-tap { cursor: pointer; border-radius: 6px; padding: 2px 4px; margin: -2px -4px; }
   .trade-card .cell-editable-tap:hover { background: var(--accent-soft); }
   .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
@@ -767,6 +763,18 @@ function $(id) { return document.getElementById(id); }
 function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+var CATEGORY_PALETTE = ['#E53935', '#D81B60', '#8E24AA', '#5E35B1', '#3949AB', '#1E88E5', '#00897B', '#2E7D32', '#F57C00', '#6D4C41', '#546E7A', '#C2185B'];
+function categoryColor(name) {
+  var s = String(name || '');
+  var h = 0;
+  for (var i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  return CATEGORY_PALETTE[Math.abs(h) % CATEGORY_PALETTE.length];
+}
+function categoryBadgeHtml(category) {
+  var label = category || '-';
+  var color = categoryColor(label);
+  return '<span class="badge badge-cat" style="background:' + color + '">' + escapeHtml(label) + '</span>';
+}
 var TIPS = {
   month: {
     title: '월',
@@ -980,18 +988,6 @@ function categoryTip(name) {
   if (name === '기타') return tipLabel(name, 'etc');
   return tipLabel(name, 'etc', name);
 }
-function categoryBadgeClass(cat) {
-  var c = String(cat || '');
-  if (c === 'AI') return 'badge badge-cat-ai';
-  if (c === '광고') return 'badge badge-cat-ads';
-  if (c === '제본') return 'badge badge-cat-bind';
-  if (c === '박스') return 'badge badge-cat-box';
-  return 'badge badge-cat-etc';
-}
-function categoryBadgeHtml(cat) {
-  var label = String(cat || '-');
-  return '<span class="' + categoryBadgeClass(cat) + '">' + escapeHtml(label) + '</span>';
-}
 var inlineEdit = null;
 function findExpenseRow(sheetRow) {
   return state.expense.find(function(row) { return row.row === sheetRow; });
@@ -1140,10 +1136,11 @@ function inlineEditAttr(kind, field, sheetRow) {
   return ' data-inline-kind="' + kind + '" data-inline-field="' + field + '" data-sheet-row="' + sheetRow + '"';
 }
 function expenseCategoryItemCell(row) {
-  var itemLabel = row.item ? escapeHtml(row.item) : '—';
-  return '<td class="cell-category-item">' +
+  var item = String(row.item || '').trim();
+  var itemLabel = item ? escapeHtml(item) : '—';
+  return '<td><span class="expense-cat-cell">' +
     '<span class="cell-modal-open" data-expense-modal="' + row.row + '" title="분류 수정·삭제">' + categoryBadgeHtml(row.category) + '</span>' +
-    '<span class="cell-editable cell-item-inline"' + inlineEditAttr('expense', 'item', row.row) + '><strong>' + itemLabel + '</strong></span></td>';
+    '<strong class="expense-item-inline cell-editable cell-item-inline"' + inlineEditAttr('expense', 'item', row.row) + '>' + itemLabel + '</strong></span></td>';
 }
 function anchorBox(el) {
   var rect = el.getBoundingClientRect();
@@ -1654,7 +1651,12 @@ function fillListCategoryFilters() {
   var cur = sel.value;
   var html = '<button type="button" data-cat="" class="' + (!cur ? 'active' : '') + '">전체</button>';
   cats.forEach(function(c) {
-    html += '<button type="button" data-cat="' + escapeHtml(c) + '" class="' + (cur === c ? 'active' : '') + '">' + escapeHtml(c) + '</button>';
+    var color = categoryColor(c);
+    var active = cur === c;
+    var style = active
+      ? ' style="background:' + color + ';border-color:' + color + ';color:#fff;"'
+      : ' style="border-color:' + color + ';color:' + color + ';"';
+    html += '<button type="button" data-cat="' + escapeHtml(c) + '" class="' + (active ? 'active' : '') + '"' + style + '>' + escapeHtml(c) + '</button>';
   });
   wrap.innerHTML = html;
 }
