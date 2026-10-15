@@ -29,6 +29,9 @@ var SOURCE_SPREADSHEET_ID = '1s_QC5gRuU7E07WGZrBtbMS_S80YHexlPPD_qYVDqTpM';
 var SOURCE_SHEET_NAME = '주문 관리';
 var ORDER_LAST_ROW_DEFAULT = 1000;
 var MANUAL_LAST_ROW = 5000;
+var LEDGER_LOAD_GEN_KEY = 'LEDGER_LOAD_GEN';
+var LEDGER_LOAD_CACHE_TTL = 300;
+var LEDGER_LOAD_CACHE_CHUNK = 90000;
 
 var PERSONAL_HEADER_RE = /주문자|고객명|수취인|받는\s*분|받는분|연락처|전화|휴대폰|핸드폰|휴대전화|주소|우편번호|이메일|유입|모아폼|moaform|답변\s*id|응답\s*id|answer\s*id|submission/i;
 var DOC_MARKER = '[장부 안내]';
@@ -115,24 +118,28 @@ function passwordsMatch_(given, expected) {
 }
 
 function loadLedger_() {
+  var cached = readLedgerLoadCache_();
+  if (cached) {
+    cached.ok = true;
+    cached.version = APP_VERSION;
+    return cached;
+  }
+  var payload = buildLedgerPayload_();
+  writeLedgerLoadCache_(payload);
+  return payload;
+}
+
+function buildLedgerPayload_() {
   var ss = activeSs_();
   var incomeSheet = mustSheet_(ss, '수입');
   var expenseSheet = mustSheet_(ss, '지출');
   var orderSheet = mustSheet_(ss, '주문 연동');
-  var summarySheet = ss.getSheetByName('월별 요약');
   var classSheet = ss.getSheetByName('분류');
   var income = readIncome_(incomeSheet);
   var expense = readExpense_(expenseSheet);
-  var orders = readOrders_(orderSheet);
+  var orders = readOrders_(ss, orderSheet);
   var meta = readMeta_(classSheet);
-  var summary = readSheetSummary_(summarySheet);
-  if (!summaryHasNumbers_(summary)) {
-    summary = computeSummary_(income, expense, orders);
-    summary.source = 'computed';
-  } else {
-    summary = alignSummary_(summary, income, expense, orders);
-    summary.source = 'sheet';
-  }
+  var summary = computeSummary_(income, expense, orders);
   return {
     ok: true,
     version: APP_VERSION,
@@ -140,6 +147,61 @@ function loadLedger_() {
     summary: summary,
     transactions: { income: income, expense: expense, orders: orders }
   };
+}
+
+function ledgerLoadCacheGen_() {
+  return PropertiesService.getScriptProperties().getProperty(LEDGER_LOAD_GEN_KEY) || '0';
+}
+
+function invalidateLedgerLoadCache_() {
+  try {
+    var props = PropertiesService.getScriptProperties();
+    var next = Number(props.getProperty(LEDGER_LOAD_GEN_KEY) || '0') + 1;
+    props.setProperty(LEDGER_LOAD_GEN_KEY, String(next));
+  } catch (err) {}
+}
+
+function readLedgerLoadCache_() {
+  var gen = ledgerLoadCacheGen_();
+  var cache = CacheService.getScriptCache();
+  var metaRaw = cache.get('hw_ll_' + gen + '_m');
+  if (!metaRaw) return null;
+  var meta;
+  try { meta = JSON.parse(metaRaw); }
+  catch (err) { return null; }
+  if (!meta || !meta.chunks) return null;
+  var parts = [];
+  var i;
+  for (i = 0; i < meta.chunks; i++) {
+    var piece = cache.get('hw_ll_' + gen + '_' + i);
+    if (piece == null) return null;
+    parts.push(piece);
+  }
+  try {
+    var data = JSON.parse(parts.join(''));
+    if (!data || !data.transactions) return null;
+    return data;
+  } catch (err2) {
+    return null;
+  }
+}
+
+function writeLedgerLoadCache_(payload) {
+  var gen = ledgerLoadCacheGen_();
+  var cache = CacheService.getScriptCache();
+  var text = JSON.stringify(payload);
+  var chunks = [];
+  var offset = 0;
+  while (offset < text.length) {
+    chunks.push(text.slice(offset, offset + LEDGER_LOAD_CACHE_CHUNK));
+    offset += LEDGER_LOAD_CACHE_CHUNK;
+  }
+  if (!chunks.length) chunks.push('{}');
+  var i;
+  for (i = 0; i < chunks.length; i++) {
+    cache.put('hw_ll_' + gen + '_' + i, chunks[i], LEDGER_LOAD_CACHE_TTL);
+  }
+  cache.put('hw_ll_' + gen + '_m', JSON.stringify({ chunks: chunks.length, v: APP_VERSION }), LEDGER_LOAD_CACHE_TTL);
 }
 
 function mutate_(action, data) {
@@ -151,19 +213,24 @@ function mutate_(action, data) {
   var ss = activeSs_();
   var sh = mustSheet_(ss, sheetName);
   var map = headerMap_(sh);
+  var result;
   if (action === 'add') {
     var row = nextDataRow_(sh, map);
     writeRecord_(sh, map, row, sheetName, data.record || {}, null);
-    return { ok: true, version: APP_VERSION, sheet: sheetName, row: row };
+    result = { ok: true, version: APP_VERSION, sheet: sheetName, row: row };
+  } else {
+    var rowNum = parseRow_(data.row);
+    assertRowMatch_(sh, map, rowNum, data.match);
+    if (action === 'delete') {
+      sh.deleteRow(rowNum);
+      result = { ok: true, version: APP_VERSION, sheet: sheetName, row: rowNum };
+    } else {
+      writeRecord_(sh, map, rowNum, sheetName, data.record || {});
+      result = { ok: true, version: APP_VERSION, sheet: sheetName, row: rowNum };
+    }
   }
-  var rowNum = parseRow_(data.row);
-  assertRowMatch_(sh, map, rowNum, data.match);
-  if (action === 'delete') {
-    sh.deleteRow(rowNum);
-    return { ok: true, version: APP_VERSION, sheet: sheetName, row: rowNum };
-  }
-  writeRecord_(sh, map, rowNum, sheetName, data.record || {});
-  return { ok: true, version: APP_VERSION, sheet: sheetName, row: rowNum };
+  invalidateLedgerLoadCache_();
+  return result;
 }
 
 function withLock_(fn) {
@@ -205,7 +272,13 @@ function readExpense_(sh) {
   });
 }
 
-function readOrders_(sh) {
+function readOrders_(ss, orderSheet) {
+  var fromSource = readOrdersFromSource_(ss, orderSheet);
+  if (fromSource) return fromSource;
+  return readOrdersFromSheet_(orderSheet);
+}
+
+function readOrdersFromSheet_(sh) {
   return readMapped_(sh, [
     { key: 'date', names: ['날짜'], kind: 'date' },
     { key: 'status', names: ['상태'], kind: 'text' },
@@ -224,6 +297,70 @@ function readOrders_(sh) {
   });
 }
 
+function readOrdersFromSource_(ss, orderSheet) {
+  var ctx = orderContextOrDefault_(ss);
+  var sourceId = ctx.sourceId || SOURCE_SPREADSHEET_ID;
+  var endRow = ctx.endRow || ORDER_LAST_ROW_DEFAULT;
+  if (endRow < 2) return [];
+  var ext;
+  try {
+    ext = SpreadsheetApp.openById(sourceId).getSheetByName(SOURCE_SHEET_NAME);
+  } catch (err) {
+    return null;
+  }
+  if (!ext) return null;
+  var block;
+  try {
+    block = ext.getRange(1, 1, endRow, 6).getValues();
+  } catch (err2) {
+    return null;
+  }
+  var map = headerMap_(orderSheet);
+  var includeCol = findHeader_(map, ['집계 포함', '집계포함']);
+  var includeLabels = [];
+  if (includeCol) {
+    var includeEnd = Math.min(Math.max(orderSheet.getLastRow(), 2), endRow);
+    includeLabels = orderSheet.getRange(2, includeCol, includeEnd, 1).getValues();
+  }
+  var out = [];
+  var r;
+  for (r = 1; r < block.length; r++) {
+    var rawDate = block[r][0];
+    var status = String(block[r][1] == null ? '' : block[r][1]).trim();
+    var amount = convertImportAmount_(block[r][5]);
+    var date = convertImportDate_(rawDate);
+    if (!date && amount == null && !status) continue;
+    var includeLabel = includeCol && includeLabels[r - 1] ? includeLabels[r - 1][0] : '';
+    out.push({
+      row: r + 1,
+      date: date,
+      status: status,
+      amount: amount,
+      included: orderIncluded_(status, includeLabel)
+    });
+  }
+  return out;
+}
+
+function convertImportDate_(cell) {
+  if (cell === '' || cell == null) return '';
+  if (typeof cell === 'number' && isFinite(cell) && cell >= 30000 && cell < 80000) {
+    return formatCellDate_(cell);
+  }
+  return formatCellDate_(cell);
+}
+
+function convertImportAmount_(cell) {
+  if (cell === '' || cell == null) return null;
+  if (typeof cell === 'number' && isFinite(cell)) return cell;
+  var direct = asNumber_(cell);
+  if (direct != null) return direct;
+  var digits = String(cell).replace(/[^0-9.]/g, '');
+  if (!digits) return null;
+  var n = Number(digits);
+  return isFinite(n) ? n : null;
+}
+
 function readMapped_(sh, fields, keep) {
   var map = headerMap_(sh);
   var cols = [];
@@ -231,9 +368,9 @@ function readMapped_(sh, fields, keep) {
   for (c = 0; c < fields.length; c++) cols.push(findHeader_(map, fields[c].names));
   var last = sh.getLastRow();
   if (last < 2) return [];
-  var height = Math.min(last, MANUAL_LAST_ROW) - 1;
+  var endRow = Math.min(last, MANUAL_LAST_ROW);
   var width = Math.max(sh.getLastColumn(), 1);
-  var values = sh.getRange(2, 1, height, width).getValues();
+  var values = sh.getRange(2, 1, endRow, width).getValues();
   var out = [];
   var r;
   for (r = 0; r < values.length; r++) {
@@ -2916,10 +3053,13 @@ function clipText_(value, max) {
 function mutateStock_(action, sheetName, data) {
   var ss = activeSs_();
   detectFormulaSep_(ss);
-  if (sheetName === '입출고') return mutateMovement_(ss, action, data);
-  if (sheetName === '재고 품목') return mutateItem_(ss, action, data);
-  if (sheetName === '주문 출고') return updateShipDates_(ss, action, data);
-  return mutateRule_(ss, action, data);
+  var result;
+  if (sheetName === '입출고') result = mutateMovement_(ss, action, data);
+  else if (sheetName === '재고 품목') result = mutateItem_(ss, action, data);
+  else if (sheetName === '주문 출고') result = updateShipDates_(ss, action, data);
+  else result = mutateRule_(ss, action, data);
+  invalidateLedgerLoadCache_();
+  return result;
 }
 
 function updateShipDates_(ss, action, data) {
