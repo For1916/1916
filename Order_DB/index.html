@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>황소 워크북 주문 관리</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+<style>
+  :root{--bg:#EEF5FF;--surface:#FFF;--border:#CFE1F7;--accent:#1E70F0;--accent-dark:#1456BC;--accent-soft:#DFEBFC;
+    --green:#12A150;--green-soft:#E1F7EA;--red:#E14747;--red-soft:#FCE6E6;--blue:#1D4ED8;--blue-soft:#E4ECFB;
+    --amber:#DB9A17;--amber-soft:#FCF1DA;--gray:#6B7A90;--gray-soft:#EEF1F5;--text:#12213D;--muted:#6B7A90;--radius:10px}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Pretendard',-apple-system,sans-serif;font-size:15px}
+  button,input,select,textarea{font-family:inherit;font-size:inherit}
+  .wrap{max-width:1000px;margin:0 auto;padding:20px 16px 80px}
+  h1{font-size:22px;margin:4px 0 16px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+  #login{max-width:360px;margin:80px auto}
+  #login input{width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;margin:10px 0}
+  .btn{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:600}
+  .btn:hover{background:var(--accent-dark)} .btn.ghost{background:var(--accent-soft);color:var(--accent-dark)}
+  .err{color:var(--red);font-size:13px;min-height:18px}
+  .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+  .summary .card{text-align:center;padding:12px} .summary b{display:block;font-size:20px;margin-top:4px}
+  .summary span{color:var(--muted);font-size:13px}
+  .tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+  .tools input{flex:1;min-width:180px;padding:10px 12px;border:1px solid var(--border);border-radius:8px}
+  .chip{border:1px solid var(--border);background:#fff;border-radius:999px;padding:7px 14px;cursor:pointer;color:var(--muted)}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .list{display:flex;flex-direction:column;gap:8px}
+  .row{display:grid;grid-template-columns:92px 84px 1fr auto;gap:12px;align-items:center;background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;cursor:pointer}
+  .row:hover{border-color:var(--accent)}
+  .date{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+  .tag{display:inline-flex;justify-content:center;align-items:center;width:84px;padding:4px 0;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap}
+  .t-wait{background:var(--amber-soft);color:var(--amber)} .t-paid{background:var(--blue-soft);color:var(--blue)}
+  .t-ship{background:var(--accent-soft);color:var(--accent-dark)} .t-done{background:var(--green-soft);color:var(--green)}
+  .t-cancel{background:var(--red-soft);color:var(--red)} .t-none{background:var(--gray-soft);color:var(--gray)}
+  .who{min-width:0} .who b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .who small{color:var(--muted)}
+  .amt{text-align:right;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .empty{text-align:center;color:var(--muted);padding:40px}
+  #detail{position:fixed;inset:0;background:rgba(18,33,61,.35);display:none;align-items:flex-end;justify-content:center;z-index:10}
+  #detail.open{display:flex}
+  #detail .card{width:100%;max-width:560px;max-height:90vh;overflow:auto;border-radius:16px 16px 0 0;padding:20px}
+  @media(min-width:700px){#detail{align-items:center}#detail .card{border-radius:16px}}
+  dl{display:grid;grid-template-columns:100px 1fr;gap:8px 12px;margin:12px 0}
+  dt{color:var(--muted);font-size:13px} dd{margin:0;word-break:break-all}
+  dd select,dd textarea{width:100%;padding:8px;border:1px solid var(--border);border-radius:8px}
+  dd textarea{min-height:70px;resize:vertical}
+  .head{display:flex;justify-content:space-between;align-items:center}
+  .x{background:none;border:0;font-size:22px;cursor:pointer;color:var(--muted)}
+  #status{position:fixed;right:16px;bottom:16px;background:#fff;border:1px solid var(--border);border-radius:999px;padding:6px 14px;font-size:13px;display:none}
+  @media(max-width:560px){.row{grid-template-columns:84px 1fr auto;grid-template-areas:"tag who amt" "date date date"}
+    .row .date{grid-area:date;font-size:12px}.row .tagc{grid-area:tag}.row .who{grid-area:who}.row .amt{grid-area:amt}
+    .summary b{font-size:17px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="login" class="card">
+    <h1>황소 워크북 주문 관리</h1>
+    <form id="lf"><input id="pw" type="password" placeholder="비밀번호" autocomplete="current-password"><button class="btn" style="width:100%">들어가기</button></form>
+    <div class="err" id="lerr"></div>
+  </div>
+  <div id="app" style="display:none">
+    <div class="head"><h1>황소 워크북 주문 관리</h1><button class="btn ghost" id="reload">새로고침</button></div>
+    <div class="summary">
+      <div class="card"><span>주문</span><b id="sCount">0건</b></div>
+      <div class="card"><span>권수</span><b id="sBooks">0권</b></div>
+      <div class="card"><span>금액</span><b id="sAmt">0원</b></div>
+    </div>
+    <div class="tools">
+      <input id="q" type="search" placeholder="이름, 연락처, 주소, 교재 검색">
+      <button class="chip on" data-f="all">전체</button>
+      <button class="chip" data-f="unpaid">입금 전</button>
+      <button class="chip" data-f="unshipped">발송 전</button>
+    </div>
+    <div class="list" id="list"></div>
+  </div>
+</div>
+<div id="detail"><div class="card" id="dcard"></div></div>
+<div id="status"></div>
+<script>
+const API_URL = 'https://order-db.for1916.workers.dev';
+const STATUSES = ['입금 대기','입금 확인','배송 준비','배송 중','배송 완료','취소','환불'];
+const UNPAID = ['', '입금 대기'];
+const CLOSED = ['배송 완료','취소','환불'];
+let PW = sessionStorage.getItem('order_pw') || '', DATA = null, FILTER = 'all';
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const won = (n) => Number(n || 0).toLocaleString('ko-KR') + '원';
+async function call(body){
+  const r = await fetch(API_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({password: PW}, body))});
+  const j = await r.json(); if (j.error) throw new Error(j.error); return j.data;
+}
+function tagClass(s){ s = s || ''; if (s === '입금 대기') return 't-wait'; if (s === '입금 확인' || s === '배송 준비') return 't-paid';
+  if (s === '배송 중') return 't-ship'; if (s === '배송 완료') return 't-done'; if (s === '취소' || s === '환불') return 't-cancel'; return 't-none'; }
+const books = (o) => { const m = String(o['교재'] || o['교재 원본 (숨김)'] || '').match(/(\d+)\s*권/); return m ? Number(m[1]) : 0; };
+const amount = (o) => typeof o['금액'] === 'number' ? o['금액'] : Number(String(o['금액'] || '').replace(/[^\d]/g, '')) || 0;
+function status(msg, ms){ const s = $('status'); s.textContent = msg; s.style.display = 'block'; clearTimeout(status.t); if (ms) status.t = setTimeout(() => s.style.display = 'none', ms); }
+async function load(){
+  status('불러오는 중…');
+  try { DATA = await call({action:'list'}); render(); status('불러옴 ✓', 1200); } catch (e) { status('불러오기 실패: ' + e.message, 4000); }
+}
+function filtered(){
+  const q = $('q').value.trim().toLowerCase();
+  return DATA.orders.filter((o) => {
+    const s = o['상태'] || '';
+    if (FILTER === 'unpaid' && !UNPAID.includes(s)) return false;
+    if (FILTER === 'unshipped' && CLOSED.includes(s)) return false;
+    if (!q) return true;
+    return ['주문자(예금주)','연락처','주소','교재','메모','유입 플랫폼','상태'].some((k) => String(o[k] || '').toLowerCase().includes(q));
+  }).sort((a, b) => String(b['제출일시'] || '').localeCompare(String(a['제출일시'] || '')) || b._row - a._row);
+}
+function render(){
+  const list = filtered(), live = list.filter((o) => !['취소','환불'].includes(o['상태']));
+  $('sCount').textContent = list.length + '건';
+  $('sBooks').textContent = live.reduce((a, o) => a + books(o), 0) + '권';
+  $('sAmt').textContent = won(live.reduce((a, o) => a + amount(o), 0));
+  $('list').innerHTML = list.length ? list.map((o) => `<div class="row" data-r="${o._row}">
+    <span class="date">${esc(o['제출일시'])}</span>
+    <span class="tagc"><span class="tag ${tagClass(o['상태'])}">${esc(o['상태'] || '미정')}</span></span>
+    <span class="who"><b>${esc(o['주문자(예금주)'])}</b><small>${esc(o['교재'])}${o['메모'] ? ' · ' + esc(o['메모']) : ''}</small></span>
+    <span class="amt">${won(amount(o))}</span></div>`).join('') : '<div class="empty">주문이 없어요.</div>';
+}
+function openDetail(row){
+  const o = DATA.orders.find((x) => x._row === row); if (!o) return;
+  const opts = STATUSES.includes(o['상태'] || '') || !o['상태'] ? STATUSES : [o['상태']].concat(STATUSES);
+  const f = (k, v) => `<dt>${esc(k)}</dt><dd>${v}</dd>`;
+  const url = String(o['모아폼 결과 URL'] || '');
+  $('dcard').innerHTML = `<div class="head"><h1 style="margin:0">${esc(o['주문자(예금주)'])}</h1><button class="x" id="dx">×</button></div><dl>
+    ${f('상태', `<select id="eStatus">${(o['상태'] ? [] : ['']).concat(opts).map((s) => `<option${s === (o['상태'] || '') ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select>`)}
+    ${f('메모', `<textarea id="eMemo">${esc(o['메모'])}</textarea>`)}
+    ${f('제출일시', esc(o['제출일시']))}${f('연락처', o['연락처'] ? `<a href="tel:${esc(o['연락처'])}">${esc(o['연락처'])}</a>` : '')}
+    ${f('교재', esc(o['교재']))}${f('금액', won(amount(o)))}${f('우편번호', esc(o['우편번호']))}${f('주소', esc(o['주소']))}
+    ${f('유입 플랫폼', esc(o['유입 플랫폼']))}${f('답변 ID', esc(o['모아폼 답변 ID']))}
+    ${f('모아폼', /^https:\/\//.test(url) ? `<a href="${esc(url)}" target="_blank" rel="noopener">답변 보기</a>` : '')}</dl>
+    <button class="btn" id="dsave" style="width:100%">저장</button>`;
+  $('detail').classList.add('open');
+  $('dx').onclick = closeDetail;
+  $('dsave').onclick = async () => {
+    const changes = [['상태', $('eStatus').value], ['메모', $('eMemo').value]].filter(([k, v]) => v !== (o[k] == null ? '' : String(o[k])));
+    if (!changes.length) return closeDetail();
+    status('저장 중…');
+    try {
+      for (const [k, v] of changes) { await call({action:'update', row:o._row, key:o['모아폼 답변 ID'], field:k, value:v}); o[k] = v === '' ? null : v; }
+      render(); closeDetail(); status('저장됨 ✓', 1500);
+    } catch (e) { status('저장 실패: ' + e.message, 5000); }
+  };
+}
+function closeDetail(){ $('detail').classList.remove('open'); }
+$('detail').onclick = (e) => { if (e.target.id === 'detail') closeDetail(); };
+$('list').onclick = (e) => { const r = e.target.closest('.row'); if (r) openDetail(Number(r.dataset.r)); };
+$('q').oninput = () => DATA && render();
+document.querySelectorAll('.chip').forEach((c) => c.onclick = () => { document.querySelectorAll('.chip').forEach((x) => x.classList.remove('on')); c.classList.add('on'); FILTER = c.dataset.f; render(); });
+$('reload').onclick = load;
+async function enter(){
+  try { await call({action:'auth'}); sessionStorage.setItem('order_pw', PW); $('login').style.display = 'none'; $('app').style.display = 'block'; load(); }
+  catch (e) { sessionStorage.removeItem('order_pw'); $('lerr').textContent = e.message; }
+}
+$('lf').onsubmit = (e) => { e.preventDefault(); PW = $('pw').value; $('lerr').textContent = ''; enter(); };
+if (PW) enter();
+</script>
+</body>
+</html>
